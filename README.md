@@ -42,47 +42,73 @@ todoIng 是一个创新的任务管理系统，它不仅提供基本的任务管
 - Mongoose
 - JWT 认证
 
-## 安装和运行
+## 快速开始
 
+### 方法一：使用Docker（推荐）
+
+#### 生产环境部署
 ```bash
 # 克隆项目
 git clone <repository-url>
 cd todoIng
 
-# 安装后端依赖
+# 构建并启动所有服务
+docker-compose up -d
+
+# 应用将在以下地址可用：
+# 前端: http://localhost
+# 后端API: http://localhost:5000
+```
+
+#### 开发环境部署
+```bash
+# 克隆项目
+git clone <repository-url>
+cd todoIng
+
+# 构建并启动开发环境
+docker-compose -f docker-compose.dev.yml up -d
+
+# 应用将在以下地址可用：
+# 前端: http://localhost:3000
+# 后端API: http://localhost:5000
+```
+
+### 方法二：手动部署
+
+#### 后端设置
+```bash
+# 进入后端目录
 cd backend
+
+# 安装依赖
 npm install
 
-# 配置环境变量
+# 创建.env文件并配置环境变量
 cp .env.example .env
-# 编辑 .env 文件，设置 MONGO_URI 和 JWT_SECRET
+# 编辑.env文件，设置MONGO_URI和JWT_SECRET
 
-# 安装前端依赖
-cd ../frontend
-npm install
-
-# 配置前端环境变量
-cp .env.example .env
-# 编辑 .env 文件，设置 VITE_API_URL
-
-# 启动开发服务器
-# 终端1: 启动后端
-cd ../backend
-npm run dev
-
-# 终端2: 启动前端
-cd ../frontend
+# 启动后端服务
+npm start
+# 或者开发模式
 npm run dev
 ```
 
-## 构建生产版本
-
+#### 前端设置
 ```bash
-# 构建前端
+# 进入前端目录
 cd frontend
-npm run build
 
-# 构建后端 (需要先配置生产环境变量)
-cd ../backend
-npm start
+# 安装依赖
+npm install
+
+# 创建.env文件并配置环境变量
+cp .env.example .env
+# 编辑.env文件，设置VITE_API_URL
+
+# 启动前端开发服务器
+npm run dev
+
+# 或者构建生产版本
+npm run build
 ```

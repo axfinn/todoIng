@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  # MongoDB服务
+  mongodb:
+    image: mongo:5.0
+    container_name: todoing_mongodb
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - todoing_network
+
+  # 后端服务
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: todoing_backend
+    restart: always
+    environment:
+      NODE_ENV: production
+      MONGO_URI: mongodb://admin:password@mongodb:27017/todoing?authSource=admin
+      JWT_SECRET: your_jwt_secret_here
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mongodb
+    networks:
+      - todoing_network
+
+  # 前端服务
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: todoing_frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - todoing_network
+
+# 数据卷定义
+volumes:
+  mongodb_data:
+    driver: local
+
+# 网络定义
+networks:
+  todoing_network:
+    driver: bridge
