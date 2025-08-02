@@ -7,6 +7,7 @@ import { logout } from './features/auth/authSlice';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
+import ProtectedRoute from './components/ProtectedRoute';
 
 const App: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -99,7 +100,11 @@ const App: React.FC = () => {
           } />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/dashboard" element={
+            <ProtectedRoute>
+              <DashboardPage />
+            </ProtectedRoute>
+          } />
         </Routes>
       </main>
       <footer className="bg-light py-3 mt-auto">
