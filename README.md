@@ -47,14 +47,42 @@ todoIng 是一个创新的任务管理系统，它不仅提供基本的任务管
 ```bash
 # 克隆项目
 git clone <repository-url>
+cd todoIng
 
-# 安装依赖
+# 安装后端依赖
+cd backend
 npm install
 
+# 配置环境变量
+cp .env.example .env
+# 编辑 .env 文件，设置 MONGO_URI 和 JWT_SECRET
+
+# 安装前端依赖
+cd ../frontend
+npm install
+
+# 配置前端环境变量
+cp .env.example .env
+# 编辑 .env 文件，设置 VITE_API_URL
+
 # 启动开发服务器
+# 终端1: 启动后端
+cd ../backend
+npm run dev
+
+# 终端2: 启动前端
+cd ../frontend
 npm run dev
 ```
 
-## 许可证
+## 构建生产版本
 
-[MIT](LICENSE)
+```bash
+# 构建前端
+cd frontend
+npm run build
+
+# 构建后端 (需要先配置生产环境变量)
+cd ../backend
+npm start
+```
