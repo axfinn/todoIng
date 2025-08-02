@@ -29,49 +29,42 @@ const LoginPage: React.FC = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (validateForm()) {
-      dispatch(loginUser({ email, password }));
-    }
+    dispatch(loginUser({ email, password }));
   };
+
+  if (isLoading) {
+    return (
+      <div className="container py-5">
+        <div className="d-flex justify-content-center align-items-center" style={{ height: '70vh' }}>
+          <div className="text-center">
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">{t('common.loading')}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container py-5">
       <div className="row justify-content-center">
         <div className="col-md-6 col-lg-5">
-          <div className="card shadow-lg border-0 rounded-3">
+          <div className="card shadow-sm">
             <div className="card-body p-5">
-              <div className="text-center mb-5">
-                <div className="d-inline-block bg-primary rounded-circle p-3 mb-4">
-                  <i className="bi bi-box-arrow-in-right text-white fs-1"></i>
-                </div>
-                <h2 className="card-title">{t('auth.login.title')}</h2>
-                <p className="text-muted">Sign in to your account</p>
+              <div className="text-center mb-4">
+                <h2 className="fw-bold">{t('auth.login.title')}</h2>
               </div>
               
-              {isLoading && (
-                <div className="container py-5">
-                  <div className="d-flex justify-content-center align-items-center" style={{ height: '70vh' }}>
-                    <div className="text-center">
-                      <div className="spinner-border text-primary" role="status">
-                        <span className="visually-hidden">{t('common.loading')}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-              
               {error && (
-                <div className="alert alert-danger alert-dismissible fade show" role="alert">
-                  <i className="bi bi-exclamation-triangle-fill me-2"></i>
-                  {error || 'Login failed'}
-                  <button type="button" className="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                <div className="alert alert-danger" role="alert">
+                  {error}
                 </div>
               )}
               
-              <form onSubmit={onSubmit} noValidate>
+              <form onSubmit={onSubmit}>
                 <div className="mb-3">
                   <label htmlFor="email" className="form-label">{t('auth.login.email')}</label>
                   <input
@@ -98,25 +91,21 @@ const LoginPage: React.FC = () => {
                   />
                 </div>
                 
-                <div className="d-grid mb-4">
-                  <button 
-                    type="submit" 
-                    className="btn btn-primary btn-lg rounded-pill" 
-                    disabled={isLoading}
-                  >
+                <div className="d-grid">
+                  <button type="submit" className="btn btn-primary btn-lg" disabled={isLoading}>
                     {t('auth.login.submit')}
                   </button>
                 </div>
-                
-                <div className="text-center">
-                  <p className="mb-0">
-                    {t('auth.login.noAccount')}{' '}
-                    <Link to="/register" className="text-decoration-none">
-                      {t('auth.login.register')}
-                    </Link>
-                  </p>
-                </div>
               </form>
+              
+              <div className="text-center mt-4">
+                <p className="mb-0">
+                  {t('auth.login.noAccount')}{' '}
+                  <Link to="/register" className="text-decoration-none">
+                    {t('auth.login.register')}
+                  </Link>
+                </p>
+              </div>
             </div>
           </div>
         </div>
