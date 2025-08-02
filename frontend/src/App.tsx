@@ -70,20 +70,28 @@ const App: React.FC = () => {
                 </a>
                 <ul className="dropdown-menu">
                   <li>
-                    <button 
+                    <a 
                       className="dropdown-item" 
-                      onClick={() => changeLanguage('en')}
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        changeLanguage('en');
+                      }}
                     >
                       English
-                    </button>
+                    </a>
                   </li>
                   <li>
-                    <button 
+                    <a 
                       className="dropdown-item" 
-                      onClick={() => changeLanguage('zh')}
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        changeLanguage('zh');
+                      }}
                     >
                       中文
-                    </button>
+                    </a>
                   </li>
                 </ul>
               </li>
