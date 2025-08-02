@@ -82,6 +82,9 @@ const App: React.FC = () => {
                     </a>
                   </li>
                   <li>
+                    <hr className="dropdown-divider" />
+                  </li>
+                  <li>
                     <a 
                       className="dropdown-item" 
                       href="#"
