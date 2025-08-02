@@ -12,7 +12,7 @@ const RegisterPage: React.FC = () => {
   const { isAuthenticated, isLoading, error } = useSelector((state: RootState) => state.auth);
 
   const [formData, setFormData] = useState({
-    name: '',
+    username: '',
     email: '',
     password: '',
     password2: '',
@@ -24,7 +24,7 @@ const RegisterPage: React.FC = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  const { name, email, password, password2 } = formData;
+  const { username, email, password, password2 } = formData;
 
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -36,22 +36,8 @@ const RegisterPage: React.FC = () => {
       alert('Passwords do not match');
       return;
     }
-    dispatch(registerUser({ name, email, password }));
+    dispatch(registerUser({ username, email, password }));
   };
-
-  if (isLoading) {
-    return (
-      <div className="container py-5">
-        <div className="d-flex justify-content-center align-items-center" style={{ height: '70vh' }}>
-          <div className="text-center">
-            <div className="spinner-border text-primary" role="status">
-              <span className="visually-hidden">{t('common.loading')}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="container py-5">
@@ -63,6 +49,18 @@ const RegisterPage: React.FC = () => {
                 <h2 className="fw-bold">{t('auth.register.title')}</h2>
               </div>
               
+              {isLoading && (
+                <div className="container py-5">
+                  <div className="d-flex justify-content-center align-items-center" style={{ height: '70vh' }}>
+                    <div className="text-center">
+                      <div className="spinner-border text-primary" role="status">
+                        <span className="visually-hidden">{t('common.loading')}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
               {error && (
                 <div className="alert alert-danger" role="alert">
                   {error}
@@ -71,13 +69,13 @@ const RegisterPage: React.FC = () => {
               
               <form onSubmit={onSubmit}>
                 <div className="mb-3">
-                  <label htmlFor="name" className="form-label">{t('auth.register.name')}</label>
+                  <label htmlFor="username" className="form-label">{t('auth.register.name')}</label>
                   <input
                     type="text"
                     className="form-control"
-                    id="name"
-                    name="name"
-                    value={name}
+                    id="username"
+                    name="username"
+                    value={username}
                     onChange={onChange}
                     required
                   />
