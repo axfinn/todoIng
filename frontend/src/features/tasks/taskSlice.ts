@@ -1,15 +1,13 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
-import axios from 'axios';
-import API_BASE_URL from '../../config/api';
+import api from '../../config/api';
 
 interface Task {
   _id: string;
   title: string;
-  description?: string;
+  description: string;
   status: 'To Do' | 'In Progress' | 'Done';
   priority: 'Low' | 'Medium' | 'High';
-  assignee?: string; // User ID
-  createdBy: string; // User ID
+  assignee?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -31,7 +29,7 @@ export const fetchTasks = createAsyncThunk<Task[], void, { rejectValue: string }
   'tasks/fetchTasks',
   async (_, { rejectWithValue }) => {
     try {
-      const res = await axios.get(`${API_BASE_URL}/tasks`);
+      const res = await api.get('/tasks');
       return res.data as Task[];
     } catch (err: any) {
       if (err.response && err.response.data) {
@@ -46,7 +44,7 @@ export const createTask = createAsyncThunk<Task, Partial<Task>, { rejectValue: s
   'tasks/createTask',
   async (taskData: Partial<Task>, { rejectWithValue }) => {
     try {
-      const res = await axios.post(`${API_BASE_URL}/tasks`, taskData);
+      const res = await api.post('/tasks', taskData);
       return res.data as Task;
     } catch (err: any) {
       if (err.response && err.response.data) {
@@ -57,11 +55,11 @@ export const createTask = createAsyncThunk<Task, Partial<Task>, { rejectValue: s
   }
 );
 
-export const updateTask = createAsyncThunk<Task, { id: string; taskData: Partial<Task> }, { rejectValue: string }>(
+export const updateTask = createAsyncThunk<Task, Task, { rejectValue: string }>(
   'tasks/updateTask',
-  async ({ id, taskData }: { id: string; taskData: Partial<Task> }, { rejectWithValue }) => {
+  async (taskData: Task, { rejectWithValue }) => {
     try {
-      const res = await axios.put(`${API_BASE_URL}/tasks/${id}`, taskData);
+      const res = await api.put(`/tasks/${taskData._id}`, taskData);
       return res.data as Task;
     } catch (err: any) {
       if (err.response && err.response.data) {
@@ -74,10 +72,10 @@ export const updateTask = createAsyncThunk<Task, { id: string; taskData: Partial
 
 export const deleteTask = createAsyncThunk<string, string, { rejectValue: string }>(
   'tasks/deleteTask',
-  async (id: string, { rejectWithValue }) => {
+  async (taskId: string, { rejectWithValue }) => {
     try {
-      await axios.delete(`${API_BASE_URL}/tasks/${id}`);
-      return id;
+      await api.delete(`/tasks/${taskId}`);
+      return taskId;
     } catch (err: any) {
       if (err.response && err.response.data) {
         return rejectWithValue(err.response.data.msg || 'Failed to delete task');

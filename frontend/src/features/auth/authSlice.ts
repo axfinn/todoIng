@@ -1,6 +1,5 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
-import axios from 'axios';
-import API_BASE_URL from '../../config/api';
+import api from '../../config/api';
 
 interface AuthState {
   token: string | null;
@@ -26,7 +25,7 @@ export const registerUser = createAsyncThunk<AuthResponse, Record<string, unknow
   'auth/registerUser',
   async (userData: Record<string, unknown>, { rejectWithValue }) => {
     try {
-      const res = await axios.post(`${API_BASE_URL}/auth/register`, userData);
+      const res = await api.post('/auth/register', userData);
       return res.data as AuthResponse;
     } catch (err: any) {
       if (err.response && err.response.data) {
@@ -41,7 +40,7 @@ export const loginUser = createAsyncThunk<AuthResponse, Record<string, unknown>,
   'auth/loginUser',
   async (userData: Record<string, unknown>, { rejectWithValue }) => {
     try {
-      const res = await axios.post(`${API_BASE_URL}/auth/login`, userData);
+      const res = await api.post('/auth/login', userData);
       return res.data as AuthResponse;
     }
     catch (err: any) {

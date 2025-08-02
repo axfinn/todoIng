@@ -66,159 +66,291 @@ const DashboardPage: React.FC = () => {
       return 0;
     });
 
-  if (isLoading) return <div className="text-center mt-5">Loading tasks...</div>;
-  if (error) return <div className="alert alert-danger mt-5">Error: {error}</div>;
+  // Get task counts by status
+  const taskCounts = {
+    total: tasks.length,
+    todo: tasks.filter((task: Task) => task.status === 'To Do').length,
+    inProgress: tasks.filter((task: Task) => task.status === 'In Progress').length,
+    done: tasks.filter((task: Task) => task.status === 'Done').length,
+  };
+
+  if (isLoading && tasks.length === 0) return (
+    <div className="container py-5">
+      <div className="d-flex justify-content-center align-items-center" style={{ height: '70vh' }}>
+        <div className="text-center">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Loading tasks...</span>
+          </div>
+          <p className="mt-3">Loading your tasks...</p>
+        </div>
+      </div>
+    </div>
+  );
+  
+  if (error && tasks.length === 0) return (
+    <div className="container py-5">
+      <div className="alert alert-danger" role="alert">
+        <h4 className="alert-heading">Error!</h4>
+        <p>Error: {error}</p>
+        <hr />
+        <button className="btn btn-outline-danger" onClick={() => dispatch(fetchTasks())}>
+          Try Again
+        </button>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="container mt-5">
-      <h1 className="mb-4">My Tasks</h1>
-
-      <div className="card mb-4">
-        <div className="card-header">Create New Task</div>
-        <div className="card-body">
-          <form onSubmit={handleCreateTask}>
-            <div className="mb-3">
-              <input
-                type="text"
-                className="form-control"
-                placeholder="Task Title"
-                name="title"
-                value={newTask.title}
-                onChange={handleNewTaskChange}
-                required
-              />
-            </div>
-            <div className="mb-3">
-              <textarea
-                className="form-control"
-                placeholder="Task Description"
-                name="description"
-                value={newTask.description}
-                onChange={handleNewTaskChange}
-              ></textarea>
-            </div>
-            <div className="row mb-3">
-              <div className="col">
-                <select
-                  className="form-select"
-                  name="status"
-                  value={newTask.status}
-                  onChange={handleNewTaskChange}
-                >
-                  <option value="To Do">To Do</option>
-                  <option value="In Progress">In Progress</option>
-                  <option value="Done">Done</option>
-                  <option value="created">Created</option>
-                  <option value="in-progress">In Progress (Legacy)</option>
-                  <option value="paused">Paused</option>
-                  <option value="completed">Completed</option>
-                  <option value="cancelled">Cancelled</option>
-                </select>
-              </div>
-              <div className="col">
-                <select
-                  className="form-select"
-                  name="priority"
-                  value={newTask.priority}
-                  onChange={handleNewTaskChange}
-                >
-                  <option value="Low">Low</option>
-                  <option value="Medium">Medium</option>
-                  <option value="High">High</option>
-                  <option value="low">Low (Legacy)</option>
-                  <option value="medium">Medium (Legacy)</option>
-                  <option value="high">High (Legacy)</option>
-                </select>
+    <div className="container py-5">
+      <div className="row">
+        <div className="col-12">
+          <div className="d-flex justify-content-between align-items-center mb-4">
+            <h1 className="fw-bold mb-0">
+              <i className="bi bi-list-check me-2"></i>
+              My Tasks
+            </h1>
+            <span className="badge bg-primary fs-6">{taskCounts.total} tasks</span>
+          </div>
+          
+          {/* Stats Cards */}
+          <div className="row mb-4">
+            <div className="col-md-4 mb-3">
+              <div className="card border-primary border-2 h-100">
+                <div className="card-body text-center">
+                  <h5 className="card-title text-primary">To Do</h5>
+                  <h2 className="fw-bold text-primary">{taskCounts.todo}</h2>
+                </div>
               </div>
             </div>
-            <div className="mb-3">
-              <input
-                type="text"
-                className="form-control"
-                placeholder="Assignee (Optional)"
-                name="assignee"
-                value={newTask.assignee}
-                onChange={handleNewTaskChange}
-              />
+            <div className="col-md-4 mb-3">
+              <div className="card border-warning border-2 h-100">
+                <div className="card-body text-center">
+                  <h5 className="card-title text-warning">In Progress</h5>
+                  <h2 className="fw-bold text-warning">{taskCounts.inProgress}</h2>
+                </div>
+              </div>
             </div>
-            <button type="submit" className="btn btn-primary">
-              Add Task
-            </button>
-          </form>
+            <div className="col-md-4 mb-3">
+              <div className="card border-success border-2 h-100">
+                <div className="card-body text-center">
+                  <h5 className="card-title text-success">Done</h5>
+                  <h2 className="fw-bold text-success">{taskCounts.done}</h2>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="row mb-3">
-        <div className="col">
-          <select
-            className="form-select"
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-          >
-            <option value="All">All Statuses</option>
-            <option value="To Do">To Do</option>
-            <option value="In Progress">In Progress</option>
-            <option value="Done">Done</option>
-            <option value="created">Created</option>
-            <option value="in-progress">In Progress (Legacy)</option>
-            <option value="paused">Paused</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
+      <div className="row">
+        <div className="col-lg-4 mb-4">
+          <div className="card shadow-sm h-100">
+            <div className="card-header bg-primary text-white">
+              <h5 className="mb-0">
+                <i className="bi bi-plus-circle me-2"></i>
+                Create New Task
+              </h5>
+            </div>
+            <div className="card-body">
+              <form onSubmit={handleCreateTask}>
+                <div className="mb-3">
+                  <label className="form-label">Title</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Task Title"
+                    name="title"
+                    value={newTask.title}
+                    onChange={handleNewTaskChange}
+                    required
+                  />
+                </div>
+                <div className="mb-3">
+                  <label className="form-label">Description</label>
+                  <textarea
+                    className="form-control"
+                    placeholder="Task Description"
+                    name="description"
+                    value={newTask.description}
+                    onChange={handleNewTaskChange}
+                    rows={3}
+                  ></textarea>
+                </div>
+                <div className="row mb-3">
+                  <div className="col-md-6">
+                    <label className="form-label">Status</label>
+                    <select
+                      className="form-select"
+                      name="status"
+                      value={newTask.status}
+                      onChange={handleNewTaskChange}
+                    >
+                      <option value="To Do">To Do</option>
+                      <option value="In Progress">In Progress</option>
+                      <option value="Done">Done</option>
+                    </select>
+                  </div>
+                  <div className="col-md-6">
+                    <label className="form-label">Priority</label>
+                    <select
+                      className="form-select"
+                      name="priority"
+                      value={newTask.priority}
+                      onChange={handleNewTaskChange}
+                    >
+                      <option value="Low">Low</option>
+                      <option value="Medium">Medium</option>
+                      <option value="High">High</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="mb-3">
+                  <label className="form-label">Assignee</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Assignee (Optional)"
+                    name="assignee"
+                    value={newTask.assignee}
+                    onChange={handleNewTaskChange}
+                  />
+                </div>
+                <div className="d-grid">
+                  <button type="submit" className="btn btn-primary">
+                    <i className="bi bi-plus-circle me-2"></i>
+                    Add Task
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
         </div>
-        <div className="col">
-          <select
-            className="form-select"
-            value={filterPriority}
-            onChange={(e) => setFilterPriority(e.target.value)}
-          >
-            <option value="All">All Priorities</option>
-            <option value="Low">Low</option>
-            <option value="Medium">Medium</option>
-            <option value="High">High</option>
-            <option value="low">Low (Legacy)</option>
-            <option value="medium">Medium (Legacy)</option>
-            <option value="high">High (Legacy)</option>
-          </select>
-        </div>
-        <div className="col">
-          <select
-            className="form-select"
-            value={sortOrder}
-            onChange={(e) => setSortOrder(e.target.value)}
-          >
-            <option value="newest">Sort by Newest</option>
-            <option value="oldest">Sort by Oldest</option>
-            <option value="priority">Sort by Priority</option>
-          </select>
-        </div>
-      </div>
 
-      {filteredAndSortedTasks.length === 0 ? (
-        <p className="text-center">No tasks found. Create one!</p>
-      ) : (
-        <div className="list-group">
-          {filteredAndSortedTasks.map((task) => (
-            <div key={task._id} className="list-group-item list-group-item-action mb-3">
-              <div className="d-flex w-100 justify-content-between">
-                <h5 className="mb-1">{task.title}</h5>
-                <small className="text-muted">Status: {task.status}</small>
-              </div>
-              <p className="mb-1">{task.description}</p>
-              <small className="text-muted">Priority: {task.priority}</small>
-              {task.assignee && <small className="text-muted ms-2">Assignee: {task.assignee}</small>}
-              <div className="mt-2">
-                <button
-                  className="btn btn-danger btn-sm"
-                  onClick={() => handleDelete(task._id)}
-                >
-                  Delete
-                </button>
+        <div className="col-lg-8">
+          <div className="card shadow-sm">
+            <div className="card-header bg-white">
+              <div className="row align-items-center">
+                <div className="col-md-4 mb-2 mb-md-0">
+                  <h5 className="mb-0">Task List</h5>
+                </div>
+                <div className="col-md-8">
+                  <div className="row">
+                    <div className="col-md-4 mb-2">
+                      <select
+                        className="form-select form-select-sm"
+                        value={filterStatus}
+                        onChange={(e) => setFilterStatus(e.target.value)}
+                      >
+                        <option value="All">All Statuses</option>
+                        <option value="To Do">To Do</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Done">Done</option>
+                      </select>
+                    </div>
+                    <div className="col-md-4 mb-2">
+                      <select
+                        className="form-select form-select-sm"
+                        value={filterPriority}
+                        onChange={(e) => setFilterPriority(e.target.value)}
+                      >
+                        <option value="All">All Priorities</option>
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
+                      </select>
+                    </div>
+                    <div className="col-md-4">
+                      <select
+                        className="form-select form-select-sm"
+                        value={sortOrder}
+                        onChange={(e) => setSortOrder(e.target.value)}
+                      >
+                        <option value="newest">Newest First</option>
+                        <option value="oldest">Oldest First</option>
+                        <option value="priority">By Priority</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-          ))}
+            <div className="card-body">
+              {isLoading && tasks.length > 0 && (
+                <div className="text-center py-3">
+                  <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Updating tasks...</span>
+                  </div>
+                </div>
+              )}
+              
+              {filteredAndSortedTasks.length === 0 ? (
+                <div className="text-center py-5">
+                  <i className="bi bi-clipboard-check text-muted fs-1 mb-3"></i>
+                  <h5 className="text-muted">No tasks found</h5>
+                  <p className="text-muted">Try changing your filters or create a new task</p>
+                </div>
+              ) : (
+                <div className="row">
+                  {filteredAndSortedTasks.map((task) => (
+                    <div key={task._id} className="col-md-6 mb-3">
+                      <div className="card h-100 border">
+                        <div className="card-body d-flex flex-column">
+                          <div className="d-flex justify-content-between align-items-start mb-2">
+                            <h5 className="card-title mb-0">{task.title}</h5>
+                            <span className={`badge ${
+                              task.priority === 'High' ? 'bg-danger' : 
+                              task.priority === 'Medium' ? 'bg-warning text-dark' : 'bg-success'
+                            }`}>
+                              {task.priority}
+                            </span>
+                          </div>
+                          
+                          {task.description && (
+                            <p className="card-text flex-grow-1 text-muted">
+                              {task.description}
+                            </p>
+                          )}
+                          
+                          <div className="mb-3">
+                            <span className={`badge ${
+                              task.status === 'To Do' ? 'bg-primary' : 
+                              task.status === 'In Progress' ? 'bg-warning text-dark' : 'bg-success'
+                            }`}>
+                              {task.status}
+                            </span>
+                            {task.assignee && (
+                              <span className="badge bg-secondary ms-2">
+                                <i className="bi bi-person-fill me-1"></i>
+                                {task.assignee}
+                              </span>
+                            )}
+                          </div>
+                          
+                          <div className="mt-auto">
+                            <small className="text-muted">
+                              Created: {new Date(task.createdAt).toLocaleDateString()}
+                            </small>
+                          </div>
+                          
+                          <div className="mt-3">
+                            <button
+                              className="btn btn-outline-danger btn-sm"
+                              onClick={() => handleDelete(task._id)}
+                            >
+                              <i className="bi bi-trash me-1"></i>
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }; 

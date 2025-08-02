@@ -19,8 +19,8 @@ const TaskSchema = new mongoose.Schema({
     default: 'Medium',
   },
   assignee: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    type: String,
+    default: null
   },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
