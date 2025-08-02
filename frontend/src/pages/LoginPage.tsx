@@ -1,48 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
+import type { RootState, AppDispatch } from '../app/store';
 import { loginUser } from '../features/auth/authSlice';
-import type { AppDispatch, RootState } from '../app/store';
+import { Link } from 'react-router-dom';
 
 const LoginPage: React.FC = () => {
+  const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
+  const { t } = useTranslation();
+  const { isAuthenticated, isLoading, error } = useSelector((state: RootState) => state.auth);
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
 
-  const [errors, setErrors] = useState({
-    email: '',
-    password: '',
-  });
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, navigate]);
 
   const { email, password } = formData;
-  const dispatch = useDispatch<AppDispatch>();
-  const { isLoading, error } = useSelector((state: RootState) => state.auth);
 
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-    setErrors({ ...errors, [e.target.name]: '' }); // Clear error on change
   };
 
-  const validateForm = () => {
-    const newErrors = { email: '', password: '' };
-    let isValid = true;
-
-    if (!email.trim()) {
-      newErrors.email = 'Email is required';
-      isValid = false;
-    } else if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email)) {
-      newErrors.email = 'Please enter a valid email';
-      isValid = false;
-    }
-
-    if (!password.trim()) {
-      newErrors.password = 'Password is required';
-      isValid = false;
-    }
-
-    setErrors(newErrors);
-    return isValid;
-  };
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,14 +47,18 @@ const LoginPage: React.FC = () => {
                 <div className="d-inline-block bg-primary rounded-circle p-3 mb-4">
                   <i className="bi bi-box-arrow-in-right text-white fs-1"></i>
                 </div>
-                <h2 className="card-title">Welcome Back</h2>
+                <h2 className="card-title">{t('auth.login.title')}</h2>
                 <p className="text-muted">Sign in to your account</p>
               </div>
               
               {isLoading && (
-                <div className="d-flex justify-content-center mb-4">
-                  <div className="spinner-border text-primary" role="status">
-                    <span className="visually-hidden">Loading...</span>
+                <div className="container py-5">
+                  <div className="d-flex justify-content-center align-items-center" style={{ height: '70vh' }}>
+                    <div className="text-center">
+                      <div className="spinner-border text-primary" role="status">
+                        <span className="visually-hidden">{t('common.loading')}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
@@ -82,41 +72,30 @@ const LoginPage: React.FC = () => {
               )}
               
               <form onSubmit={onSubmit} noValidate>
-                <div className="form-group mb-4">
-                  <div className="input-group">
-                    <span className="input-group-text">
-                      <i className="bi bi-envelope"></i>
-                    </span>
-                    <input
-                      type="email"
-                      className={`form-control form-control-lg ${errors.email ? 'is-invalid' : ''}`}
-                      placeholder="Email Address"
-                      name="email"
-                      value={email}
-                      onChange={onChange}
-                      required
-                    />
-                  </div>
-                  {errors.email && <div className="invalid-feedback d-block">{errors.email}</div>}
+                <div className="mb-3">
+                  <label htmlFor="email" className="form-label">{t('auth.login.email')}</label>
+                  <input
+                    type="email"
+                    className="form-control"
+                    id="email"
+                    name="email"
+                    value={email}
+                    onChange={onChange}
+                    required
+                  />
                 </div>
                 
-                <div className="form-group mb-4">
-                  <div className="input-group">
-                    <span className="input-group-text">
-                      <i className="bi bi-lock"></i>
-                    </span>
-                    <input
-                      type="password"
-                      className={`form-control form-control-lg ${errors.password ? 'is-invalid' : ''}`}
-                      placeholder="Password"
-                      name="password"
-                      value={password}
-                      onChange={onChange}
-                      minLength={6}
-                      required
-                    />
-                  </div>
-                  {errors.password && <div className="invalid-feedback d-block">{errors.password}</div>}
+                <div className="mb-3">
+                  <label htmlFor="password" className="form-label">{t('auth.login.password')}</label>
+                  <input
+                    type="password"
+                    className="form-control"
+                    id="password"
+                    name="password"
+                    value={password}
+                    onChange={onChange}
+                    required
+                  />
                 </div>
                 
                 <div className="d-grid mb-4">
@@ -125,26 +104,16 @@ const LoginPage: React.FC = () => {
                     className="btn btn-primary btn-lg rounded-pill" 
                     disabled={isLoading}
                   >
-                    {isLoading ? (
-                      <>
-                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                        Signing in...
-                      </>
-                    ) : (
-                      <>
-                        <i className="bi bi-box-arrow-in-right me-2"></i>
-                        Sign In
-                      </>
-                    )}
+                    {t('auth.login.submit')}
                   </button>
                 </div>
                 
                 <div className="text-center">
-                  <p className="mb-0 text-muted">
-                    Don't have an account?{' '}
-                    <a href="/register" className="text-decoration-none">
-                      Sign up here
-                    </a>
+                  <p className="mb-0">
+                    {t('auth.login.noAccount')}{' '}
+                    <Link to="/register" className="text-decoration-none">
+                      {t('auth.login.register')}
+                    </Link>
                   </p>
                 </div>
               </form>

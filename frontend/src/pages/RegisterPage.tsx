@@ -1,210 +1,142 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
+import type { RootState, AppDispatch } from '../app/store';
 import { registerUser } from '../features/auth/authSlice';
-import type { AppDispatch, RootState } from '../app/store';
 
 const RegisterPage: React.FC = () => {
-  const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    password: '',
-    password2: '',
-  });
-
-  const [errors, setErrors] = useState({
-    username: '',
-    email: '',
-    password: '',
-    password2: '',
-  });
-
-  const { username, email, password, password2 } = formData;
   const dispatch = useDispatch<AppDispatch>();
-  const { isLoading, error } = useSelector((state: RootState) => state.auth);
+  const navigate = useNavigate();
+  const { t } = useTranslation();
+  const { isAuthenticated, isLoading, error } = useSelector((state: RootState) => state.auth);
+
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    password2: '',
+  });
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, navigate]);
+
+  const { name, email, password, password2 } = formData;
 
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-    setErrors({ ...errors, [e.target.name]: '' }); // Clear error on change
-  };
-
-  const validateForm = () => {
-    const newErrors = { username: '', email: '', password: '', password2: '' };
-    let isValid = true;
-
-    if (!username.trim()) {
-      newErrors.username = 'Username is required';
-      isValid = false;
-    }
-
-    if (!email.trim()) {
-      newErrors.email = 'Email is required';
-      isValid = false;
-    } else if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email)) {
-      newErrors.email = 'Please enter a valid email';
-      isValid = false;
-    }
-
-    if (!password.trim()) {
-      newErrors.password = 'Password is required';
-      isValid = false;
-    } else if (password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
-      isValid = false;
-    }
-
-    if (!password2.trim()) {
-      newErrors.password2 = 'Confirm password is required';
-      isValid = false;
-    } else if (password !== password2) {
-      newErrors.password2 = 'Passwords do not match';
-      isValid = false;
-    }
-
-    setErrors(newErrors);
-    return isValid;
   };
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (validateForm()) {
-      dispatch(registerUser({ username, email, password }));
+    if (password !== password2) {
+      alert('Passwords do not match');
+      return;
     }
+    dispatch(registerUser({ name, email, password }));
   };
+
+  if (isLoading) {
+    return (
+      <div className="container py-5">
+        <div className="d-flex justify-content-center align-items-center" style={{ height: '70vh' }}>
+          <div className="text-center">
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">{t('common.loading')}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container py-5">
       <div className="row justify-content-center">
         <div className="col-md-6 col-lg-5">
-          <div className="card shadow-lg border-0 rounded-3">
+          <div className="card shadow-sm">
             <div className="card-body p-5">
-              <div className="text-center mb-5">
-                <div className="d-inline-block bg-success rounded-circle p-3 mb-4">
-                  <i className="bi bi-person-plus text-white fs-1"></i>
-                </div>
-                <h2 className="card-title">Create Account</h2>
-                <p className="text-muted">Join us today</p>
+              <div className="text-center mb-4">
+                <h2 className="fw-bold">{t('auth.register.title')}</h2>
               </div>
               
-              {isLoading && (
-                <div className="d-flex justify-content-center mb-4">
-                  <div className="spinner-border text-success" role="status">
-                    <span className="visually-hidden">Loading...</span>
-                  </div>
-                </div>
-              )}
-              
               {error && (
-                <div className="alert alert-danger alert-dismissible fade show" role="alert">
-                  <i className="bi bi-exclamation-triangle-fill me-2"></i>
-                  {error || 'Registration failed'}
-                  <button type="button" className="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                <div className="alert alert-danger" role="alert">
+                  {error}
                 </div>
               )}
               
-              <form onSubmit={onSubmit} noValidate>
-                <div className="form-group mb-4">
-                  <div className="input-group">
-                    <span className="input-group-text">
-                      <i className="bi bi-person"></i>
-                    </span>
-                    <input
-                      type="text"
-                      className={`form-control form-control-lg ${errors.username ? 'is-invalid' : ''}`}
-                      placeholder="Username"
-                      name="username"
-                      value={username}
-                      onChange={onChange}
-                      required
-                    />
-                  </div>
-                  {errors.username && <div className="invalid-feedback d-block">{errors.username}</div>}
+              <form onSubmit={onSubmit}>
+                <div className="mb-3">
+                  <label htmlFor="name" className="form-label">{t('auth.register.name')}</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    id="name"
+                    name="name"
+                    value={name}
+                    onChange={onChange}
+                    required
+                  />
                 </div>
                 
-                <div className="form-group mb-4">
-                  <div className="input-group">
-                    <span className="input-group-text">
-                      <i className="bi bi-envelope"></i>
-                    </span>
-                    <input
-                      type="email"
-                      className={`form-control form-control-lg ${errors.email ? 'is-invalid' : ''}`}
-                      placeholder="Email Address"
-                      name="email"
-                      value={email}
-                      onChange={onChange}
-                      required
-                    />
-                  </div>
-                  {errors.email && <div className="invalid-feedback d-block">{errors.email}</div>}
+                <div className="mb-3">
+                  <label htmlFor="email" className="form-label">{t('auth.register.email')}</label>
+                  <input
+                    type="email"
+                    className="form-control"
+                    id="email"
+                    name="email"
+                    value={email}
+                    onChange={onChange}
+                    required
+                  />
                 </div>
                 
-                <div className="form-group mb-4">
-                  <div className="input-group">
-                    <span className="input-group-text">
-                      <i className="bi bi-lock"></i>
-                    </span>
-                    <input
-                      type="password"
-                      className={`form-control form-control-lg ${errors.password ? 'is-invalid' : ''}`}
-                      placeholder="Password"
-                      name="password"
-                      value={password}
-                      onChange={onChange}
-                      minLength={6}
-                      required
-                    />
-                  </div>
-                  {errors.password && <div className="invalid-feedback d-block">{errors.password}</div>}
+                <div className="mb-3">
+                  <label htmlFor="password" className="form-label">{t('auth.register.password')}</label>
+                  <input
+                    type="password"
+                    className="form-control"
+                    id="password"
+                    name="password"
+                    value={password}
+                    onChange={onChange}
+                    required
+                  />
                 </div>
                 
-                <div className="form-group mb-4">
-                  <div className="input-group">
-                    <span className="input-group-text">
-                      <i className="bi bi-lock-fill"></i>
-                    </span>
-                    <input
-                      type="password"
-                      className={`form-control form-control-lg ${errors.password2 ? 'is-invalid' : ''}`}
-                      placeholder="Confirm Password"
-                      name="password2"
-                      value={password2}
-                      onChange={onChange}
-                      minLength={6}
-                      required
-                    />
-                  </div>
-                  {errors.password2 && <div className="invalid-feedback d-block">{errors.password2}</div>}
+                <div className="mb-3">
+                  <label htmlFor="password2" className="form-label">{t('auth.register.confirmPassword')}</label>
+                  <input
+                    type="password"
+                    className="form-control"
+                    id="password2"
+                    name="password2"
+                    value={password2}
+                    onChange={onChange}
+                    required
+                  />
                 </div>
                 
-                <div className="d-grid mb-4">
-                  <button 
-                    type="submit" 
-                    className="btn btn-success btn-lg rounded-pill" 
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <>
-                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                        Creating Account...
-                      </>
-                    ) : (
-                      <>
-                        <i className="bi bi-person-plus me-2"></i>
-                        Create Account
-                      </>
-                    )}
+                <div className="d-grid">
+                  <button type="submit" className="btn btn-primary btn-lg" disabled={isLoading}>
+                    {t('auth.register.submit')}
                   </button>
                 </div>
-                
-                <div className="text-center">
-                  <p className="mb-0 text-muted">
-                    Already have an account?{' '}
-                    <a href="/login" className="text-decoration-none">
-                      Sign in here
-                    </a>
-                  </p>
-                </div>
               </form>
+              
+              <div className="text-center mt-4">
+                <p className="mb-0">
+                  {t('auth.register.haveAccount')}{' '}
+                  <Link to="/login" className="text-decoration-none">
+                    {t('auth.register.login')}
+                  </Link>
+                </p>
+              </div>
             </div>
           </div>
         </div>

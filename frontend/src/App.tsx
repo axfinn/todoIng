@@ -1,6 +1,7 @@
 import React from 'react';
 import { Routes, Route, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import type { RootState, AppDispatch } from './app/store';
 import { logout } from './features/auth/authSlice';
 
@@ -12,9 +13,14 @@ import ProtectedRoute from './components/ProtectedRoute';
 const App: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const { t, i18n } = useTranslation();
 
   const handleLogout = () => {
     dispatch(logout());
+  };
+
+  const changeLanguage = (lng: string) => {
+    i18n.changeLanguage(lng);
   };
 
   return (
@@ -29,28 +35,57 @@ const App: React.FC = () => {
             <ul className="navbar-nav me-auto mb-2 mb-lg-0">
               <li className="nav-item">
                 <Link className="nav-link" to="/">
-                  Home
+                  {t('nav.home')}
                 </Link>
               </li>
               {isAuthenticated && (
                 <li className="nav-item">
                   <Link className="nav-link" to="/dashboard">
-                    Dashboard
+                    {t('nav.dashboard')}
                   </Link>
                 </li>
               )}
             </ul>
             <ul className="navbar-nav mb-2 mb-lg-0">
+              <li className="nav-item dropdown">
+                <button 
+                  className="btn btn-outline-light dropdown-toggle me-2" 
+                  type="button" 
+                  id="languageDropdown" 
+                  data-bs-toggle="dropdown" 
+                  aria-expanded="false"
+                >
+                  {i18n.language === 'en' ? 'English' : '中文'}
+                </button>
+                <ul className="dropdown-menu" aria-labelledby="languageDropdown">
+                  <li>
+                    <button 
+                      className="dropdown-item" 
+                      onClick={() => changeLanguage('en')}
+                    >
+                      English
+                    </button>
+                  </li>
+                  <li>
+                    <button 
+                      className="dropdown-item" 
+                      onClick={() => changeLanguage('zh')}
+                    >
+                      中文
+                    </button>
+                  </li>
+                </ul>
+              </li>
               {!isAuthenticated ? (
                 <>
                   <li className="nav-item">
                     <Link className="nav-link" to="/register">
-                      Register
+                      {t('nav.register')}
                     </Link>
                   </li>
                   <li className="nav-item">
                     <Link className="nav-link" to="/login">
-                      Login
+                      {t('nav.login')}
                     </Link>
                   </li>
                 </>
@@ -58,7 +93,7 @@ const App: React.FC = () => {
                 <li className="nav-item">
                   <button className="btn btn-outline-light" onClick={handleLogout}>
                     <i className="bi bi-box-arrow-right me-1"></i>
-                    Logout
+                    {t('nav.logout')}
                   </button>
                 </li>
               )}
@@ -72,25 +107,24 @@ const App: React.FC = () => {
             <div className="container py-5">
               <div className="row justify-content-center">
                 <div className="col-md-8 text-center">
-                  <h1 className="display-4 fw-bold mb-4">Welcome to todoIng!</h1>
+                  <h1 className="display-4 fw-bold mb-4">{t('home.title')}</h1>
                   <p className="lead mb-4">
-                    Your modern task management solution. Organize your work, boost your productivity, 
-                    and achieve your goals with our intuitive task management system.
+                    {t('home.description')}
                   </p>
                   {!isAuthenticated && (
                     <div className="d-grid gap-3 d-sm-flex justify-content-sm-center">
                       <Link to="/register" className="btn btn-primary btn-lg px-4 gap-3">
-                        Get Started
+                        {t('home.getStarted')}
                       </Link>
                       <Link to="/login" className="btn btn-outline-primary btn-lg px-4">
-                        Login
+                        {t('home.login')}
                       </Link>
                     </div>
                   )}
                   {isAuthenticated && (
                     <div className="d-grid gap-3 d-sm-flex justify-content-sm-center">
                       <Link to="/dashboard" className="btn btn-primary btn-lg px-4 gap-3">
-                        Go to Dashboard
+                        {t('nav.dashboard')}
                       </Link>
                     </div>
                   )}
@@ -110,7 +144,7 @@ const App: React.FC = () => {
       <footer className="bg-light py-3 mt-auto">
         <div className="container">
           <div className="text-center text-muted">
-            &copy; {new Date().getFullYear()} todoIng - Task Management System
+            &copy; {new Date().getFullYear()} {t('footer.copyright')}
           </div>
         </div>
       </footer>
