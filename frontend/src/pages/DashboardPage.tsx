@@ -25,6 +25,7 @@ const DashboardPage: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState<string>('All');
   const [filterPriority, setFilterPriority] = useState<string>('All');
   const [sortOrder, setSortOrder] = useState<string>('newest');
+  const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null); // 用于跟踪展开的任务
 
   useEffect(() => {
     dispatch(fetchTasks());
@@ -93,6 +94,11 @@ const DashboardPage: React.FC = () => {
         return newCommentText;
       });
     }
+  };
+
+  // 切换任务详情展开/收起状态
+  const toggleTaskDetails = (taskId: string) => {
+    setExpandedTaskId(expandedTaskId === taskId ? null : taskId);
   };
 
   const handleAddComment = (taskId: string) => {
@@ -429,19 +435,70 @@ const DashboardPage: React.FC = () => {
                               </span>
                             </div>
                             
-                            {/* Comments section */}
-                            {task.comments && task.comments.length > 0 && (
-                              <div className="mt-2">
-                                <small className="text-muted">Comments:</small>
-                                <div className="small">
-                                  {task.comments.slice(-2).map((comment, index) => (
-                                    <div key={index} className="text-muted fst-italic">
-                                      "{comment.text}"
+                            {/* Expand/Collapse button for task details */}
+                            <button 
+                              className="btn btn-sm btn-link p-0 mt-2"
+                              onClick={() => toggleTaskDetails(task._id)}
+                            >
+                              {expandedTaskId === task._id ? 'Hide Details' : 'Show Details'} 
+                              <i className={`bi ms-1 ${expandedTaskId === task._id ? 'bi-chevron-up' : 'bi-chevron-down'}`}></i>
+                            </button>
+                            
+                            {/* Task Timeline - shown when expanded */}
+                            {expandedTaskId === task._id && (
+                              <div className="mt-3">
+                                <h6 className="mb-3">Task Timeline</h6>
+                                <div className="timeline">
+                                  {/* Task creation event */}
+                                  <div className="timeline-item mb-3">
+                                    <div className="d-flex">
+                                      <div className="timeline-icon bg-success rounded-circle d-flex align-items-center justify-content-center me-2">
+                                        <i className="bi bi-plus text-white"></i>
+                                      </div>
+                                      <div className="flex-grow-1">
+                                        <div className="card">
+                                          <div className="card-body py-2 px-3">
+                                            <div className="d-flex justify-content-between">
+                                              <h6 className="mb-0">Task Created</h6>
+                                              <small className="text-muted">
+                                                {new Date(task.createdAt).toLocaleString()}
+                                              </small>
+                                            </div>
+                                            <p className="mb-0 text-muted small">Task was created with status: {task.status}</p>
+                                          </div>
+                                        </div>
+                                      </div>
                                     </div>
-                                  ))}
-                                  {task.comments.length > 2 && (
-                                    <div className="text-muted fst-italic">
-                                      + {task.comments.length - 2} more comments
+                                  </div>
+                                  
+                                  {/* Status change events and comments */}
+                                  {task.comments && task.comments.length > 0 ? (
+                                    task.comments.map((comment, index) => (
+                                      <div key={index} className="timeline-item mb-3">
+                                        <div className="d-flex">
+                                          <div className="timeline-icon bg-primary rounded-circle d-flex align-items-center justify-content-center me-2">
+                                            <i className="bi bi-chat-text text-white"></i>
+                                          </div>
+                                          <div className="flex-grow-1">
+                                            <div className="card">
+                                              <div className="card-body py-2 px-3">
+                                                <div className="d-flex justify-content-between">
+                                                  <h6 className="mb-0">Status Update</h6>
+                                                  <small className="text-muted">
+                                                    {new Date(comment.createdAt).toLocaleString()}
+                                                  </small>
+                                                </div>
+                                                <p className="mb-1">"{comment.text}"</p>
+                                                <span className="badge bg-info">Comment</span>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    ))
+                                  ) : (
+                                    <div className="text-center py-2 text-muted">
+                                      <small>No timeline events yet</small>
                                     </div>
                                   )}
                                 </div>
