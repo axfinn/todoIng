@@ -15,8 +15,8 @@ todoIng 是一个创新的任务管理系统，它不仅提供基本的任务管
 
 详细的项目设计文档请查看 [docs](./docs) 目录：
 
-- [项目概述](docs/project-overview.md)
-- [技术设计](docs/technical-design.md)
+- [项目概述](../README.md)
+- [系统架构与技术设计](docs/technical-design.md)
 - [UI/UX 设计](docs/ui-ux-design.md)
 - [API 设计](docs/api-design.md)
 - [数据库设计](docs/database-design.md)
@@ -29,11 +29,14 @@ todoIng 是一个创新的任务管理系统，它不仅提供基本的任务管
 ## 技术栈
 
 ### 前端
-- React 18
+- React 19
 - TypeScript
 - Redux Toolkit
-- React Router
-- D3.js (用于历史数据可视化)
+- React Router v7
+- Bootstrap 5
+- Bootstrap Icons
+- i18next (多语言支持)
+- Axios (HTTP客户端)
 
 ### 后端
 - Node.js
@@ -41,6 +44,8 @@ todoIng 是一个创新的任务管理系统，它不仅提供基本的任务管
 - MongoDB
 - Mongoose
 - JWT 认证
+- bcryptjs (密码加密)
+- express-validator (数据验证)
 
 ## 快速开始
 
@@ -57,7 +62,7 @@ docker-compose up -d
 
 # 应用将在以下地址可用：
 # 前端: http://localhost
-# 后端API: http://localhost:5000
+# 后端API: http://localhost:5001
 ```
 
 #### 开发环境部署
@@ -71,7 +76,7 @@ docker-compose -f docker-compose.dev.yml up -d
 
 # 应用将在以下地址可用：
 # 前端: http://localhost:3000
-# 后端API: http://localhost:5000
+# 后端API: http://localhost:5001
 ```
 
 ### 方法二：手动部署
@@ -112,3 +117,18 @@ npm run dev
 # 或者构建生产版本
 npm run build
 ```
+
+## 赞助作者
+
+如果你觉得这个项目对你有帮助，欢迎赞助作者一杯咖啡！
+
+<div style="display: flex; justify-content: center; gap: 20px; margin: 20px 0;">
+  <div style="text-align: center;">
+    <h4>支付宝</h4>
+    <img src="./img/alipay.JPG" alt="支付宝收款码" width="200">
+  </div>
+  <div style="text-align: center;">
+    <h4>微信</h4>
+    <img src="./img/wxpay.JPG" alt="微信收款码" width="200">
+  </div>
+</div>

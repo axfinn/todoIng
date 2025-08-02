@@ -38,10 +38,12 @@ development/
 
 请确保您的开发环境满足以下要求：
 
-- Node.js >= 18.x
-- MongoDB >= 5.x
-- npm >= 8.x
-- Git
+- Node.js >= 18.x (推荐使用 nvm 管理多个 Node.js 版本)
+- MongoDB >= 5.0 (建议使用 MongoDB Atlas 作为云数据库解决方案)
+- npm >= 8.x (或使用 yarn >= 1.22 作为替代包管理器)
+- Git (版本控制工具)
+- Docker (可选，用于容器化部署)
+- VS Code (推荐开发编辑器)
 
 ## 贡献指南
 
