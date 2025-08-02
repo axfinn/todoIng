@@ -1,5 +1,17 @@
 # 前端模块变更日志
 
+## [1.4.1] - 2025-08-03
+
+### 修复
+- 解决Bootstrap和Bootstrap Icons CDN资源加载问题 (2025-08-03 01:02:26)
+  - 移除index.html中的CDN资源引用
+  - 安装bootstrap和bootstrap-icons作为本地npm依赖
+  - 在main.tsx中引入本地Bootstrap和Bootstrap Icons资源
+
+### 改进
+- 提高应用的网络稳定性，避免CDN连接问题
+- 确保在各种网络环境下都能正常加载UI资源
+
 ## [1.4.0] - 2025-08-03
 
 ### 新增
