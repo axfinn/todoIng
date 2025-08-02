@@ -31,7 +31,9 @@ const DashboardPage: React.FC = () => {
   }, [dispatch]);
 
   const handleDelete = (id: string) => {
-    dispatch(deleteTask(id));
+    if (window.confirm('Are you sure you want to delete this task?')) {
+      dispatch(deleteTask(id));
+    }
   };
 
   const handleNewTaskChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -74,7 +76,7 @@ const DashboardPage: React.FC = () => {
       
       // 如果有备注，则添加到任务中
       if (comment) {
-        const newComment: TaskComment = {
+        const newComment = {
           text: comment,
           createdAt: new Date().toISOString(),
         };
@@ -502,9 +504,9 @@ const DashboardPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Edit Task Modal */}
+      {/* Edit Task Modal - Fixed the issue with modal display */}
       {editingTask && (
-        <div className="modal fade show d-block" tabIndex={-1} style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+        <div className="modal fade show d-block" tabIndex={-1} style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050 }}>
           <div className="modal-dialog">
             <div className="modal-content">
               <div className="modal-header">
@@ -516,7 +518,71 @@ const DashboardPage: React.FC = () => {
                 ></button>
               </div>
               <div className="modal-body">
-                {/* Modal content would go here if needed */}
+                <div className="row g-3">
+                  <div className="col-12">
+                    <label className="form-label">Title</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      name="title"
+                      value={editingTask.title}
+                      onChange={handleEditChange}
+                      required
+                    />
+                  </div>
+                  <div className="col-12">
+                    <label className="form-label">Description</label>
+                    <textarea
+                      className="form-control"
+                      name="description"
+                      value={editingTask.description}
+                      onChange={handleEditChange}
+                      rows={3}
+                    ></textarea>
+                  </div>
+                  <div className="col-md-6">
+                    <label className="form-label">Status</label>
+                    <select
+                      className="form-select"
+                      name="status"
+                      value={editingTask.status}
+                      onChange={handleEditChange}
+                    >
+                      <option value="To Do">To Do</option>
+                      <option value="In Progress">In Progress</option>
+                      <option value="Done">Done</option>
+                    </select>
+                  </div>
+                  <div className="col-md-6">
+                    <label className="form-label">Priority</label>
+                    <select
+                      className="form-select"
+                      name="priority"
+                      value={editingTask.priority}
+                      onChange={handleEditChange}
+                    >
+                      <option value="Low">Low</option>
+                      <option value="Medium">Medium</option>
+                      <option value="High">High</option>
+                    </select>
+                  </div>
+                  <div className="col-12">
+                    <div className="d-flex justify-content-between">
+                      <button 
+                        className="btn btn-primary"
+                        onClick={handleUpdateTask}
+                      >
+                        Save Changes
+                      </button>
+                      <button 
+                        className="btn btn-secondary"
+                        onClick={() => setEditingTask(null)}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
