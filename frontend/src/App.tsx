@@ -59,16 +59,16 @@ const App: React.FC = () => {
             </ul>
             <ul className="navbar-nav mb-2 mb-lg-0">
               <li className="nav-item dropdown">
-                <button 
+                <a 
                   className="btn btn-outline-light dropdown-toggle me-2" 
-                  type="button" 
-                  id="languageDropdown" 
+                  href="#"
+                  role="button" 
                   data-bs-toggle="dropdown" 
                   aria-expanded="false"
                 >
                   {i18n.language === 'en' ? 'English' : '中文'}
-                </button>
-                <ul className="dropdown-menu" aria-labelledby="languageDropdown">
+                </a>
+                <ul className="dropdown-menu">
                   <li>
                     <button 
                       className="dropdown-item" 
