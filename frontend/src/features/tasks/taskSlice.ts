@@ -1,13 +1,20 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
 import api from '../../config/api';
 
-interface Task {
+export interface TaskComment {
+  text: string;
+  createdBy?: string;
+  createdAt: string;
+}
+
+export interface Task {
   _id: string;
   title: string;
   description: string;
   status: 'To Do' | 'In Progress' | 'Done';
   priority: 'Low' | 'Medium' | 'High';
   assignee?: string;
+  comments?: TaskComment[];
   createdAt: string;
   updatedAt: string;
 }
@@ -117,5 +124,5 @@ const taskSlice = createSlice({
   },
 });
 
-export type { Task };
+export type { TaskState };
 export default taskSlice.reducer;

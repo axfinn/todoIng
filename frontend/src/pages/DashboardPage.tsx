@@ -1,6 +1,10 @@
+export type TaskComment = {
+  text: string;
+  createdAt: string;
+};
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchTasks, deleteTask, createTask } from '../features/tasks/taskSlice';
+import { fetchTasks, deleteTask, createTask, updateTask } from '../features/tasks/taskSlice';
 import type { RootState, AppDispatch } from '../app/store';
 import type { Task } from '../features/tasks/taskSlice';
 
@@ -16,6 +20,8 @@ const DashboardPage: React.FC = () => {
     assignee: '',
   });
 
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [commentText, setCommentText] = useState<{[key: string]: string}>({});
   const [filterStatus, setFilterStatus] = useState<string>('All');
   const [filterPriority, setFilterPriority] = useState<string>('All');
   const [sortOrder, setSortOrder] = useState<string>('newest');
@@ -42,6 +48,63 @@ const DashboardPage: React.FC = () => {
       priority: 'Medium',
       assignee: '',
     });
+  };
+
+  const handleEditTask = (task: Task) => {
+    setEditingTask(task);
+  };
+
+  const handleUpdateTask = () => {
+    if (editingTask) {
+      dispatch(updateTask(editingTask));
+      setEditingTask(null);
+    }
+  };
+
+  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    if (editingTask) {
+      setEditingTask({ ...editingTask, [e.target.name]: e.target.value });
+    }
+  };
+
+  const handleStatusChange = (taskId: string, newStatus: 'To Do' | 'In Progress' | 'Done', comment?: string) => {
+    const taskToUpdate = tasks.find(task => task._id === taskId);
+    if (taskToUpdate) {
+      const updatedTask = { ...taskToUpdate, status: newStatus };
+      
+      // 如果有备注，则添加到任务中
+      if (comment) {
+        const newComment: TaskComment = {
+          text: comment,
+          createdAt: new Date().toISOString(),
+        };
+        
+        updatedTask.comments = updatedTask.comments ? [...updatedTask.comments, newComment] : [newComment];
+      }
+      
+      dispatch(updateTask(updatedTask));
+      
+      // 清除备注输入
+      setCommentText(prev => {
+        const newCommentText = { ...prev };
+        delete newCommentText[taskId];
+        return newCommentText;
+      });
+    }
+  };
+
+  const handleAddComment = (taskId: string) => {
+    const comment = commentText[taskId];
+    if (comment) {
+      handleStatusChange(taskId, 'In Progress', comment); // 默认更新为"In Progress"状态并添加备注
+    }
+  };
+
+  const handleCommentChange = (taskId: string, text: string) => {
+    setCommentText(prev => ({
+      ...prev,
+      [taskId]: text
+    }));
   };
 
   const filteredAndSortedTasks = tasks
@@ -204,145 +267,232 @@ const DashboardPage: React.FC = () => {
                     </select>
                   </div>
                 </div>
-                <div className="mb-3">
-                  <label className="form-label">Assignee</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="Assignee (Optional)"
-                    name="assignee"
-                    value={newTask.assignee}
-                    onChange={handleNewTaskChange}
-                  />
-                </div>
-                <div className="d-grid">
-                  <button type="submit" className="btn btn-primary">
-                    <i className="bi bi-plus-circle me-2"></i>
-                    Add Task
-                  </button>
-                </div>
+                <button type="submit" className="btn btn-primary w-100">
+                  <i className="bi bi-plus-circle me-1"></i>
+                  Create Task
+                </button>
               </form>
             </div>
           </div>
         </div>
 
         <div className="col-lg-8">
-          <div className="card shadow-sm">
-            <div className="card-header bg-white">
-              <div className="row align-items-center">
-                <div className="col-md-4 mb-2 mb-md-0">
-                  <h5 className="mb-0">Task List</h5>
+          {/* Filters and Sorting */}
+          <div className="card shadow-sm mb-4">
+            <div className="card-body">
+              <div className="row">
+                <div className="col-md-5 mb-3 mb-md-0">
+                  <label className="form-label">Filter by Status</label>
+                  <select 
+                    className="form-select"
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                  >
+                    <option value="All">All Statuses</option>
+                    <option value="To Do">To Do</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Done">Done</option>
+                  </select>
                 </div>
-                <div className="col-md-8">
-                  <div className="row">
-                    <div className="col-md-4 mb-2">
-                      <select
-                        className="form-select form-select-sm"
-                        value={filterStatus}
-                        onChange={(e) => setFilterStatus(e.target.value)}
-                      >
-                        <option value="All">All Statuses</option>
-                        <option value="To Do">To Do</option>
-                        <option value="In Progress">In Progress</option>
-                        <option value="Done">Done</option>
-                      </select>
-                    </div>
-                    <div className="col-md-4 mb-2">
-                      <select
-                        className="form-select form-select-sm"
-                        value={filterPriority}
-                        onChange={(e) => setFilterPriority(e.target.value)}
-                      >
-                        <option value="All">All Priorities</option>
-                        <option value="Low">Low</option>
-                        <option value="Medium">Medium</option>
-                        <option value="High">High</option>
-                      </select>
-                    </div>
-                    <div className="col-md-4">
-                      <select
-                        className="form-select form-select-sm"
-                        value={sortOrder}
-                        onChange={(e) => setSortOrder(e.target.value)}
-                      >
-                        <option value="newest">Newest First</option>
-                        <option value="oldest">Oldest First</option>
-                        <option value="priority">By Priority</option>
-                      </select>
-                    </div>
-                  </div>
+                <div className="col-md-5 mb-3 mb-md-0">
+                  <label className="form-label">Filter by Priority</label>
+                  <select 
+                    className="form-select"
+                    value={filterPriority}
+                    onChange={(e) => setFilterPriority(e.target.value)}
+                  >
+                    <option value="All">All Priorities</option>
+                    <option value="Low">Low</option>
+                    <option value="Medium">Medium</option>
+                    <option value="High">High</option>
+                  </select>
+                </div>
+                <div className="col-md-2">
+                  <label className="form-label">Sort By</label>
+                  <select 
+                    className="form-select"
+                    value={sortOrder}
+                    onChange={(e) => setSortOrder(e.target.value)}
+                  >
+                    <option value="newest">Newest</option>
+                    <option value="oldest">Oldest</option>
+                    <option value="priority">Priority</option>
+                  </select>
                 </div>
               </div>
             </div>
-            <div className="card-body">
-              {isLoading && tasks.length > 0 && (
-                <div className="text-center py-3">
-                  <div className="spinner-border text-primary" role="status">
-                    <span className="visually-hidden">Updating tasks...</span>
-                  </div>
-                </div>
-              )}
-              
+          </div>
+
+          {/* Task List */}
+          <div className="card shadow-sm">
+            <div className="card-header bg-white">
+              <h5 className="mb-0">
+                <i className="bi bi-card-list me-2"></i>
+                Task List
+              </h5>
+            </div>
+            <div className="card-body p-0">
               {filteredAndSortedTasks.length === 0 ? (
                 <div className="text-center py-5">
-                  <i className="bi bi-clipboard-check text-muted fs-1 mb-3"></i>
-                  <h5 className="text-muted">No tasks found</h5>
-                  <p className="text-muted">Try changing your filters or create a new task</p>
+                  <i className="bi bi-clipboard-check text-muted" style={{ fontSize: '3rem' }}></i>
+                  <p className="mt-3 mb-0 text-muted">No tasks found. Create a new task to get started!</p>
                 </div>
               ) : (
-                <div className="row">
-                  {filteredAndSortedTasks.map((task) => (
-                    <div key={task._id} className="col-md-6 mb-3">
-                      <div className="card h-100 border">
-                        <div className="card-body d-flex flex-column">
-                          <div className="d-flex justify-content-between align-items-start mb-2">
-                            <h5 className="card-title mb-0">{task.title}</h5>
-                            <span className={`badge ${
-                              task.priority === 'High' ? 'bg-danger' : 
-                              task.priority === 'Medium' ? 'bg-warning text-dark' : 'bg-success'
-                            }`}>
-                              {task.priority}
-                            </span>
+                <div className="list-group list-group-flush">
+                  {filteredAndSortedTasks.map((task: Task) => (
+                    <div key={task._id} className="list-group-item">
+                      {editingTask && editingTask._id === task._id ? (
+                        // Edit mode
+                        <div className="row g-3">
+                          <div className="col-12">
+                            <label className="form-label">Title</label>
+                            <input
+                              type="text"
+                              className="form-control"
+                              name="title"
+                              value={editingTask.title}
+                              onChange={handleEditChange}
+                              required
+                            />
                           </div>
-                          
-                          {task.description && (
-                            <p className="card-text flex-grow-1 text-muted">
-                              {task.description}
-                            </p>
-                          )}
-                          
-                          <div className="mb-3">
-                            <span className={`badge ${
-                              task.status === 'To Do' ? 'bg-primary' : 
-                              task.status === 'In Progress' ? 'bg-warning text-dark' : 'bg-success'
-                            }`}>
-                              {task.status}
-                            </span>
-                            {task.assignee && (
-                              <span className="badge bg-secondary ms-2">
-                                <i className="bi bi-person-fill me-1"></i>
-                                {task.assignee}
-                              </span>
-                            )}
+                          <div className="col-12">
+                            <label className="form-label">Description</label>
+                            <textarea
+                              className="form-control"
+                              name="description"
+                              value={editingTask.description}
+                              onChange={handleEditChange}
+                              rows={2}
+                            ></textarea>
                           </div>
-                          
-                          <div className="mt-auto">
-                            <small className="text-muted">
-                              Created: {new Date(task.createdAt).toLocaleDateString()}
-                            </small>
-                          </div>
-                          
-                          <div className="mt-3">
-                            <button
-                              className="btn btn-outline-danger btn-sm"
-                              onClick={() => handleDelete(task._id)}
+                          <div className="col-md-6">
+                            <label className="form-label">Status</label>
+                            <select
+                              className="form-select"
+                              name="status"
+                              value={editingTask.status}
+                              onChange={handleEditChange}
                             >
-                              <i className="bi bi-trash me-1"></i>
-                              Delete
+                              <option value="To Do">To Do</option>
+                              <option value="In Progress">In Progress</option>
+                              <option value="Done">Done</option>
+                            </select>
+                          </div>
+                          <div className="col-md-6">
+                            <label className="form-label">Priority</label>
+                            <select
+                              className="form-select"
+                              name="priority"
+                              value={editingTask.priority}
+                              onChange={handleEditChange}
+                            >
+                              <option value="Low">Low</option>
+                              <option value="Medium">Medium</option>
+                              <option value="High">High</option>
+                            </select>
+                          </div>
+                          <div className="col-12">
+                            <button 
+                              className="btn btn-primary me-2"
+                              onClick={handleUpdateTask}
+                            >
+                              Save
+                            </button>
+                            <button 
+                              className="btn btn-secondary"
+                              onClick={() => setEditingTask(null)}
+                            >
+                              Cancel
                             </button>
                           </div>
                         </div>
-                      </div>
+                      ) : (
+                        // Display mode
+                        <div className="row align-items-center">
+                          <div className="col-md-7">
+                            <h6 className="mb-1">{task.title}</h6>
+                            <p className="mb-2 text-muted small">{task.description}</p>
+                            <div className="d-flex flex-wrap gap-2">
+                              <span className={`badge ${
+                                task.status === 'To Do' ? 'bg-secondary' : 
+                                task.status === 'In Progress' ? 'bg-warning' : 'bg-success'
+                              }`}>
+                                {task.status}
+                              </span>
+                              <span className={`badge ${
+                                task.priority === 'Low' ? 'bg-info' : 
+                                task.priority === 'Medium' ? 'bg-primary' : 'bg-danger'
+                              }`}>
+                                {task.priority}
+                              </span>
+                            </div>
+                            
+                            {/* Comments section */}
+                            {task.comments && task.comments.length > 0 && (
+                              <div className="mt-2">
+                                <small className="text-muted">Comments:</small>
+                                <div className="small">
+                                  {task.comments.slice(-2).map((comment, index) => (
+                                    <div key={index} className="text-muted fst-italic">
+                                      "{comment.text}"
+                                    </div>
+                                  ))}
+                                  {task.comments.length > 2 && (
+                                    <div className="text-muted fst-italic">
+                                      + {task.comments.length - 2} more comments
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          <div className="col-md-3">
+                            <div className="d-flex flex-column gap-2">
+                              <select 
+                                className="form-select form-select-sm"
+                                value={task.status}
+                                onChange={(e) => handleStatusChange(task._id, e.target.value as any)}
+                              >
+                                <option value="To Do">To Do</option>
+                                <option value="In Progress">In Progress</option>
+                                <option value="Done">Done</option>
+                              </select>
+                              
+                              {/* Comment input */}
+                              <div className="input-group input-group-sm">
+                                <input
+                                  type="text"
+                                  className="form-control"
+                                  placeholder="Add comment..."
+                                  value={commentText[task._id] || ''}
+                                  onChange={(e) => handleCommentChange(task._id, e.target.value)}
+                                />
+                                <button 
+                                  className="btn btn-outline-primary btn-sm"
+                                  type="button"
+                                  onClick={() => handleAddComment(task._id)}
+                                >
+                                  <i className="bi bi-chat"></i>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="col-md-2 text-end">
+                            <button 
+                              className="btn btn-outline-primary btn-sm me-1"
+                              onClick={() => handleEditTask(task)}
+                            >
+                              <i className="bi bi-pencil"></i>
+                            </button>
+                            <button 
+                              className="btn btn-outline-danger btn-sm"
+                              onClick={() => handleDelete(task._id)}
+                            >
+                              <i className="bi bi-trash"></i>
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -351,8 +501,29 @@ const DashboardPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Edit Task Modal */}
+      {editingTask && (
+        <div className="modal fade show d-block" tabIndex={-1} style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Edit Task</h5>
+                <button 
+                  type="button" 
+                  className="btn-close" 
+                  onClick={() => setEditingTask(null)}
+                ></button>
+              </div>
+              <div className="modal-body">
+                {/* Modal content would go here if needed */}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
-}; 
+};
 
 export default DashboardPage;

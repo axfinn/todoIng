@@ -14,7 +14,7 @@ router.post(
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { title, description, status, priority, assignee } = req.body;
+    const { title, description, status, priority, assignee, comments } = req.body;
 
     try {
       const newTask = new Task({
@@ -23,6 +23,7 @@ router.post(
         status: status || 'To Do',
         priority: priority || 'Medium',
         assignee,
+        comments: comments || [],
         createdBy: req.user.id,
       });
 
@@ -90,7 +91,7 @@ router.put(
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { title, description, status, priority, assignee } = req.body;
+    const { title, description, status, priority, assignee, comments } = req.body;
 
     // Build task object
     const taskFields = {};
@@ -99,6 +100,7 @@ router.put(
     if (status) taskFields.status = status;
     if (priority) taskFields.priority = priority;
     if (assignee) taskFields.assignee = assignee;
+    if (comments) taskFields.comments = comments;
 
     try {
       let task = await Task.findById(req.params.id);

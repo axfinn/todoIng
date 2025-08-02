@@ -35,6 +35,20 @@ const TaskSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  // 添加备注字段用于任务更新时的备注信息
+  comments: [
+    {
+      text: String,
+      createdBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+      },
+      createdAt: {
+        type: Date,
+        default: Date.now,
+      },
+    },
+  ],
 });
 
 // 更新任务时自动更新updatedAt字段
