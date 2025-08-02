@@ -41,8 +41,6 @@ services:
       dockerfile: Dockerfile
     container_name: todoing_frontend
     restart: always
-    environment:
-      - VITE_API_URL=http://localhost:5001/api
     ports:
       - "80:80"
     depends_on:
