@@ -17,6 +17,8 @@ export interface Task {
   comments?: TaskComment[];
   createdAt: string;
   updatedAt: string;
+  deadline?: string | null;
+  scheduledDate?: string | null;
 }
 
 interface TaskState {
@@ -47,9 +49,9 @@ export const fetchTasks = createAsyncThunk<Task[], void, { rejectValue: string }
   }
 );
 
-export const createTask = createAsyncThunk<Task, Partial<Task>, { rejectValue: string }>(
+export const createTask = createAsyncThunk<Task, Omit<Task, '_id' | 'createdAt' | 'updatedAt' | 'comments'>, { rejectValue: string }>(
   'tasks/createTask',
-  async (taskData: Partial<Task>, { rejectWithValue }) => {
+  async (taskData: Omit<Task, '_id' | 'createdAt' | 'updatedAt' | 'comments'>, { rejectWithValue }) => {
     try {
       const res = await api.post('/tasks', taskData);
       return res.data as Task;
@@ -62,11 +64,12 @@ export const createTask = createAsyncThunk<Task, Partial<Task>, { rejectValue: s
   }
 );
 
-export const updateTask = createAsyncThunk<Task, Task, { rejectValue: string }>(
+export const updateTask = createAsyncThunk<Task, Partial<Task> & { _id: string }, { rejectValue: string }>(
   'tasks/updateTask',
-  async (taskData: Task, { rejectWithValue }) => {
+  async (taskData: Partial<Task> & { _id: string }, { rejectWithValue }) => {
     try {
-      const res = await api.put(`/tasks/${taskData._id}`, taskData);
+      const { _id, ...taskUpdate } = taskData;
+      const res = await api.put(`/tasks/${_id}`, taskUpdate);
       return res.data as Task;
     } catch (err: any) {
       if (err.response && err.response.data) {
@@ -107,10 +110,10 @@ const taskSlice = createSlice({
       })
       .addCase(fetchTasks.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload as string;
+        state.error = action.error.message || 'Failed to fetch tasks';
       })
       .addCase(createTask.fulfilled, (state, action: PayloadAction<Task>) => {
-        state.tasks.push(action.payload);
+        state.tasks.unshift(action.payload);
       })
       .addCase(updateTask.fulfilled, (state, action: PayloadAction<Task>) => {
         const index = state.tasks.findIndex((task) => task._id === action.payload._id);

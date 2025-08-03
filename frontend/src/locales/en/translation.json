@@ -35,6 +35,8 @@
     "status": "Status",
     "priority": "Priority",
     "assignee": "Assignee",
+    "deadline": "Deadline",
+    "scheduledDate": "Scheduled Date",
     "createTask": "Create Task",
     "noTasks": "No tasks found",
     "edit": "Edit",
@@ -47,6 +49,8 @@
     "addCommentButton": "Add Comment",
     "created": "Created",
     "updated": "Updated",
+    "overdue": "Overdue",
+    "dueSoon": "Due Soon",
     "filter": {
       "status": "Filter by Status",
       "priority": "Filter by Priority",

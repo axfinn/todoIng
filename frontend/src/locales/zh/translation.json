@@ -35,6 +35,8 @@
     "status": "状态",
     "priority": "优先级",
     "assignee": "负责人",
+    "deadline": "截止日期",
+    "scheduledDate": "计划日期",
     "createTask": "创建任务",
     "noTasks": "暂无任务",
     "edit": "编辑",
@@ -47,6 +49,8 @@
     "addCommentButton": "添加评论",
     "created": "创建于",
     "updated": "更新于",
+    "overdue": "已过期",
+    "dueSoon": "即将到期",
     "filter": {
       "status": "按状态筛选",
       "priority": "按优先级筛选",

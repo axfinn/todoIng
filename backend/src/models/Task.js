@@ -35,6 +35,15 @@ const TaskSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  // 添加deadline和代办时间属性
+  deadline: {
+    type: Date,
+    default: null
+  },
+  scheduledDate: {
+    type: Date,
+    default: null
+  },
   // 添加备注字段用于任务更新时的备注信息
   comments: [
     {

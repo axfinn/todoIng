@@ -14,7 +14,7 @@ router.post(
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { title, description, status, priority, assignee, comments } = req.body;
+    const { title, description, status, priority, assignee, comments, deadline, scheduledDate } = req.body;
 
     try {
       const newTask = new Task({
@@ -24,6 +24,8 @@ router.post(
         priority: priority || 'Medium',
         assignee,
         comments: comments || [],
+        deadline: deadline || null,
+        scheduledDate: scheduledDate || null,
         createdBy: req.user.id,
       });
 
@@ -91,7 +93,7 @@ router.put(
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { title, description, status, priority, assignee, comments } = req.body;
+    const { title, description, status, priority, assignee, comments, deadline, scheduledDate } = req.body;
 
     // Build task object
     const taskFields = {};
@@ -99,8 +101,10 @@ router.put(
     if (description) taskFields.description = description;
     if (status) taskFields.status = status;
     if (priority) taskFields.priority = priority;
-    if (assignee) taskFields.assignee = assignee;
+    if (assignee !== undefined) taskFields.assignee = assignee;
     if (comments) taskFields.comments = comments;
+    if (deadline !== undefined) taskFields.deadline = deadline;
+    if (scheduledDate !== undefined) taskFields.scheduledDate = scheduledDate;
 
     try {
       let task = await Task.findById(req.params.id);

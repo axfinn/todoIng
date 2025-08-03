@@ -1,7 +1,3 @@
-export type TaskComment = {
-  text: string;
-  createdAt: string;
-};
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
@@ -20,6 +16,8 @@ const DashboardPage: React.FC = () => {
     status: 'To Do' as 'To Do' | 'In Progress' | 'Done',
     priority: 'Medium' as 'Low' | 'Medium' | 'High',
     assignee: '',
+    deadline: '',
+    scheduledDate: '',
   });
 
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -30,6 +28,11 @@ const DashboardPage: React.FC = () => {
   const [sortOrder, setSortOrder] = useState<string>('newest');
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null); // 用于跟踪展开的任务
   const [githubStats, setGithubStats] = useState({ stars: 0, forks: 0 });
+
+  // 计算各类任务的数量
+  const todoTasksCount = tasks.filter(task => task.status === 'To Do').length;
+  const inProgressTasksCount = tasks.filter(task => task.status === 'In Progress').length;
+  const doneTasksCount = tasks.filter(task => task.status === 'Done').length;
 
   useEffect(() => {
     dispatch(fetchTasks());
@@ -54,43 +57,61 @@ const DashboardPage: React.FC = () => {
     }
   };
 
-  // 快速更新任务状态
-  const updateTaskStatus = (task: Task, status: 'To Do' | 'In Progress' | 'Done') => {
-    const updatedTask = { ...task, status };
-    dispatch(updateTask(updatedTask));
-  };
-
   const handleNewTaskChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    setNewTask({ ...newTask, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setNewTask({ ...newTask, [name]: value });
   };
 
   const handleCreateTask = (e: React.FormEvent) => {
     e.preventDefault();
-    dispatch(createTask(newTask));
+    
+    // 处理日期字段，如果为空则设为null
+    const taskToCreate = {
+      ...newTask,
+      deadline: newTask.deadline || null,
+      scheduledDate: newTask.scheduledDate || null,
+    };
+    
+    dispatch(createTask(taskToCreate));
     setNewTask({
       title: '',
       description: '',
       status: 'To Do',
       priority: 'Medium',
       assignee: '',
+      deadline: '',
+      scheduledDate: '',
     });
+    setShowCreateModal(false);
   };
 
   const handleEdit = (task: Task) => {
-    setEditingTask(task);
+    setEditingTask({
+      ...task,
+      deadline: task.deadline ? task.deadline.split('T')[0] : '',
+      scheduledDate: task.scheduledDate ? task.scheduledDate.split('T')[0] : '',
+    });
   };
 
   const handleUpdateTask = (e: React.FormEvent) => {
     e.preventDefault();
     if (editingTask) {
-      dispatch(updateTask(editingTask));
+      // 处理日期字段，如果为空则设为null
+      const taskToUpdate = {
+        ...editingTask,
+        deadline: editingTask.deadline || null,
+        scheduledDate: editingTask.scheduledDate || null,
+      };
+      
+      dispatch(updateTask(taskToUpdate));
       setEditingTask(null);
     }
   };
 
   const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     if (editingTask) {
-      setEditingTask({ ...editingTask, [e.target.name]: e.target.value });
+      const { name, value } = e.target;
+      setEditingTask({ ...editingTask, [name]: value });
     }
   };
 
@@ -116,10 +137,58 @@ const DashboardPage: React.FC = () => {
     setCommentText({ ...commentText, [taskId]: text });
   };
 
+  // 快速更新任务状态
+  const updateTaskStatus = (task: Task, status: 'To Do' | 'In Progress' | 'Done') => {
+    const updatedTask = { ...task, status };
+    dispatch(updateTask(updatedTask));
+  };
+
+  // 快速筛选任务
+  const setFilter = (status: string) => {
+    setFilterStatus(status);
+  };
+
+  // 检查任务是否临近截止日期
+  const isTaskNearDeadline = (task: Task) => {
+    if (!task.deadline) return false;
+    
+    const deadline = new Date(task.deadline);
+    const now = new Date();
+    const diffTime = deadline.getTime() - now.getTime();
+    const diffDays = diffTime / (1000 * 3600 * 24);
+    
+    // 如果截止日期已过或在1天内，则标记为临近截止日期
+    return diffDays <= 1;
+  };
+
+  // 检查任务是否已过截止日期
+  const isTaskOverdue = (task: Task) => {
+    if (!task.deadline) return false;
+    
+    const deadline = new Date(task.deadline);
+    const now = new Date();
+    
+    return deadline < now;
+  };
+
   const filteredAndSortedTasks = tasks
     .filter(task => filterStatus === 'All' || task.status === filterStatus)
     .filter(task => filterPriority === 'All' || task.priority === filterPriority)
     .sort((a, b) => {
+      // 首先按是否有截止日期排序（有截止日期的优先）
+      const aHasDeadline = a.deadline ? 1 : 0;
+      const bHasDeadline = b.deadline ? 1 : 0;
+      
+      if (aHasDeadline !== bHasDeadline) {
+        return bHasDeadline - aHasDeadline;
+      }
+      
+      // 如果都有截止日期或都没有，按截止日期排序（早的在前）
+      if (a.deadline && b.deadline) {
+        return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
+      }
+      
+      // 按创建时间排序
       if (sortOrder === 'newest') {
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       } else {
@@ -153,6 +222,16 @@ const DashboardPage: React.FC = () => {
     }
   };
 
+  // 获取截止日期徽章样式
+  const getDeadlineBadgeClass = (task: Task) => {
+    if (isTaskOverdue(task)) {
+      return 'bg-danger';
+    } else if (isTaskNearDeadline(task)) {
+      return 'bg-warning text-dark';
+    }
+    return 'bg-secondary';
+  };
+
   const toggleTaskDetails = (taskId: string) => {
     setExpandedTaskId(expandedTaskId === taskId ? null : taskId);
   };
@@ -181,6 +260,11 @@ const DashboardPage: React.FC = () => {
       default:
         return priority;
     }
+  };
+
+  // GitHub star操作
+  const handleStarRepo = () => {
+    window.open('https://github.com/axfinn/todoIng', '_blank');
   };
 
   if (isLoading) {
@@ -217,7 +301,7 @@ const DashboardPage: React.FC = () => {
               <i className="bi bi-github me-2"></i>
               <button 
                 className="btn btn-outline-dark btn-sm me-3 d-flex align-items-center"
-                onClick={() => window.open('https://github.com/axfinn/todoIng', '_blank')}
+                onClick={handleStarRepo}
               >
                 <i className="bi bi-star-fill me-1"></i> 
                 <span>Star</span>
@@ -237,27 +321,27 @@ const DashboardPage: React.FC = () => {
           <div className="d-flex gap-2 mb-4">
             <button 
               className={`btn ${filterStatus === 'All' ? 'btn-primary' : 'btn-outline-primary'}`}
-              onClick={() => setFilterStatus('All')}
+              onClick={() => setFilter('All')}
             >
               {t('dashboard.allTasks')} <span className="badge bg-white text-primary ms-1">{tasks.length}</span>
             </button>
             <button 
               className={`btn ${filterStatus === 'To Do' ? 'btn-secondary' : 'btn-outline-secondary'}`}
-              onClick={() => setFilterStatus('To Do')}
+              onClick={() => setFilter('To Do')}
             >
-              {t('status.todo')} <span className="badge bg-white text-secondary ms-1">{tasks.filter(task => task.status === 'To Do').length}</span>
+              {t('status.todo')} <span className="badge bg-white text-secondary ms-1">{todoTasksCount}</span>
             </button>
             <button 
               className={`btn ${filterStatus === 'In Progress' ? 'btn-warning' : 'btn-outline-warning'}`}
-              onClick={() => setFilterStatus('In Progress')}
+              onClick={() => setFilter('In Progress')}
             >
-              {t('status.inProgress')} <span className="badge bg-white text-warning ms-1">{tasks.filter(task => task.status === 'In Progress').length}</span>
+              {t('status.inProgress')} <span className="badge bg-white text-warning ms-1">{inProgressTasksCount}</span>
             </button>
             <button 
               className={`btn ${filterStatus === 'Done' ? 'btn-success' : 'btn-outline-success'}`}
-              onClick={() => setFilterStatus('Done')}
+              onClick={() => setFilter('Done')}
             >
-              {t('status.done')} <span className="badge bg-white text-success ms-1">{tasks.filter(task => task.status === 'Done').length}</span>
+              {t('status.done')} <span className="badge bg-white text-success ms-1">{doneTasksCount}</span>
             </button>
           </div>
 
@@ -325,11 +409,18 @@ const DashboardPage: React.FC = () => {
                 <div className="row">
                   {filteredAndSortedTasks.map((task) => (
                     <div key={task._id} className="col-12 mb-3">
-                      <div className="card">
+                      <div className={`card ${isTaskOverdue(task) ? 'border-danger' : ''}`}>
                         <div className="card-body">
                           <div className="d-flex justify-content-between align-items-start">
                             <div>
-                              <h5 className="card-title">{task.title}</h5>
+                              <h5 className="card-title">
+                                {task.title}
+                                {task.deadline && (
+                                  <span className={`badge ${getDeadlineBadgeClass(task)} ms-2`}>
+                                    {isTaskOverdue(task) ? t('dashboard.overdue') : t('dashboard.dueSoon')}
+                                  </span>
+                                )}
+                              </h5>
                               <p className="card-text text-muted">{task.description}</p>
                               <div className="d-flex gap-2 mb-2">
                                 <span className={`badge ${getStatusBadgeClass(task.status)}`}>
@@ -338,6 +429,18 @@ const DashboardPage: React.FC = () => {
                                 <span className={`badge ${getPriorityBadgeClass(task.priority)}`}>
                                   {translatePriority(task.priority)}
                                 </span>
+                                {task.deadline && (
+                                  <span className="badge bg-secondary">
+                                    <i className="bi bi-calendar me-1"></i>
+                                    {new Date(task.deadline).toLocaleDateString(i18n.language)}
+                                  </span>
+                                )}
+                                {task.scheduledDate && (
+                                  <span className="badge bg-info">
+                                    <i className="bi bi-clock me-1"></i>
+                                    {new Date(task.scheduledDate).toLocaleDateString(i18n.language)}
+                                  </span>
+                                )}
                               </div>
                               {task.assignee && (
                                 <p className="mb-1">
@@ -402,26 +505,6 @@ const DashboardPage: React.FC = () => {
                               </button>
                             </div>
                           </div>
-
-                          {/* 快速状态更新按钮 */}
-                          {task.status !== 'Done' && (
-                            <button
-                              className="btn btn-sm btn-success"
-                              onClick={() => updateTaskStatus(task, 'Done')}
-                              title={t('dashboard.markAsDone')}
-                            >
-                              <i className="bi bi-check-circle"></i>
-                            </button>
-                          )}
-                          {task.status !== 'In Progress' && task.status !== 'Done' && (
-                            <button
-                              className="btn btn-sm btn-warning"
-                              onClick={() => updateTaskStatus(task, 'In Progress')}
-                              title={t('dashboard.markAsInProgress')}
-                            >
-                              <i className="bi bi-arrow-right-circle"></i>
-                            </button>
-                          )}
 
                           {/* 任务详情和评论 */}
                           {(expandedTaskId === task._id || task.status === 'In Progress') && (
@@ -577,6 +660,28 @@ const DashboardPage: React.FC = () => {
                     </select>
                   </div>
                   <div className="mb-3">
+                    <label htmlFor="deadline" className="form-label">{t('dashboard.deadline')}</label>
+                    <input
+                      type="date"
+                      className="form-control"
+                      id="deadline"
+                      name="deadline"
+                      value={newTask.deadline}
+                      onChange={handleNewTaskChange}
+                    />
+                  </div>
+                  <div className="mb-3">
+                    <label htmlFor="scheduledDate" className="form-label">{t('dashboard.scheduledDate')}</label>
+                    <input
+                      type="date"
+                      className="form-control"
+                      id="scheduledDate"
+                      name="scheduledDate"
+                      value={newTask.scheduledDate}
+                      onChange={handleNewTaskChange}
+                    />
+                  </div>
+                  <div className="mb-3">
                     <label htmlFor="description" className="form-label">{t('dashboard.description')}</label>
                     <textarea
                       className="form-control"
@@ -671,6 +776,28 @@ const DashboardPage: React.FC = () => {
                       <option value="Medium">{t('priority.medium')}</option>
                       <option value="High">{t('priority.high')}</option>
                     </select>
+                  </div>
+                  <div className="mb-3">
+                    <label htmlFor="editDeadline" className="form-label">{t('dashboard.deadline')}</label>
+                    <input
+                      type="date"
+                      className="form-control"
+                      id="editDeadline"
+                      name="deadline"
+                      value={editingTask.deadline || ''}
+                      onChange={handleEditChange}
+                    />
+                  </div>
+                  <div className="mb-3">
+                    <label htmlFor="editScheduledDate" className="form-label">{t('dashboard.scheduledDate')}</label>
+                    <input
+                      type="date"
+                      className="form-control"
+                      id="editScheduledDate"
+                      name="scheduledDate"
+                      value={editingTask.scheduledDate || ''}
+                      onChange={handleEditChange}
+                    />
                   </div>
                   <div className="mb-3">
                     <label htmlFor="editAssignee" className="form-label">{t('dashboard.assignee')}</label>
