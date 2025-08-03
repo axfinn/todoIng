@@ -8,6 +8,7 @@ import { logout } from './features/auth/authSlice';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
+import ReportsPage from './pages/ReportsPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 const App: React.FC = () => {
@@ -57,11 +58,18 @@ const App: React.FC = () => {
                 </Link>
               </li>
               {isAuthenticated && (
-                <li className="nav-item">
-                  <Link className="nav-link" to="/dashboard">
-                    {t('nav.dashboard')}
-                  </Link>
-                </li>
+                <>
+                  <li className="nav-item">
+                    <Link className="nav-link" to="/dashboard">
+                      {t('nav.dashboard')}
+                    </Link>
+                  </li>
+                  <li className="nav-item">
+                    <Link className="nav-link" to="/reports">
+                      {t('nav.reports')}
+                    </Link>
+                  </li>
+                </>
               )}
             </ul>
             <ul className="navbar-nav mb-2 mb-lg-0">
@@ -175,6 +183,11 @@ const App: React.FC = () => {
           <Route path="/dashboard" element={
             <ProtectedRoute>
               <DashboardPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/reports" element={
+            <ProtectedRoute>
+              <ReportsPage />
             </ProtectedRoute>
           } />
         </Routes>

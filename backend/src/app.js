@@ -4,6 +4,7 @@ const dotenv = require('dotenv');
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/auth');
 const taskRoutes = require('./routes/tasks');
+const reportRoutes = require('./routes/reports');
 const errorHandler = require('./middleware/error');
 const User = require('./models/User');
 const bcrypt = require('bcryptjs');
@@ -59,6 +60,7 @@ app.use(cors());
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
+app.use('/api/reports', reportRoutes);
 
 // Error handler
 app.use(errorHandler);

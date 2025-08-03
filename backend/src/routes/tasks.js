@@ -102,9 +102,22 @@ router.put(
     if (status) taskFields.status = status;
     if (priority) taskFields.priority = priority;
     if (assignee !== undefined) taskFields.assignee = assignee;
-    if (comments) taskFields.comments = comments;
     if (deadline !== undefined) taskFields.deadline = deadline;
     if (scheduledDate !== undefined) taskFields.scheduledDate = scheduledDate;
+
+    // 处理评论，确保添加创建者信息
+    if (comments) {
+      taskFields.comments = comments.map(comment => {
+        // 如果评论没有创建者信息，则添加当前用户作为创建者
+        if (!comment.createdBy) {
+          return {
+            ...comment,
+            createdBy: req.user.id
+          };
+        }
+        return comment;
+      });
+    }
 
     try {
       let task = await Task.findById(req.params.id);
@@ -144,7 +157,7 @@ router.delete('/:id', auth, async (req, res) => {
       return res.status(401).json({ msg: 'User not authorized' });
     }
 
-    await Task.findByIdAndRemove(req.params.id);
+    await Task.findByIdAndDelete(req.params.id);
 
     res.json({ msg: 'Task removed' });
   } catch (err) {

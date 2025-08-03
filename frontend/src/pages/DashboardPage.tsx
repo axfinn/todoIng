@@ -140,9 +140,14 @@ const DashboardPage: React.FC = () => {
     if (commentText[taskId]?.trim()) {
       const updatedTask = tasks.find(task => task._id === taskId);
       if (updatedTask) {
+        // 获取当前用户信息，这里假设用户信息存储在localStorage中
+        const currentUser = localStorage.getItem('user');
+        const creator = currentUser ? JSON.parse(currentUser).name : 'Anonymous';
+        
         const newComment = {
           text: commentText[taskId],
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
+          creator: creator // 添加评论创建者信息
         };
         
         const updatedComments = [...(updatedTask.comments || []), newComment];
