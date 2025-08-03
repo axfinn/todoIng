@@ -21,17 +21,17 @@ services:
     restart: always
     environment:
       - NODE_ENV=production
-      - MONGO_URI=mongodb://mongodb:27017/todoing
+      - MONGO_URI=mongodb://todoing_mongodb_local:27017/todoing
       - JWT_SECRET=your_jwt_secret_here
       - PORT=5001
       # 是否禁用注册功能
-      - DISABLE_REGISTRATION=false
-      # 是否启用登录验证码 (默认开启)
-      - ENABLE_CAPTCHA=true
-      # 默认用户配置（示例）
-      # - DEFAULT_USERNAME=admin
-      # - DEFAULT_EMAIL=admin@example.com
-      # - DEFAULT_PASSWORD=securepassword
+      - DISABLE_REGISTRATION=true
+      # 是否启用登录验证码
+      - ENABLE_CAPTCHA=false
+      # 默认用户配置
+      - DEFAULT_USERNAME=admin
+      - DEFAULT_EMAIL=admin@example.com
+      - DEFAULT_PASSWORD=securepassword
     ports:
       - "5001:5001"
     depends_on:
@@ -50,9 +50,9 @@ services:
     environment:
       - VITE_API_BASE_URL=/api
       # 是否禁用注册功能
-      - VITE_DISABLE_REGISTRATION=false
-      # 是否启用登录验证码 (默认开启)
-      - VITE_ENABLE_CAPTCHA=true
+      - VITE_DISABLE_REGISTRATION=true
+      # 是否启用登录验证码
+      - VITE_ENABLE_CAPTCHA=false
     depends_on:
       - backend
     networks:
