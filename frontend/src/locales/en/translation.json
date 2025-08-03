@@ -51,6 +51,12 @@
     "updated": "Updated",
     "overdue": "Overdue",
     "dueSoon": "Due Soon",
+    "exportCalendar": "Export to Calendar",
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "dayAfterTomorrow": "Day after tomorrow",
+    "nextWeek": "Next week",
+    "nextMonth": "Next month",
     "filter": {
       "status": "Filter by Status",
       "priority": "Filter by Priority",

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { fetchTasks, deleteTask, createTask, updateTask } from '../features/tasks/taskSlice';
+import { generateCalendarICS, downloadICSFile } from '../utils/calendarUtils';
 import type { RootState, AppDispatch } from '../app/store';
 import type { Task } from '../features/tasks/taskSlice';
 
@@ -10,14 +11,29 @@ const DashboardPage: React.FC = () => {
   const { tasks, isLoading, error } = useSelector((state: RootState) => state.tasks);
   const { t, i18n } = useTranslation();
 
+  // 获取指定天数后的日期字符串
+  const getDateAfterDays = (days: number): string => {
+    const date = new Date();
+    date.setDate(date.getDate() + days);
+    return date.toISOString().split('T')[0];
+  };
+
+  // 快捷设置日期的函数
+  const setQuickDate = (field: 'deadline' | 'scheduledDate', days: number) => {
+    setNewTask({
+      ...newTask,
+      [field]: getDateAfterDays(days)
+    });
+  };
+
   const [newTask, setNewTask] = useState({
     title: '',
     description: '',
     status: 'To Do' as 'To Do' | 'In Progress' | 'Done',
     priority: 'Medium' as 'Low' | 'Medium' | 'High',
     assignee: '',
-    deadline: '',
-    scheduledDate: '',
+    deadline: new Date().toISOString().split('T')[0],
+    scheduledDate: new Date().toISOString().split('T')[0],
   });
 
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -55,6 +71,11 @@ const DashboardPage: React.FC = () => {
     if (window.confirm(t('dashboard.confirmDelete'))) {
       dispatch(deleteTask(id));
     }
+  };
+
+  const handleExportCalendar = () => {
+    const icsContent = generateCalendarICS(tasks);
+    downloadICSFile(icsContent, 'todoing-tasks.ics');
   };
 
   const handleNewTaskChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -289,13 +310,24 @@ const DashboardPage: React.FC = () => {
           
           {/* 创建任务按钮和GitHub信息 */}
           <div className="d-flex justify-content-between align-items-center mb-4">
-            <button 
-              className="btn btn-primary" 
-              onClick={() => setShowCreateModal(true)}
-            >
-              <i className="bi bi-plus-lg me-1"></i>
-              {t('dashboard.newTask')}
-            </button>
+            <div className="d-flex gap-2">
+              <button 
+                className="btn btn-primary" 
+                onClick={() => setShowCreateModal(true)}
+              >
+                <i className="bi bi-plus-lg me-1"></i>
+                {t('dashboard.newTask')}
+              </button>
+              
+              <button 
+                className="btn btn-outline-secondary"
+                onClick={handleExportCalendar}
+                title={t('dashboard.exportCalendar')}
+              >
+                <i className="bi bi-calendar-plus me-1"></i>
+                {t('dashboard.exportCalendar')}
+              </button>
+            </div>
             
             <div className="d-flex align-items-center">
               <i className="bi bi-github me-2"></i>
@@ -669,6 +701,43 @@ const DashboardPage: React.FC = () => {
                       value={newTask.deadline}
                       onChange={handleNewTaskChange}
                     />
+                    <div className="mt-1">
+                      <button 
+                        type="button" 
+                        className="btn btn-sm btn-outline-primary me-1"
+                        onClick={() => setQuickDate('deadline', 0)}
+                      >
+                        {t('dashboard.today')}
+                      </button>
+                      <button 
+                        type="button" 
+                        className="btn btn-sm btn-outline-primary me-1"
+                        onClick={() => setQuickDate('deadline', 1)}
+                      >
+                        {t('dashboard.tomorrow')}
+                      </button>
+                      <button 
+                        type="button" 
+                        className="btn btn-sm btn-outline-primary me-1"
+                        onClick={() => setQuickDate('deadline', 2)}
+                      >
+                        {t('dashboard.dayAfterTomorrow')}
+                      </button>
+                      <button 
+                        type="button" 
+                        className="btn btn-sm btn-outline-primary me-1"
+                        onClick={() => setQuickDate('deadline', 7)}
+                      >
+                        {t('dashboard.nextWeek')}
+                      </button>
+                      <button 
+                        type="button" 
+                        className="btn btn-sm btn-outline-primary"
+                        onClick={() => setQuickDate('deadline', 30)}
+                      >
+                        {t('dashboard.nextMonth')}
+                      </button>
+                    </div>
                   </div>
                   <div className="mb-3">
                     <label htmlFor="scheduledDate" className="form-label">{t('dashboard.scheduledDate')}</label>
@@ -680,6 +749,43 @@ const DashboardPage: React.FC = () => {
                       value={newTask.scheduledDate}
                       onChange={handleNewTaskChange}
                     />
+                    <div className="mt-1">
+                      <button 
+                        type="button" 
+                        className="btn btn-sm btn-outline-primary me-1"
+                        onClick={() => setQuickDate('scheduledDate', 0)}
+                      >
+                        {t('dashboard.today')}
+                      </button>
+                      <button 
+                        type="button" 
+                        className="btn btn-sm btn-outline-primary me-1"
+                        onClick={() => setQuickDate('scheduledDate', 1)}
+                      >
+                        {t('dashboard.tomorrow')}
+                      </button>
+                      <button 
+                        type="button" 
+                        className="btn btn-sm btn-outline-primary me-1"
+                        onClick={() => setQuickDate('scheduledDate', 2)}
+                      >
+                        {t('dashboard.dayAfterTomorrow')}
+                      </button>
+                      <button 
+                        type="button" 
+                        className="btn btn-sm btn-outline-primary me-1"
+                        onClick={() => setQuickDate('scheduledDate', 7)}
+                      >
+                        {t('dashboard.nextWeek')}
+                      </button>
+                      <button 
+                        type="button" 
+                        className="btn btn-sm btn-outline-primary"
+                        onClick={() => setQuickDate('scheduledDate', 30)}
+                      >
+                        {t('dashboard.nextMonth')}
+                      </button>
+                    </div>
                   </div>
                   <div className="mb-3">
                     <label htmlFor="description" className="form-label">{t('dashboard.description')}</label>
@@ -787,6 +893,58 @@ const DashboardPage: React.FC = () => {
                       value={editingTask.deadline || ''}
                       onChange={handleEditChange}
                     />
+                    <div className="mt-1">
+                      <button 
+                        type="button" 
+                        className="btn btn-sm btn-outline-primary me-1"
+                        onClick={() => editingTask && setEditingTask({
+                          ...editingTask,
+                          deadline: getDateAfterDays(0)
+                        })}
+                      >
+                        {t('dashboard.today')}
+                      </button>
+                      <button 
+                        type="button" 
+                        className="btn btn-sm btn-outline-primary me-1"
+                        onClick={() => editingTask && setEditingTask({
+                          ...editingTask,
+                          deadline: getDateAfterDays(1)
+                        })}
+                      >
+                        {t('dashboard.tomorrow')}
+                      </button>
+                      <button 
+                        type="button" 
+                        className="btn btn-sm btn-outline-primary me-1"
+                        onClick={() => editingTask && setEditingTask({
+                          ...editingTask,
+                          deadline: getDateAfterDays(2)
+                        })}
+                      >
+                        {t('dashboard.dayAfterTomorrow')}
+                      </button>
+                      <button 
+                        type="button" 
+                        className="btn btn-sm btn-outline-primary me-1"
+                        onClick={() => editingTask && setEditingTask({
+                          ...editingTask,
+                          deadline: getDateAfterDays(7)
+                        })}
+                      >
+                        {t('dashboard.nextWeek')}
+                      </button>
+                      <button 
+                        type="button" 
+                        className="btn btn-sm btn-outline-primary"
+                        onClick={() => editingTask && setEditingTask({
+                          ...editingTask,
+                          deadline: getDateAfterDays(30)
+                        })}
+                      >
+                        {t('dashboard.nextMonth')}
+                      </button>
+                    </div>
                   </div>
                   <div className="mb-3">
                     <label htmlFor="editScheduledDate" className="form-label">{t('dashboard.scheduledDate')}</label>
@@ -798,6 +956,58 @@ const DashboardPage: React.FC = () => {
                       value={editingTask.scheduledDate || ''}
                       onChange={handleEditChange}
                     />
+                    <div className="mt-1">
+                      <button 
+                        type="button" 
+                        className="btn btn-sm btn-outline-primary me-1"
+                        onClick={() => editingTask && setEditingTask({
+                          ...editingTask,
+                          scheduledDate: getDateAfterDays(0)
+                        })}
+                      >
+                        {t('dashboard.today')}
+                      </button>
+                      <button 
+                        type="button" 
+                        className="btn btn-sm btn-outline-primary me-1"
+                        onClick={() => editingTask && setEditingTask({
+                          ...editingTask,
+                          scheduledDate: getDateAfterDays(1)
+                        })}
+                      >
+                        {t('dashboard.tomorrow')}
+                      </button>
+                      <button 
+                        type="button" 
+                        className="btn btn-sm btn-outline-primary me-1"
+                        onClick={() => editingTask && setEditingTask({
+                          ...editingTask,
+                          scheduledDate: getDateAfterDays(2)
+                        })}
+                      >
+                        {t('dashboard.dayAfterTomorrow')}
+                      </button>
+                      <button 
+                        type="button" 
+                        className="btn btn-sm btn-outline-primary me-1"
+                        onClick={() => editingTask && setEditingTask({
+                          ...editingTask,
+                          scheduledDate: getDateAfterDays(7)
+                        })}
+                      >
+                        {t('dashboard.nextWeek')}
+                      </button>
+                      <button 
+                        type="button" 
+                        className="btn btn-sm btn-outline-primary"
+                        onClick={() => editingTask && setEditingTask({
+                          ...editingTask,
+                          scheduledDate: getDateAfterDays(30)
+                        })}
+                      >
+                        {t('dashboard.nextMonth')}
+                      </button>
+                    </div>
                   </div>
                   <div className="mb-3">
                     <label htmlFor="editAssignee" className="form-label">{t('dashboard.assignee')}</label>

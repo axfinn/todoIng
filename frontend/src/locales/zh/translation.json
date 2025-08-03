@@ -51,6 +51,12 @@
     "updated": "更新于",
     "overdue": "已过期",
     "dueSoon": "即将到期",
+    "exportCalendar": "导出到日历",
+    "today": "今天",
+    "tomorrow": "明天",
+    "dayAfterTomorrow": "后天",
+    "nextWeek": "下周",
+    "nextMonth": "下个月",
     "filter": {
       "status": "按状态筛选",
       "priority": "按优先级筛选",
