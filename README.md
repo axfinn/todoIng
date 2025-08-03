@@ -12,6 +12,7 @@
 - **Web 图形化界面** - 直观的用户界面，便于操作和查看任务状态
 - **实时同步** - 多设备间任务状态实时同步
 - **数据统计** - 提供任务完成情况的统计和分析
+- **Docker 自动构建** - 使用 GitHub Actions 实现的自动化 Docker 镜像构建和部署
 
 ## 文档
 
@@ -123,6 +124,27 @@ npm run build
 
 - 后端镜像: [axiu/todoing](https://hub.docker.com/r/axiu/todoing)
 - 前端镜像: [axiu/todoing-frontend](https://hub.docker.com/r/axiu/todoing-frontend)
+
+## Docker 自动构建
+
+本项目使用 GitHub Actions 实现 Docker 镜像的自动构建和推送。每当有新的 Git 标签创建时，GitHub Actions 会自动构建 Docker 镜像并推送到 Docker Hub。
+
+### 配置自动构建
+
+要为你的 fork 配置自动构建，需要在 GitHub 仓库中设置以下 Secrets:
+
+1. `DOCKERHUB_USERNAME` - 你的 Docker Hub 用户名
+2. `DOCKERHUB_TOKEN` - 你的 Docker Hub 访问令牌
+
+生成 Docker Hub 访问令牌的步骤:
+1. 登录到 [Docker Hub](https://hub.docker.com/)
+2. 进入 Account Settings（账户设置）
+3. 点击 Security（安全）选项卡
+4. 点击 "New Access Token"（新建访问令牌）
+5. 为令牌添加描述（例如："GitHub Actions"）
+6. 选择适当的权限（通常选择 Read & Write）
+7. 点击 "Generate"（生成）
+8. 复制生成的令牌并将其作为 `DOCKERHUB_TOKEN` Secret 添加到 GitHub
 
 ## 赞助作者
 
