@@ -1,46 +1,52 @@
 {
   "nav": {
     "home": "首页",
-    "dashboard": "仪表板",
-    "register": "注册",
+    "dashboard": "任务面板",
     "login": "登录",
+    "register": "注册",
     "logout": "退出"
-  },
-  "home": {
-    "title": "欢迎使用 todoIng！",
-    "description": "您现代化的任务管理解决方案。通过我们直观的任务管理系统组织您的工作，提高生产力并实现目标。",
-    "getStarted": "开始使用",
-    "login": "登录"
   },
   "auth": {
     "login": {
-      "title": "登录您的账户",
+      "title": "登录",
       "email": "邮箱地址",
       "password": "密码",
       "submit": "登录",
-      "noAccount": "还没有账户？",
-      "register": "在此注册"
+      "noAccount": "没有账户？",
+      "register": "注册"
     },
     "register": {
-      "title": "创建账户",
-      "name": "姓名",
+      "title": "注册",
+      "name": "用户名",
       "email": "邮箱地址",
       "password": "密码",
       "confirmPassword": "确认密码",
       "submit": "注册",
       "haveAccount": "已有账户？",
-      "login": "在此登录"
+      "login": "登录"
     }
   },
   "dashboard": {
-    "title": "任务仪表板",
+    "title": "任务面板",
     "newTask": "新建任务",
+    "taskList": "任务列表",
     "taskTitle": "任务标题",
     "description": "描述",
     "status": "状态",
     "priority": "优先级",
     "assignee": "负责人",
     "createTask": "创建任务",
+    "noTasks": "暂无任务",
+    "edit": "编辑",
+    "delete": "删除",
+    "confirmDelete": "确定要删除这个任务吗？",
+    "showDetails": "显示详情",
+    "hideDetails": "隐藏详情",
+    "comments": "评论",
+    "addComment": "添加评论...",
+    "addCommentButton": "添加评论",
+    "created": "创建于",
+    "updated": "更新于",
     "filter": {
       "status": "按状态筛选",
       "priority": "按优先级筛选",
@@ -51,18 +57,9 @@
       "newest": "最新优先",
       "oldest": "最早优先"
     },
-    "taskList": "任务列表",
-    "showDetails": "显示详情",
-    "hideDetails": "隐藏详情",
-    "edit": "编辑",
-    "delete": "删除",
-    "confirmDelete": "您确定要删除这个任务吗？",
-    "noTasks": "未找到任务",
-    "addComment": "添加评论...",
-    "addCommentButton": "添加评论",
-    "comments": "评论",
-    "created": "创建于",
-    "updated": "更新于"
+    "markAsDone": "标记为完成",
+    "markAsInProgress": "标记为进行中",
+    "allTasks": "所有任务"
   },
   "status": {
     "todo": "待办",
@@ -75,12 +72,17 @@
     "high": "高"
   },
   "common": {
-    "save": "保存",
-    "cancel": "取消",
     "loading": "加载中...",
-    "error": "错误"
+    "cancel": "取消",
+    "save": "保存"
+  },
+  "home": {
+    "title": "欢迎使用 todoIng",
+    "description": "一个使用 React、TypeScript 和 Node.js 构建的现代化任务管理应用",
+    "getStarted": "开始使用",
+    "login": "登录"
   },
   "footer": {
-    "copyright": "todoIng - 任务管理系统"
+    "copyright": "todoIng 任务管理器"
   }
 }

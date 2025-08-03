@@ -150,6 +150,15 @@ const App: React.FC = () => {
                       </Link>
                     </div>
                   )}
+                  
+                  <div className="mt-5">
+                    <div className="d-flex align-items-center justify-content-center">
+                      <i className="bi bi-github me-2"></i>
+                      <a href="https://github.com/axfinn/todoIng" target="_blank" rel="noopener noreferrer" className="text-decoration-none">
+                        Fork me on GitHub
+                      </a>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -166,7 +175,15 @@ const App: React.FC = () => {
       <footer className="bg-light py-3 mt-auto">
         <div className="container">
           <div className="text-center text-muted">
-            &copy; {new Date().getFullYear()} {t('footer.copyright')}
+            <div className="d-flex align-items-center justify-content-center">
+              <i className="bi bi-github me-2"></i>
+              <a href="https://github.com/axfinn/todoIng" target="_blank" rel="noopener noreferrer" className="text-decoration-none text-muted">
+                Fork me on GitHub
+              </a>
+            </div>
+            <div className="mt-2">
+              &copy; {new Date().getFullYear()} {t('footer.copyright')}
+            </div>
           </div>
         </div>
       </footer>
