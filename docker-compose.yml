@@ -1,11 +1,7 @@
-version: '3.8'
-
 services:
   mongodb:
-    image: mongo:5.0
-    container_name: todoing_mongodb
-    ports:
-      - "27017:27017"
+    image: mongo:7
+    restart: always
     volumes:
       - mongodb_data:/data/db
     networks:
@@ -15,14 +11,16 @@ services:
     build: 
       context: ./backend
       dockerfile: Dockerfile
-    container_name: todoing_backend
     ports:
       - "5001:5001"
     environment:
-      - MONGO_URI=mongodb://todoing_mongodb:27017/todoing
+      - MONGO_URI=mongodb://mongodb:27017/todoing
       - JWT_SECRET=your_jwt_secret_here
       - DISABLE_REGISTRATION=false
       - ENABLE_CAPTCHA=true
+      - DEFAULT_USERNAME=admin
+      - DEFAULT_EMAIL=admin@example.com
+      - DEFAULT_PASSWORD=admin123
     env_file:
       - ./backend/.env
     depends_on:
@@ -31,10 +29,9 @@ services:
       - todoing_network
 
   frontend:
-    build: 
+    build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: todoing_frontend
     ports:
       - "80:80"
     environment:

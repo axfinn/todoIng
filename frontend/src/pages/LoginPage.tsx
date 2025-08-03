@@ -4,7 +4,6 @@ import { useNavigate, Link } from 'react-router-dom';
 import { loginUser } from '../features/auth/authSlice';
 import { useTranslation } from 'react-i18next';
 import type { AppDispatch, RootState } from '../app/store';
-import { useGetCaptchaQuery } from '../redux/apiSlice';
 
 const LoginPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -61,10 +60,11 @@ const LoginPage: React.FC = () => {
     e.preventDefault();
     
     // 准备登录数据
-    const userData: Record<string, string> = { email, password, captcha };
+    const userData: Record<string, string> = { email, password };
     
-    // 如果启用了验证码且有验证码ID，则添加验证码ID
+    // 如果启用了验证码且有验证码ID，则添加验证码相关数据
     if (isCaptchaEnabled && captchaId) {
+      userData.captcha = captcha;
       userData.captchaId = captchaId;
     }
     
@@ -149,7 +149,7 @@ const LoginPage: React.FC = () => {
                         onClick={getCaptcha}
                         disabled={isLoading}
                       >
-                        {isLoading ? t('common.loading') : t('auth.login.refreshCaptcha')}
+                        {t('auth.login.refreshCaptcha')}
                       </button>
                     </div>
                     {captchaImage && (

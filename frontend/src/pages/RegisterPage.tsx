@@ -23,6 +23,7 @@ const RegisterPage: React.FC = () => {
   });
 
   const [captchaImage, setCaptchaImage] = useState<string | null>(null);
+  const [captchaId, setCaptchaId] = useState<string | null>(null);
 
   // 从环境变量获取验证码功能开关状态
   const isCaptchaEnabled = import.meta.env.VITE_ENABLE_CAPTCHA === 'true';
@@ -34,6 +35,13 @@ const RegisterPage: React.FC = () => {
     }
   }, [isAuthenticated, navigate]);
 
+  useEffect(() => {
+    // 如果启用了验证码功能，则获取验证码
+    if (isCaptchaEnabled) {
+      getCaptcha();
+    }
+  }, [isCaptchaEnabled]);
+
 
   const { username, email, password, password2, captcha } = formData;
 
@@ -42,13 +50,12 @@ const RegisterPage: React.FC = () => {
     try {
       const response = await fetch('/api/auth/captcha');
       const data = await response.json();
-      if (response.ok) {
+      if (data.image && data.id) {
         setCaptchaImage(data.image);
-      } else {
-        console.error('Failed to get captcha:', data.msg);
+        setCaptchaId(data.id);
       }
-    } catch (err) {
-      console.error('Error getting captcha:', err);
+    } catch (error) {
+      console.error('获取验证码失败:', error);
     }
   };
 
@@ -65,9 +72,15 @@ const RegisterPage: React.FC = () => {
     }
     
     // 准备注册数据
-    const registerData: Record<string, string> = { username, email, password, captcha };
+    const userData: Record<string, string> = { username, email, password };
     
-    dispatch(registerUser(registerData));
+    // 如果启用了验证码且有验证码ID，则添加验证码相关数据
+    if (isCaptchaEnabled && captchaId) {
+      userData.captcha = captcha;
+      userData.captchaId = captchaId;
+    }
+    
+    dispatch(registerUser(userData));
   };
 
   // 如果注册功能被禁用，显示提示信息
