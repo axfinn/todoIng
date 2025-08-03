@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Routes, Route, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
@@ -14,6 +14,12 @@ const App: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
   const { t, i18n } = useTranslation();
+  const [currentLanguage, setCurrentLanguage] = useState('en');
+
+  useEffect(() => {
+    // 初始化时设置当前语言
+    setCurrentLanguage(i18n.language);
+  }, [i18n.language]);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -21,6 +27,7 @@ const App: React.FC = () => {
 
   const changeLanguage = (lng: string) => {
     i18n.changeLanguage(lng);
+    setCurrentLanguage(lng);
   };
 
   return (
@@ -66,7 +73,7 @@ const App: React.FC = () => {
                   data-bs-toggle="dropdown" 
                   aria-expanded="false"
                 >
-                  {i18n.language === 'en' ? 'English' : '中文'}
+                  {currentLanguage === 'en' ? 'English' : '中文'}
                 </a>
                 <ul className="dropdown-menu">
                   <li>

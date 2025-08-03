@@ -1,9 +1,11 @@
 version: '3.8'
 
 services:
+  # MongoDB服务
   mongodb:
-    image: mongo:4.4
+    image: mongo:5.0
     container_name: todoing_mongodb_dev
+    restart: always
     ports:
       - "27017:27017"
     volumes:
@@ -12,12 +14,11 @@ services:
       - todoing_network_dev
 
   backend:
-    build: 
+    build:
       context: ./backend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     container_name: todoing_backend_dev
-    ports:
-      - "5001:5001"
+    restart: always
     environment:
       - NODE_ENV=development
       - MONGO_URI=mongodb://mongodb:27017/todoing
@@ -25,8 +26,16 @@ services:
       - PORT=5001
       # 是否禁用注册功能
       - DISABLE_REGISTRATION=false
-      # 是否启用登录验证码
-      - ENABLE_CAPTCHA=false
+      # 是否启用登录验证码 (默认开启)
+      - ENABLE_CAPTCHA=true
+      # 验证码服务密钥
+      - CAPTCHA_SECRET=your_captcha_secret_here
+      # 默认用户配置（示例）
+      # - DEFAULT_USERNAME=admin
+      # - DEFAULT_EMAIL=admin@example.com
+      # - DEFAULT_PASSWORD=securepassword
+    ports:
+      - "5001:5001"
     volumes:
       - ./backend:/app
       - /app/node_modules
@@ -38,16 +47,19 @@ services:
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     container_name: todoing_frontend_dev
+    restart: always
     ports:
       - "3000:3000"
     environment:
-      - VITE_API_BASE_URL=/api
+      - VITE_API_BASE_URL=http://localhost:5001/api
       # 是否禁用注册功能
       - VITE_DISABLE_REGISTRATION=false
-      # 是否启用登录验证码
-      - VITE_ENABLE_CAPTCHA=false
+      # 是否启用登录验证码 (默认开启)
+      - VITE_ENABLE_CAPTCHA=true
+      # 验证码服务密钥（前端也需要知晓）
+      - VITE_CAPTCHA_SECRET=your_captcha_secret_here
     volumes:
       - ./frontend:/app
       - /app/node_modules
@@ -56,9 +68,11 @@ services:
     networks:
       - todoing_network_dev
 
+# 数据卷定义
 volumes:
   mongodb_data_dev:
 
+# 网络定义
 networks:
   todoing_network_dev:
     driver: bridge

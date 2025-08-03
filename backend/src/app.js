@@ -1,75 +1,42 @@
 const express = require('express');
-const connectDB = require('./config/db');
-const dotenv = require('dotenv');
-const path = require('path');
-const User = require('./models/User');
-const bcrypt = require('bcryptjs');
 const cors = require('cors');
+const dotenv = require('dotenv');
+const connectDB = require('./config/db');
+const authRoutes = require('./routes/auth');
+const taskRoutes = require('./routes/tasks');
+const errorHandler = require('./middleware/error');
 
 // Load env vars
-dotenv.config();
+dotenv.config({ path: './.env' });
+
+// Connect to database
+connectDB();
 
 const app = express();
 
-// Connect Database
-connectDB();
-
-// 初始化默认用户
-const initializeDefaultUser = async () => {
-  try {
-    // 检查是否配置了默认用户
-    if (process.env.DEFAULT_USERNAME && process.env.DEFAULT_PASSWORD && process.env.DEFAULT_EMAIL) {
-      // 检查用户是否已存在
-      const existingUser = await User.findOne({
-        $or: [
-          { username: process.env.DEFAULT_USERNAME },
-          { email: process.env.DEFAULT_EMAIL }
-        ]
-      });
-      
-      // 如果不存在则创建
-      if (!existingUser) {
-        const user = new User({
-          username: process.env.DEFAULT_USERNAME,
-          email: process.env.DEFAULT_EMAIL,
-          password: process.env.DEFAULT_PASSWORD
-        });
-        
-        const salt = await bcrypt.genSalt(10);
-        user.password = await bcrypt.hash(user.password, salt);
-        await user.save();
-        console.log('Default user created successfully');
-      }
-    }
-  } catch (err) {
-    console.error('Error initializing default user:', err.message);
-  }
-};
-
-// 调用初始化函数
-initializeDefaultUser();
-
-const authRoutes = require('./routes/auth');
-const taskRoutes = require('./routes/tasks');
-const authMiddleware = require('./middleware/auth');
-const errorMiddleware = require('./middleware/error');
-const loggerMiddleware = require('./middleware/logger');
-
-// 中间件
-app.use(loggerMiddleware);
-app.use(cors());
+// Body parser
 app.use(express.json());
 
-// 路由
+// Enable cors
+app.use(cors());
+
+// Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/tasks', authMiddleware, taskRoutes);
+app.use('/api/tasks', taskRoutes);
 
-// 错误处理中间件（必须在路由之后注册）
-app.use(errorMiddleware);
+// Error handler
+app.use(errorHandler);
 
-// 获取端口配置，默认为5000
-const PORT = process.env.PORT || 5000;
+// Validate and use port from environment or default to 5001
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 5001;
 
-app.listen(PORT, () => {
+// Check if port is valid
+if (isNaN(PORT) || PORT < 1024 || PORT > 65535) {
+  console.error('Invalid port configuration. Using default port 5001');
+  process.env.PORT = '5001';
+}
+
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });

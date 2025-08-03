@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { useTranslation } from 'react-i18next';
-import type { RootState, AppDispatch } from '../app/store';
+import { useNavigate, Link } from 'react-router-dom';
 import { loginUser } from '../features/auth/authSlice';
-import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import type { AppDispatch, RootState } from '../app/store';
+import { useGetCaptchaQuery } from '../redux/apiSlice';
 
 const LoginPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -15,17 +15,41 @@ const LoginPage: React.FC = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    captcha: '',
+    captcha: ''
   });
 
-  // 检查是否启用验证码功能
-  const isCaptchaEnabled = process.env.REACT_APP_ENABLE_CAPTCHA === 'true';
+  const [captchaImage, setCaptchaImage] = useState<string | null>(null);
+  const [captchaId, setCaptchaId] = useState<string | null>(null);
+
+  // 从环境变量获取验证码功能开关状态
+  const isCaptchaEnabled = import.meta.env.VITE_ENABLE_CAPTCHA === 'true';
+
+  // 获取验证码
+  const getCaptcha = async () => {
+    try {
+      const response = await fetch('/api/auth/captcha');
+      const data = await response.json();
+      if (data.image && data.id) {
+        setCaptchaImage(data.image);
+        setCaptchaId(data.id);
+      }
+    } catch (error) {
+      console.error('获取验证码失败:', error);
+    }
+  };
 
   useEffect(() => {
     if (isAuthenticated) {
       navigate('/dashboard');
     }
   }, [isAuthenticated, navigate]);
+
+  useEffect(() => {
+    // 如果启用了验证码功能，则获取验证码
+    if (isCaptchaEnabled) {
+      getCaptcha();
+    }
+  }, [isCaptchaEnabled]);
 
   const { email, password, captcha } = formData;
 
@@ -37,18 +61,16 @@ const LoginPage: React.FC = () => {
     e.preventDefault();
     
     // 准备登录数据
-    const loginData: { email: string; password: string; captcha?: string } = {
-      email,
-      password
-    };
+    const userData: Record<string, string> = { email, password, captcha };
     
-    // 如果启用了验证码，则添加验证码到请求数据中
-    if (isCaptchaEnabled) {
-      loginData.captcha = captcha;
+    // 如果启用了验证码且有验证码ID，则添加验证码ID
+    if (isCaptchaEnabled && captchaId) {
+      userData.captchaId = captchaId;
     }
     
-    dispatch(loginUser(loginData));
+    dispatch(loginUser(userData));
   };
+
 
   if (isLoading) {
     return (
@@ -107,6 +129,7 @@ const LoginPage: React.FC = () => {
                   />
                 </div>
                 
+                {/* 验证码输入框 - 与注册页面保持一致 */}
                 {isCaptchaEnabled && (
                   <div className="mb-3 position-relative">
                     <label htmlFor="captcha" className="form-label">{t('auth.login.captcha')}</label>
@@ -123,17 +146,29 @@ const LoginPage: React.FC = () => {
                       <button 
                         type="button" 
                         className="btn btn-outline-secondary"
-                        // TODO: Add get captcha logic
+                        onClick={getCaptcha}
+                        disabled={isLoading}
                       >
-                        {t('auth.login.getCaptcha')}
+                        {isLoading ? t('common.loading') : t('auth.login.refreshCaptcha')}
                       </button>
                     </div>
+                    {captchaImage && (
+                      <div className="mt-2 text-center">
+                        <img 
+                          src={captchaImage} 
+                          alt={t('auth.login.captcha')} 
+                          className="img-fluid rounded"
+                          style={{ maxHeight: '80px', cursor: 'pointer' }}
+                          onClick={getCaptcha}
+                        />
+                      </div>
+                    )}
                   </div>
                 )}
                 
                 <div className="d-grid">
                   <button type="submit" className="btn btn-primary btn-lg" disabled={isLoading}>
-                    {t('auth.login.submit')}
+                    {isLoading ? t('common.loading') : t('auth.login.submit')}
                   </button>
                 </div>
               </form>

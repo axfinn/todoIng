@@ -1,10 +1,9 @@
 const mongoose = require('mongoose');
-require('dotenv').config();
 
 const connectDB = async () => {
   try {
-    // 优先使用环境变量中的MONGO_URI，否则使用默认值
-    const conn = await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/todoing', {
+    // 尝试连接MongoDB，使用docker-compose中定义的服务名称
+    const conn = await mongoose.connect(process.env.MONGO_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
@@ -12,7 +11,8 @@ const connectDB = async () => {
     console.log(`MongoDB Connected: ${conn.connection.host}`);
   } catch (err) {
     console.error(`Error: ${err.message}`);
-    process.exit(1);
+    // 如果连接失败，5秒后重试
+    setTimeout(connectDB, 5000);
   }
 };
 

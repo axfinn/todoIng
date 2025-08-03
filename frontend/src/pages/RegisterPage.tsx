@@ -1,25 +1,32 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { useTranslation } from 'react-i18next';
-import type { RootState, AppDispatch } from '../app/store';
+import { useNavigate, Link } from 'react-router-dom';
 import { registerUser } from '../features/auth/authSlice';
+import { useTranslation } from 'react-i18next';
+import type { AppDispatch, RootState } from '../app/store';
 
 const RegisterPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { isAuthenticated, isLoading, error } = useSelector((state: RootState) => state.auth);
-
-  // 检查是否禁用注册功能
-  const isRegistrationDisabled = process.env.REACT_APP_DISABLE_REGISTRATION === 'true';
+  
+  // 从环境变量获取注册功能开关状态
+  const isRegistrationDisabled = import.meta.env.VITE_DISABLE_REGISTRATION === 'true';
 
   const [formData, setFormData] = useState({
     username: '',
     email: '',
     password: '',
     password2: '',
+    captcha: ''
   });
+
+  const [captchaImage, setCaptchaImage] = useState<string | null>(null);
+
+  // 从环境变量获取验证码功能开关状态
+  const isCaptchaEnabled = import.meta.env.VITE_ENABLE_CAPTCHA === 'true';
+
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -27,7 +34,23 @@ const RegisterPage: React.FC = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  const { username, email, password, password2 } = formData;
+
+  const { username, email, password, password2, captcha } = formData;
+
+  // 获取验证码
+  const getCaptcha = async () => {
+    try {
+      const response = await fetch('/api/auth/captcha');
+      const data = await response.json();
+      if (response.ok) {
+        setCaptchaImage(data.image);
+      } else {
+        console.error('Failed to get captcha:', data.msg);
+      }
+    } catch (err) {
+      console.error('Error getting captcha:', err);
+    }
+  };
 
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -35,14 +58,19 @@ const RegisterPage: React.FC = () => {
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (password !== password2) {
-      alert('Passwords do not match');
+      alert(t('auth.register.passwordMismatch'));
       return;
     }
-    dispatch(registerUser({ username, email, password }));
+    
+    // 准备注册数据
+    const registerData: Record<string, string> = { username, email, password, captcha };
+    
+    dispatch(registerUser(registerData));
   };
 
-  // 如果禁用了注册功能，显示提示信息
+  // 如果注册功能被禁用，显示提示信息
   if (isRegistrationDisabled) {
     return (
       <div className="container py-5">
@@ -70,6 +98,20 @@ const RegisterPage: React.FC = () => {
     );
   }
 
+  if (isLoading) {
+    return (
+      <div className="container py-5">
+        <div className="d-flex justify-content-center align-items-center" style={{ height: '70vh' }}>
+          <div className="text-center">
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">{t('common.loading')}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container py-5">
       <div className="row justify-content-center">
@@ -79,25 +121,13 @@ const RegisterPage: React.FC = () => {
               <div className="text-center mb-4">
                 <h2 className="fw-bold">{t('auth.register.title')}</h2>
               </div>
-              
-              {isLoading && (
-                <div className="container py-5">
-                  <div className="d-flex justify-content-center align-items-center" style={{ height: '70vh' }}>
-                    <div className="text-center">
-                      <div className="spinner-border text-primary" role="status">
-                        <span className="visually-hidden">{t('common.loading')}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-              
+
               {error && (
                 <div className="alert alert-danger" role="alert">
                   {error}
                 </div>
               )}
-              
+
               <form onSubmit={onSubmit}>
                 <div className="mb-3">
                   <label htmlFor="username" className="form-label">{t('auth.register.name')}</label>
@@ -111,7 +141,7 @@ const RegisterPage: React.FC = () => {
                     required
                   />
                 </div>
-                
+
                 <div className="mb-3">
                   <label htmlFor="email" className="form-label">{t('auth.register.email')}</label>
                   <input
@@ -124,7 +154,7 @@ const RegisterPage: React.FC = () => {
                     required
                   />
                 </div>
-                
+
                 <div className="mb-3">
                   <label htmlFor="password" className="form-label">{t('auth.register.password')}</label>
                   <input
@@ -137,7 +167,7 @@ const RegisterPage: React.FC = () => {
                     required
                   />
                 </div>
-                
+
                 <div className="mb-3">
                   <label htmlFor="password2" className="form-label">{t('auth.register.confirmPassword')}</label>
                   <input
@@ -150,27 +180,66 @@ const RegisterPage: React.FC = () => {
                     required
                   />
                 </div>
-                
+
+                {/* 验证码输入框 - 与登录页面保持一致 */}
+                {isCaptchaEnabled && (
+                  <div className="mb-3 position-relative">
+                    <label htmlFor="captcha" className="form-label">{t('auth.register.captcha')}</label>
+                    <div className="input-group">
+                      <input
+                        type="text"
+                        className="form-control"
+                        id="captcha"
+                        name="captcha"
+                        value={captcha}
+                        onChange={onChange}
+                        required
+                      />
+                      <button 
+                        type="button" 
+                        className="btn btn-outline-secondary"
+                        onClick={getCaptcha}
+                        disabled={isLoading}
+                      >
+                        {isLoading ? t('common.loading') : t('auth.register.refreshCaptcha')}
+                      </button>
+                    </div>
+                    {captchaImage && (
+                      <div className="mt-2 text-center">
+                        <img 
+                          src={captchaImage} 
+                          alt={t('auth.register.captcha')} 
+                          className="img-fluid rounded"
+                          style={{ maxHeight: '80px', cursor: 'pointer' }}
+                          onClick={getCaptcha}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <div className="d-grid">
                   <button type="submit" className="btn btn-primary btn-lg" disabled={isLoading}>
-                    {t('auth.register.submit')}
+                    {isLoading ? t('common.loading') : t('auth.register.submit')}
                   </button>
                 </div>
               </form>
-              
+
               <div className="text-center mt-4">
                 <p className="mb-0">
-                  {t('auth.register.haveAccount')}{' '}
-                  <Link to="/login" className="text-decoration-none">
-                    {t('auth.register.login')}
-                  </Link>
+                  {t('auth.register.haveAccount')} <Link to="/login" className="text-decoration-none">{t('auth.register.login')}</Link>
                 </p>
               </div>
-              
+
               <div className="text-center mt-4">
                 <div className="d-flex align-items-center justify-content-center">
                   <i className="bi bi-github me-2"></i>
-                  <a href="https://github.com/axfinn/todoIng" target="_blank" rel="noopener noreferrer" className="text-decoration-none">
+                  <a 
+                    href="https://github.com/axfinn/todoIng" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="text-decoration-none"
+                  >
                     Fork me on GitHub
                   </a>
                 </div>

@@ -1,8 +1,9 @@
 version: '3.8'
 
 services:
+  # MongoDB服务
   mongodb:
-    image: mongo:4.4
+    image: mongo:5.0
     container_name: todoing_mongodb_local
     restart: always
     ports:
@@ -13,44 +14,55 @@ services:
       - todoing_network_local
 
   backend:
-    image: axfinn/todoing-backend:latest
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: todoing_backend_local
     restart: always
-    ports:
-      - "5001:5001"
     environment:
+      - NODE_ENV=production
       - MONGO_URI=mongodb://mongodb:27017/todoing
       - JWT_SECRET=your_jwt_secret_here
       - PORT=5001
       # 是否禁用注册功能
       - DISABLE_REGISTRATION=false
-      # 是否启用登录验证码
-      - ENABLE_CAPTCHA=false
+      # 是否启用登录验证码 (默认开启)
+      - ENABLE_CAPTCHA=true
+      # 默认用户配置（示例）
+      # - DEFAULT_USERNAME=admin
+      # - DEFAULT_EMAIL=admin@example.com
+      # - DEFAULT_PASSWORD=securepassword
+    ports:
+      - "5001:5001"
     depends_on:
       - mongodb
     networks:
       - todoing_network_local
 
   frontend:
-    image: axfinn/todoing-frontend:latest
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     container_name: todoing_frontend_local
     restart: always
     ports:
       - "80:80"
-    depends_on:
-      - backend
-    networks:
-      - todoing_network_local
     environment:
       - VITE_API_BASE_URL=/api
       # 是否禁用注册功能
       - VITE_DISABLE_REGISTRATION=false
-      # 是否启用登录验证码
-      - VITE_ENABLE_CAPTCHA=false
+      # 是否启用登录验证码 (默认开启)
+      - VITE_ENABLE_CAPTCHA=true
+    depends_on:
+      - backend
+    networks:
+      - todoing_network_local
 
+# 数据卷定义
 volumes:
   mongodb_data_local:
 
+# 网络定义
 networks:
   todoing_network_local:
     driver: bridge

@@ -278,6 +278,16 @@ const checkCaptcha = (req, res, next) => {
 router.post('/login', checkCaptcha, (req, res) => {
   // 正常登录逻辑
 });
+
+// 生成验证码路由
+router.get('/captcha', (req, res) => {
+  // 生成验证码逻辑
+  const captcha = generateCaptcha();
+  // 保存验证码到会话或缓存中
+  req.session.captcha = captcha.text;
+  // 返回验证码图像
+  res.json({ image: captcha.image });
+});
 ```
 
 ## 5. 数据库设计实现
@@ -285,7 +295,7 @@ router.post('/login', checkCaptcha, (req, res) => {
 ### 5.1 MongoDB 模式定义
 
 #### 5.1.1 用户模型
-```javascript
+```
 const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   email: { type: String, required: true, unique: true },
@@ -316,7 +326,7 @@ const userSchema = new mongoose.Schema({
 ```
 
 #### 5.1.2 任务模型
-```javascript
+```
 const taskSchema = new mongoose.Schema({
   title: { type: String, required: true },
   description: String,
@@ -349,7 +359,7 @@ const taskSchema = new mongoose.Schema({
 ```
 
 #### 5.1.3 团队模型
-```javascript
+```
 const teamSchema = new mongoose.Schema({
   name: { type: String, required: true },
   description: String,
