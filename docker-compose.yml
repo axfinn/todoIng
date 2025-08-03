@@ -3,12 +3,8 @@ version: '3.8'
 services:
   # MongoDB服务
   mongodb:
-    image: mongo:5.0
+    image: mongo:4.4
     container_name: todoing_mongodb
-    restart: always
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: password
     ports:
       - "27017:27017"
     volumes:
@@ -16,7 +12,6 @@ services:
     networks:
       - todoing_network
 
-  # 后端服务
   backend:
     build:
       context: ./backend
@@ -24,17 +19,25 @@ services:
     container_name: todoing_backend
     restart: always
     environment:
-      NODE_ENV: production
-      MONGO_URI: mongodb://admin:password@mongodb:27017/todoing?authSource=admin
-      JWT_SECRET: your_jwt_secret_here
+      - NODE_ENV=production
+      - MONGO_URI=mongodb://mongodb:27017/todoing
+      - JWT_SECRET=your_jwt_secret_here
+      - PORT=5001
+      # 是否禁用注册功能
+      - DISABLE_REGISTRATION=false
+      # 是否启用登录验证码
+      - ENABLE_CAPTCHA=false
+      # 默认用户配置（示例）
+      # - DEFAULT_USERNAME=admin
+      # - DEFAULT_EMAIL=admin@example.com
+      # - DEFAULT_PASSWORD=securepassword
     ports:
-      - "5001:5000"
+      - "5001:5001"
     depends_on:
       - mongodb
     networks:
       - todoing_network
 
-  # 前端服务
   frontend:
     build:
       context: ./frontend
@@ -43,6 +46,12 @@ services:
     restart: always
     ports:
       - "80:80"
+    environment:
+      - VITE_API_BASE_URL=/api
+      # 是否禁用注册功能
+      - VITE_DISABLE_REGISTRATION=false
+      # 是否启用登录验证码
+      - VITE_ENABLE_CAPTCHA=false
     depends_on:
       - backend
     networks:
@@ -51,7 +60,6 @@ services:
 # 数据卷定义
 volumes:
   mongodb_data:
-    driver: local
 
 # 网络定义
 networks:

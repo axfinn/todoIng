@@ -17,6 +17,11 @@ router.post(
     ).isLength({ min: 6 }),
   ],
   async (req, res) => {
+    // 检查是否禁用注册功能
+    if (process.env.DISABLE_REGISTRATION === 'true') {
+      return res.status(403).json({ msg: 'Registration is disabled' });
+    }
+
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });

@@ -23,7 +23,9 @@
       "confirmPassword": "Confirm Password",
       "submit": "Register",
       "haveAccount": "Already have an account?",
-      "login": "Login"
+      "login": "Login",
+      "disabledTitle": "Registration Disabled",
+      "disabledMessage": "New user registration is currently disabled. Please contact the system administrator for access."
     }
   },
   "dashboard": {

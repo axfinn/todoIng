@@ -23,7 +23,9 @@
       "confirmPassword": "确认密码",
       "submit": "注册",
       "haveAccount": "已有账户？",
-      "login": "登录"
+      "login": "登录",
+      "disabledTitle": "注册已禁用",
+      "disabledMessage": "当前已禁用新用户注册。请联系系统管理员获取访问权限。"
     }
   },
   "dashboard": {

@@ -11,6 +11,9 @@ const RegisterPage: React.FC = () => {
   const { t } = useTranslation();
   const { isAuthenticated, isLoading, error } = useSelector((state: RootState) => state.auth);
 
+  // 检查是否禁用注册功能
+  const isRegistrationDisabled = process.env.REACT_APP_DISABLE_REGISTRATION === 'true';
+
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -38,6 +41,34 @@ const RegisterPage: React.FC = () => {
     }
     dispatch(registerUser({ username, email, password }));
   };
+
+  // 如果禁用了注册功能，显示提示信息
+  if (isRegistrationDisabled) {
+    return (
+      <div className="container py-5">
+        <div className="row justify-content-center">
+          <div className="col-md-6 col-lg-5">
+            <div className="card shadow-sm">
+              <div className="card-body p-5">
+                <div className="text-center mb-4">
+                  <h2 className="fw-bold">{t('auth.register.title')}</h2>
+                </div>
+                
+                <div className="alert alert-warning" role="alert">
+                  <h4 className="alert-heading">{t('auth.register.disabledTitle')}</h4>
+                  <p>{t('auth.register.disabledMessage')}</p>
+                  <hr />
+                  <Link to="/login" className="btn btn-primary">
+                    {t('auth.register.login')}
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container py-5">

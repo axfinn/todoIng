@@ -1,41 +1,48 @@
-# todoIng - 现代化任务管理系统
+# todoIng - 任务管理系统
 
-![todoIng Dashboard](img/dashboard.png)
+todoIng 是一个创新的任务管理系统，它不仅提供基本的任务管理功能，还为每个任务提供完整的生命周期追踪和变更历史记录，就像 Git 管理代码变更一样管理任务。
 
-一个使用 React、TypeScript、Node.js、MongoDB 和 Docker 构建的现代化任务管理系统。
+## 功能特性
 
-## 核心特性
+- [x] 用户认证（注册/登录）
+- [x] 任务管理（创建、编辑、删除、状态变更）
+- [x] 任务历史追踪（类似 Git 的任务变更历史）
+- [x] 团队协作功能
+- [x] 数据可视化展示
+- [x] 多语言支持
+- [ ] 通知系统
+- [x] Docker 容器化部署
 
-- **任务生命周期管理** - 完整的任务状态跟踪（创建、进行中、暂停、完成、取消）
-- **变更历史追踪** - 记录任务的每一次变更，支持随时回溯任务状态
-- **可视化历史展示** - 以图形化方式展示任务变更历史，类似 Git 提交历史
-- **Web 图形化界面** - 直观的用户界面，便于操作和查看任务状态
-- **实时同步** - 多设备间任务状态实时同步
-- **数据统计** - 提供任务完成情况的统计和分析
-- **Docker 自动构建** - 使用 GitHub Actions 实现的自动化 Docker 镜像构建和部署
+## 配置管理
 
-## 文档
+系统支持多种配置选项，可以通过环境变量进行控制：
 
-详细的项目设计文档请查看 [docs](./docs) 目录：
+| 变量名 | 描述 | 默认值 |
+|--------|------|--------|
+| `DISABLE_REGISTRATION` | 是否禁用注册功能 | `false` |
+| `ENABLE_CAPTCHA` | 是否启用登录验证码 | `false` |
+| `DEFAULT_USERNAME` | 默认用户名 | 无 |
+| `DEFAULT_EMAIL` | 默认用户邮箱 | 无 |
+| `DEFAULT_PASSWORD` | 默认用户密码 | 无 |
 
-- [项目概述](../README.md)
-- [系统架构与技术设计](docs/technical-design.md)
-- [UI/UX 设计](docs/ui-ux-design.md)
-- [API 设计](docs/api-design.md)
-- [数据库设计](docs/database-design.md)
-- [实现技术方案](docs/implementation-plan.md)
+更多配置信息请查看 [配置文档](./docs/configuration.md)。
+
+## 快速开始
 
 开发相关文档请查看 [docs/development](./docs/development) 目录：
 
 - [开发计划](docs/development/development-plan.md)
 
-## 技术栈
+## 文档
 
-- 前端: React 18, TypeScript, Redux, Bootstrap 5, React Router v6
-- 后端: Node.js, Express, Mongoose
-- 数据库: MongoDB
-- 部署: Docker, Docker Compose
-- 其他: i18next (多语言), Axios (HTTP 客户端)
+- [API 设计](./docs/api-design.md)
+- [数据库设计](./docs/database-design.md)
+- [实现计划](./docs/implementation-plan.md)
+- [技术设计](./docs/technical-design.md)
+- [UI/UX 设计](./docs/ui-ux-design.md)
+- [配置管理](./docs/configuration.md)
+
+## 技术栈
 
 ## 快速开始
 
@@ -118,12 +125,13 @@ npm run dev
 npm run build
 ```
 
-## Docker 镜像
+## 部署
 
-预构建的 Docker 镜像可在 Docker Hub 获取:
+应用支持多种部署方式：
+1. Docker 容器化部署
+2. 传统部署方式
 
-- 后端镜像: [axiu/todoing](https://hub.docker.com/r/axiu/todoing)
-- 前端镜像: [axiu/todoing-frontend](https://hub.docker.com/r/axiu/todoing-frontend)
+详细部署说明请参考 [部署文档](./docs/deployment.md)。
 
 ## Docker 自动构建
 
@@ -146,17 +154,10 @@ npm run build
 7. 点击 "Generate"（生成）
 8. 复制生成的令牌并将其作为 `DOCKERHUB_TOKEN` Secret 添加到 GitHub
 
-## 赞助作者
+## 贡献
 
-如果你觉得这个项目对你有帮助，欢迎赞助作者一杯咖啡！
+欢迎提交 Issue 和 Pull Request 来帮助改进项目。
 
-<div style="display: flex; justify-content: center; gap: 20px; margin: 20px 0;">
-  <div style="text-align: center;">
-    <h4>支付宝</h4>
-    <img src="./img/alipay.JPG" alt="支付宝收款码" width="200">
-  </div>
-  <div style="text-align: center;">
-    <h4>微信</h4>
-    <img src="./img/wxpay.JPG" alt="微信收款码" width="200">
-  </div>
-</div>
+## 许可证
+
+[MIT](./LICENSE)

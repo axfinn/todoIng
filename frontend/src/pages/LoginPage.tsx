@@ -15,7 +15,11 @@ const LoginPage: React.FC = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
+    captcha: '',
   });
+
+  // 检查是否启用验证码功能
+  const isCaptchaEnabled = process.env.REACT_APP_ENABLE_CAPTCHA === 'true';
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -23,7 +27,7 @@ const LoginPage: React.FC = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  const { email, password } = formData;
+  const { email, password, captcha } = formData;
 
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -31,7 +35,19 @@ const LoginPage: React.FC = () => {
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    dispatch(loginUser({ email, password }));
+    
+    // 准备登录数据
+    const loginData: { email: string; password: string; captcha?: string } = {
+      email,
+      password
+    };
+    
+    // 如果启用了验证码，则添加验证码到请求数据中
+    if (isCaptchaEnabled) {
+      loginData.captcha = captcha;
+    }
+    
+    dispatch(loginUser(loginData));
   };
 
   if (isLoading) {
@@ -90,6 +106,30 @@ const LoginPage: React.FC = () => {
                     required
                   />
                 </div>
+                
+                {isCaptchaEnabled && (
+                  <div className="mb-3 position-relative">
+                    <label htmlFor="captcha" className="form-label">{t('auth.login.captcha')}</label>
+                    <div className="input-group">
+                      <input
+                        type="text"
+                        className="form-control"
+                        id="captcha"
+                        name="captcha"
+                        value={captcha}
+                        onChange={onChange}
+                        required
+                      />
+                      <button 
+                        type="button" 
+                        className="btn btn-outline-secondary"
+                        // TODO: Add get captcha logic
+                      >
+                        {t('auth.login.getCaptcha')}
+                      </button>
+                    </div>
+                  </div>
+                )}
                 
                 <div className="d-grid">
                   <button type="submit" className="btn btn-primary btn-lg" disabled={isLoading}>

@@ -201,20 +201,83 @@ const checkTeamPermission = (team, userId, requiredRole) => {
 };
 ```
 
-#### 4.3.2 团队任务分配
-团队任务只能分配给团队成员：
+### 4.4 系统配置管理
+
+#### 4.4.1 注册控制
+系统支持通过环境变量禁用用户注册功能，适用于私有部署场景。
 
 ```javascript
-const assignTaskToTeamMember = async (taskId, assigneeId, teamId) => {
-  const team = await Team.findById(teamId);
-  const isMember = team.members.some(m => m.user.toString() === assigneeId.toString());
-  
-  if (!isMember) {
-    throw new Error('User is not a member of the team');
+// 检查是否禁用注册
+const isRegistrationDisabled = () => {
+  return process.env.DISABLE_REGISTRATION === 'true';
+};
+
+// 在注册路由中应用控制
+router.post('/register', (req, res) => {
+  if (isRegistrationDisabled()) {
+    return res.status(403).json({ msg: 'Registration is disabled' });
+  }
+  // 正常注册逻辑
+});
+```
+
+#### 4.4.2 默认用户
+系统支持配置默认用户，在应用启动时自动创建，方便私有部署场景的初始访问。
+
+```javascript
+// 创建默认用户
+const createDefaultUser = async () => {
+  // 检查是否配置了默认用户
+  if (process.env.DEFAULT_USERNAME && process.env.DEFAULT_PASSWORD) {
+    // 检查用户是否已存在
+    const existingUser = await User.findOne({
+      $or: [
+        { username: process.env.DEFAULT_USERNAME },
+        { email: process.env.DEFAULT_EMAIL }
+      ]
+    });
+    
+    // 如果不存在则创建
+    if (!existingUser) {
+      const user = new User({
+        username: process.env.DEFAULT_USERNAME,
+        email: process.env.DEFAULT_EMAIL,
+        password: process.env.DEFAULT_PASSWORD
+      });
+      
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(user.password, salt);
+      await user.save();
+      console.log('Default user created successfully');
+    }
+  }
+};
+```
+
+#### 4.4.3 登录验证码
+系统支持可选的登录验证码功能，增强系统安全性。
+
+```javascript
+// 验证码检查中间件
+const checkCaptcha = (req, res, next) => {
+  // 检查是否启用了验证码功能
+  if (process.env.ENABLE_CAPTCHA !== 'true') {
+    return next();
   }
   
-  return await Task.findByIdAndUpdate(taskId, { assignee: assigneeId });
+  const { captcha } = req.body;
+  // 验证验证码逻辑
+  if (!captcha || !isValidCaptcha(captcha)) {
+    return res.status(400).json({ msg: 'Invalid captcha' });
+  }
+  
+  next();
 };
+
+// 在登录路由中应用
+router.post('/login', checkCaptcha, (req, res) => {
+  // 正常登录逻辑
+});
 ```
 
 ## 5. 数据库设计实现
@@ -550,7 +613,7 @@ const VirtualizedTaskList: React.FC<{ tasks: Task[] }> = ({ tasks }) => {
 ## 10. 部署方案
 
 ### 10.1 Docker 化部署
-```dockerfile
+```
 # Dockerfile
 FROM node:18-alpine
 
@@ -567,7 +630,7 @@ CMD ["npm", "start"]
 ```
 
 ### 10.2 Nginx 反向代理配置
-```nginx
+```
 server {
     listen 80;
     server_name todoing.example.com;

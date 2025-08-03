@@ -1,68 +1,64 @@
 version: '3.8'
 
 services:
-  # MongoDB服务
   mongodb:
-    image: mongo:5.0
+    image: mongo:4.4
     container_name: todoing_mongodb_dev
-    restart: always
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: password
     ports:
       - "27017:27017"
     volumes:
       - mongodb_data_dev:/data/db
     networks:
-      - todoing_network
+      - todoing_network_dev
 
-  # 后端服务
   backend:
-    build:
+    build: 
       context: ./backend
       dockerfile: Dockerfile
     container_name: todoing_backend_dev
-    restart: always
-    environment:
-      NODE_ENV: development
-      MONGO_URI: mongodb://admin:password@mongodb:27017/todoing?authSource=admin
-      JWT_SECRET: your_jwt_secret_here
     ports:
-      - "5001:5000"
+      - "5001:5001"
+    environment:
+      - NODE_ENV=development
+      - MONGO_URI=mongodb://mongodb:27017/todoing
+      - JWT_SECRET=your_jwt_secret_here
+      - PORT=5001
+      # 是否禁用注册功能
+      - DISABLE_REGISTRATION=false
+      # 是否启用登录验证码
+      - ENABLE_CAPTCHA=false
     volumes:
       - ./backend:/app
       - /app/node_modules
     depends_on:
       - mongodb
     networks:
-      - todoing_network
-    command: npm run dev
+      - todoing_network_dev
 
-  # 前端服务
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: todoing_frontend_dev
-    restart: always
-    environment:
-      - VITE_API_URL=http://localhost:5001/api
     ports:
-      - "3000:80"
+      - "3000:3000"
+    environment:
+      - VITE_API_BASE_URL=/api
+      # 是否禁用注册功能
+      - VITE_DISABLE_REGISTRATION=false
+      # 是否启用登录验证码
+      - VITE_ENABLE_CAPTCHA=false
     volumes:
       - ./frontend:/app
       - /app/node_modules
     depends_on:
       - backend
     networks:
-      - todoing_network
+      - todoing_network_dev
 
-# 数据卷定义
 volumes:
   mongodb_data_dev:
-    driver: local
 
-# 网络定义
 networks:
-  todoing_network:
+  todoing_network_dev:
     driver: bridge
