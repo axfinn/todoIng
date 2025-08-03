@@ -16,6 +16,29 @@ todoIng 是一个创新的任务管理系统，它不仅提供基本的任务管
 - [ ] 通知系统
 - [x] Docker 容器化部署
 
+## 技术栈
+
+### 前端
+- React 18
+- TypeScript
+- Redux Toolkit (状态管理)
+- React Router v6 (路由管理)
+- Bootstrap 5 (UI框架)
+- Bootstrap Icons (图标库)
+- i18next (国际化)
+- Vite (构建工具)
+- Axios (HTTP客户端)
+
+### 后端
+- Node.js
+- Express.js
+- MongoDB (数据库)
+- Mongoose (ODM)
+- JSON Web Tokens (JWT认证)
+- Bcrypt.js (密码加密)
+- Speakeasy (双因素认证)
+- QRCode (二维码生成)
+
 ## 配置管理
 
 系统支持多种配置选项，可以通过环境变量进行控制：
@@ -45,7 +68,9 @@ todoIng 是一个创新的任务管理系统，它不仅提供基本的任务管
 - [UI/UX 设计](./docs/ui-ux-design.md)
 - [配置管理](./docs/configuration.md)
 
-## 技术栈
+## 项目截图
+
+![仪表板界面](./img/dashboard.png)
 
 ## 快速开始
 
@@ -166,6 +191,21 @@ npm run build
 6. 选择适当的权限（通常选择 Read & Write）
 7. 点击 "Generate"（生成）
 8. 复制生成的令牌并将其作为 `DOCKERHUB_TOKEN` Secret 添加到 GitHub
+
+## 请作者喝咖啡
+
+如果你觉得这个项目对你有帮助，欢迎请作者喝杯咖啡！
+
+<div style="display: flex; gap: 20px;">
+  <div>
+    <h4>支付宝</h4>
+    <img src="./img/alipay.JPG" width="200">
+  </div>
+  <div>
+    <h4>微信支付</h4>
+    <img src="./img/wxpay.JPG" width="200">
+  </div>
+</div>
 
 ## 贡献
 
