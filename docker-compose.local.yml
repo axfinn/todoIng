@@ -1,49 +1,38 @@
 version: '3.8'
 
 services:
-  # MongoDB服务
   mongodb:
     image: mongo:5.0
-    container_name: todoing_mongodb_local
+    container_name: todoing_mongodb
     restart: always
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: password
     ports:
-      - "27018:27017"
+      - "27017:27017"
     volumes:
-      - mongodb_data_local:/data/db
+      - mongodb_data:/data/db
     networks:
       - todoing_network
 
-  # 后端服务
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: todoing_backend_local
+    image: axiu/todoing:latest
+    container_name: todoing_backend
     restart: always
-    environment:
-      NODE_ENV: production
-      MONGO_URI: mongodb://admin:password@mongodb:27017/todoing?authSource=admin
-      JWT_SECRET: your_jwt_secret_here
-      PORT: 5000
     ports:
-      - "5001:5000"
+      - "5001:5001"
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/todoing
+      - JWT_SECRET=your_jwt_secret_here
+      - PORT=5001
     depends_on:
       - mongodb
     networks:
       - todoing_network
 
-  # 前端服务
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: todoing_frontend_local
+    image: axiu/todoing-frontend:latest
+    container_name: todoing_frontend
     restart: always
     ports:
-      - "3002:80"
+      - "80:80"
     depends_on:
       - backend
     networks:
@@ -51,10 +40,8 @@ services:
     environment:
       - VITE_API_URL=http://host.docker.internal:5001/api
 
-# 数据卷定义
 volumes:
-  mongodb_data_local:
-    driver: local
+  mongodb_data:
 
 # 网络定义
 networks:

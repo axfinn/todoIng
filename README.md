@@ -1,6 +1,8 @@
-# todoIng
+# todoIng - 现代化任务管理系统
 
-todoIng 是一个创新的任务管理系统，它不仅提供基本的任务管理功能，还为每个任务提供完整的生命周期追踪和变更历史记录，就像 Git 管理代码变更一样管理任务。
+![todoIng Dashboard](img/dashboard.png)
+
+一个使用 React、TypeScript、Node.js、MongoDB 和 Docker 构建的现代化任务管理系统。
 
 ## 核心特性
 
@@ -28,41 +30,38 @@ todoIng 是一个创新的任务管理系统，它不仅提供基本的任务管
 
 ## 技术栈
 
-### 前端
-- React 19
-- TypeScript
-- Redux Toolkit
-- React Router v7
-- Bootstrap 5
-- Bootstrap Icons
-- i18next (多语言支持)
-- Axios (HTTP客户端)
-
-### 后端
-- Node.js
-- Express.js
-- MongoDB
-- Mongoose
-- JWT 认证
-- bcryptjs (密码加密)
-- express-validator (数据验证)
+- 前端: React 18, TypeScript, Redux, Bootstrap 5, React Router v6
+- 后端: Node.js, Express, Mongoose
+- 数据库: MongoDB
+- 部署: Docker, Docker Compose
+- 其他: i18next (多语言), Axios (HTTP 客户端)
 
 ## 快速开始
 
-### 方法一：使用Docker（推荐）
+### 使用 Docker Compose 部署（推荐）
 
-#### 生产环境部署
 ```bash
 # 克隆项目
-git clone <repository-url>
+git clone https://github.com/axfinn/todoIng.git
 cd todoIng
 
-# 构建并启动所有服务
+# 启动服务
 docker-compose up -d
 
-# 应用将在以下地址可用：
+# 访问应用
 # 前端: http://localhost
-# 后端API: http://localhost:5001
+# 后端 API: http://localhost:5001/api
+```
+
+### 使用 Docker Hub 镜像
+
+```bash
+# 拉取镜像
+docker pull axiu/todoing:latest
+docker pull axiu/todoing-frontend:latest
+
+# 运行服务
+docker-compose -f docker-compose.local.yml up -d
 ```
 
 #### 开发环境部署
@@ -117,6 +116,13 @@ npm run dev
 # 或者构建生产版本
 npm run build
 ```
+
+## Docker 镜像
+
+预构建的 Docker 镜像可在 Docker Hub 获取:
+
+- 后端镜像: [axiu/todoing](https://hub.docker.com/r/axiu/todoing)
+- 前端镜像: [axiu/todoing-frontend](https://hub.docker.com/r/axiu/todoing-frontend)
 
 ## 赞助作者
 
