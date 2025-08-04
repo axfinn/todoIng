@@ -403,6 +403,12 @@ router.post(
           return res.status(400).json({ msg: 'Invalid or expired captcha' });
         }
         
+        // 检查验证码是否过期
+        if (storedCaptcha.expiresAt < Date.now()) {
+          captchaStore.delete(captchaId);
+          return res.status(400).json({ msg: 'Captcha has expired' });
+        }
+        
         if (storedCaptcha.text !== captcha.toUpperCase()) {
           return res.status(400).json({ msg: 'Invalid captcha' });
         }
