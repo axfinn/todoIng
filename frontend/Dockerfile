@@ -1,32 +1,35 @@
-# 使用官方Node.js运行时作为构建环境
+# 使用Node.js 18作为构建环境
 FROM node:18-alpine AS builder
 
 # 设置工作目录
 WORKDIR /app
 
-# 复制package.json和package-lock.json（如果存在）
+# 复制package.json和package-lock.json
 COPY package*.json ./
 
-# 安装依赖
+# 安装所有依赖
 RUN npm install
 
-# 复制应用源代码
+# 安装esbuild-wasm作为跨平台兼容的替代方案
+RUN npm install esbuild-wasm
+
+# 复制源代码
 COPY . .
 
 # 构建应用
 RUN npm run build
 
-# 使用nginx作为生产环境服务器
+# 使用nginx作为生产环境
 FROM nginx:alpine
 
-# 复制构建产物到nginx服务器
+# 复制构建产物到nginx目录
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# 复制自定义nginx配置文件
+# 复制nginx配置
 COPY nginx.conf /etc/nginx/nginx.conf
 
-# 暴露端口
+# 暴露80端口
 EXPOSE 80
 
-# 启动nginx服务器
+# 启动nginx
 CMD ["nginx", "-g", "daemon off;"]
