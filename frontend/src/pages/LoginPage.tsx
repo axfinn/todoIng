@@ -11,6 +11,21 @@ const LoginPage: React.FC = () => {
   const { t } = useTranslation();
   const { isAuthenticated, isLoading, error } = useSelector((state: RootState) => state.auth);
 
+  const [backgroundImage, setBackgroundImage] = useState('');
+
+  // 背景图片数组
+  const backgroundImages = [
+    'https://picsum.photos/1920/1080?random=1',
+    'https://picsum.photos/1920/1080?random=2',
+    'https://picsum.photos/1920/1080?random=3'
+  ];
+
+  // 设置随机背景图片
+  useEffect(() => {
+    const randomIndex = Math.floor(Math.random() * backgroundImages.length);
+    setBackgroundImage(backgroundImages[randomIndex]);
+  }, []);
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -87,99 +102,114 @@ const LoginPage: React.FC = () => {
   }
 
   return (
-    <div className="container py-5">
-      <div className="row justify-content-center">
-        <div className="col-md-6 col-lg-5">
-          <div className="card shadow-sm">
-            <div className="card-body p-5">
-              <div className="text-center mb-4">
-                <h2 className="fw-bold">{t('auth.login.title')}</h2>
-              </div>
+    <div 
+      className="d-flex flex-column min-vh-100"
+      style={{
+        backgroundImage: `url(${backgroundImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'fixed'
+      }}
+    >
+      <div className="container py-5 flex-grow-1 d-flex align-items-center">
+        <div className="row justify-content-center w-100">
+          <div className="col-md-6 col-lg-5">
+            <div className="card shadow-lg" style={{ 
+              backgroundColor: 'rgba(255, 255, 255, 0.8)',
+              borderRadius: '10px',
+              backdropFilter: 'blur(10px)'
+            }}>
+              <div className="card-body p-5">
+                <div className="text-center mb-4">
+                  <h2 className="fw-bold">{t('auth.login.title')}</h2>
+                </div>
               
-              {error && (
-                <div className="alert alert-danger" role="alert">
-                  {error}
-                </div>
-              )}
-              
-              <form onSubmit={onSubmit}>
-                <div className="mb-3">
-                  <label htmlFor="email" className="form-label">{t('auth.login.email')}</label>
-                  <input
-                    type="email"
-                    className="form-control"
-                    id="email"
-                    name="email"
-                    value={email}
-                    onChange={onChange}
-                    required
-                  />
-                </div>
-                
-                <div className="mb-3">
-                  <label htmlFor="password" className="form-label">{t('auth.login.password')}</label>
-                  <input
-                    type="password"
-                    className="form-control"
-                    id="password"
-                    name="password"
-                    value={password}
-                    onChange={onChange}
-                    required
-                  />
-                </div>
-                
-                {/* 验证码输入框 - 与注册页面保持一致 */}
-                {isCaptchaEnabled && (
-                  <div className="mb-3 position-relative">
-                    <label htmlFor="captcha" className="form-label">{t('auth.login.captcha')}</label>
-                    <div className="input-group">
-                      <input
-                        type="text"
-                        className="form-control"
-                        id="captcha"
-                        name="captcha"
-                        value={captcha}
-                        onChange={onChange}
-                        required
-                      />
-                      <button 
-                        type="button" 
-                        className="btn btn-outline-secondary"
-                        onClick={getCaptcha}
-                        disabled={isLoading}
-                      >
-                        {t('auth.login.refreshCaptcha')}
-                      </button>
-                    </div>
-                    {captchaImage && (
-                      <div className="mt-2 text-center">
-                        <img 
-                          src={captchaImage} 
-                          alt={t('auth.login.captcha')} 
-                          className="img-fluid rounded"
-                          style={{ maxHeight: '80px', cursor: 'pointer' }}
-                          onClick={getCaptcha}
-                        />
-                      </div>
-                    )}
+                {error && (
+                  <div className="alert alert-danger" role="alert">
+                    {error}
                   </div>
                 )}
-                
-                <div className="d-grid">
-                  <button type="submit" className="btn btn-primary btn-lg" disabled={isLoading}>
-                    {isLoading ? t('common.loading') : t('auth.login.submit')}
-                  </button>
-                </div>
-              </form>
               
-              <div className="text-center mt-4">
-                <p className="mb-0">
-                  {t('auth.login.noAccount')}{' '}
-                  <Link to="/register" className="text-decoration-none">
-                    {t('auth.login.register')}
-                  </Link>
-                </p>
+                <form onSubmit={onSubmit}>
+                  <div className="mb-3">
+                    <label htmlFor="email" className="form-label">{t('auth.login.email')}</label>
+                    <input
+                      type="email"
+                      className="form-control"
+                      id="email"
+                      name="email"
+                      value={email}
+                      onChange={onChange}
+                      required
+                    />
+                  </div>
+                  
+                  <div className="mb-3">
+                    <label htmlFor="password" className="form-label">{t('auth.login.password')}</label>
+                    <input
+                      type="password"
+                      className="form-control"
+                      id="password"
+                      name="password"
+                      value={password}
+                      onChange={onChange}
+                      required
+                    />
+                  </div>
+                  
+                  {/* 验证码输入框 - 与注册页面保持一致 */}
+                  {isCaptchaEnabled && (
+                    <div className="mb-3 position-relative">
+                      <label htmlFor="captcha" className="form-label">{t('auth.login.captcha')}</label>
+                      <div className="input-group">
+                        <input
+                          type="text"
+                          className="form-control"
+                          id="captcha"
+                          name="captcha"
+                          value={captcha}
+                          onChange={onChange}
+                          required
+                        />
+                        <button 
+                          type="button" 
+                          className="btn btn-outline-secondary"
+                          onClick={getCaptcha}
+                          disabled={isLoading}
+                        >
+                          {t('auth.login.refreshCaptcha')}
+                        </button>
+                      </div>
+                      {captchaImage && (
+                        <div className="mt-2 text-center">
+                          <img 
+                            src={captchaImage} 
+                            alt={t('auth.login.captcha')} 
+                            className="img-fluid rounded"
+                            style={{ maxHeight: '80px', cursor: 'pointer' }}
+                            onClick={getCaptcha}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
+                  <div className="d-grid">
+                    <button type="submit" className="btn btn-primary btn-lg" disabled={isLoading}>
+                      {isLoading ? t('common.loading') : t('auth.login.submit')}
+                    </button>
+                  </div>
+                </form>
+                
+                <div className="text-center mt-4">
+                  <p className="mb-0">
+                    {t('auth.login.noAccount')}{' '}
+                    <Link to="/register" className="text-decoration-none">
+                      {t('auth.login.register')}
+                    </Link>
+                  </p>
+                </div>
               </div>
             </div>
           </div>
