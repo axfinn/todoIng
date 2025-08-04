@@ -409,7 +409,17 @@ router.post(
           return res.status(400).json({ msg: 'Captcha has expired' });
         }
         
-        if (storedCaptcha.text !== captcha.toUpperCase()) {
+        // 输出调试信息
+        console.log('验证码验证信息:', {
+          inputCaptcha: captcha,
+          storedCaptcha: storedCaptcha.text,
+          inputUppercase: captcha.toUpperCase(),
+          storedUppercase: storedCaptcha.text.toUpperCase(),
+          matchResult: storedCaptcha.text.toUpperCase() === captcha.toUpperCase()
+        });
+        
+        // 统一转换为大写进行比较
+        if (storedCaptcha.text.toUpperCase() !== captcha.toUpperCase()) {
           return res.status(400).json({ msg: 'Invalid captcha' });
         }
         
@@ -458,9 +468,9 @@ router.get('/captcha', (req, res) => {
     // 生成安全的验证码ID
     const captchaId = generateCaptchaId();
     
-    // 存储验证码并设置过期时间
+    // 存储验证码并设置过期时间 (转换为大写以统一处理)
     captchaStore.set(captchaId, {
-      text: captchaText,
+      text: captchaText.toUpperCase(),
       createdAt: Date.now(),
       expiresAt: Date.now() + CAPTCHA_CONFIG.lifetime
     });
