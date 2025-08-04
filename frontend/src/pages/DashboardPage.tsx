@@ -99,45 +99,20 @@ const DashboardPage: React.FC = () => {
   const handleImportTasks = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      dispatch(importTasks(file)).then((action: any) => {
-        if (importTasks.fulfilled.match(action)) {
-          const { imported, errors } = action.payload;
-          alert(t('dashboard.importSuccess', { count: imported, errors: errors.length }));
-          // 刷新任务列表
-          dispatch(fetchTasks());
-        } else if (importTasks.rejected.match(action)) {
-          alert(t('dashboard.importFailed') + ': ' + action.payload);
-        }
-      });
+      dispatch(importTasks(file));
+      // 重置文件输入框
+      e.target.value = '';
     }
-  };
-
-  const handleNewTaskChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setNewTask({ ...newTask, [name]: value });
   };
 
   const handleCreateTask = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // 验证截止日期必须在计划日期之后
-    if (newTask.deadline && newTask.scheduledDate) {
-      const deadline = new Date(newTask.deadline);
-      const scheduledDate = new Date(newTask.scheduledDate);
-      if (deadline < scheduledDate) {
-        alert(t('dashboard.deadlineBeforeScheduledDate'));
-        return;
-      }
-    }
-    
-    // 处理日期字段，如果为空则设为null
-    const taskToCreate = {
+    const taskData = {
       ...newTask,
       deadline: newTask.deadline || null,
-      scheduledDate: newTask.scheduledDate || null,
+      scheduledDate: newTask.scheduledDate || null
     };
-    
-    dispatch(createTask(taskToCreate));
+    dispatch(createTask(taskData));
     setNewTask({
       title: '',
       description: '',
@@ -145,172 +120,124 @@ const DashboardPage: React.FC = () => {
       priority: 'Medium',
       assignee: '',
       deadline: '',
-      scheduledDate: '',
+      scheduledDate: ''
     });
     setShowCreateModal(false);
+  };
+
+  const handleUpdateTask = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editingTask) {
+      const taskData = {
+        ...editingTask,
+        deadline: editingTask.deadline || null,
+        scheduledDate: editingTask.scheduledDate || null
+      };
+      dispatch(updateTask(taskData));
+      setEditingTask(null);
+    }
   };
 
   const handleEdit = (task: Task) => {
     setEditingTask({
       ...task,
       deadline: task.deadline ? task.deadline.split('T')[0] : '',
-      scheduledDate: task.scheduledDate ? task.scheduledDate.split('T')[0] : '',
+      scheduledDate: task.scheduledDate ? task.scheduledDate.split('T')[0] : ''
     });
   };
 
-  const handleUpdateTask = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
     if (editingTask) {
-      // 验证截止日期必须在计划日期之后
-      if (editingTask.deadline && editingTask.scheduledDate) {
-        const deadline = new Date(editingTask.deadline);
-        const scheduledDate = new Date(editingTask.scheduledDate);
-        if (deadline < scheduledDate) {
-          alert(t('dashboard.deadlineBeforeScheduledDate'));
-          return;
-        }
-      }
-      
-      // 处理日期字段，如果为空则设为null
-      const taskToUpdate = {
+      setEditingTask({
         ...editingTask,
-        deadline: editingTask.deadline || null,
-        scheduledDate: editingTask.scheduledDate || null,
-      };
-      
-      dispatch(updateTask(taskToUpdate));
-      setEditingTask(null);
+        [name]: value
+      });
     }
   };
 
-  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    if (editingTask) {
-      const { name, value } = e.target;
-      setEditingTask({ ...editingTask, [name]: value });
-    }
-  };
-
-  const handleAddComment = (taskId: string) => {
-    const comment = commentText[taskId];
-    if (comment?.trim()) {
-      // 查找当前任务
-      const task = tasks.find(t => t._id === taskId);
-      if (task) {
-        // 创建新的评论对象
-        const newComment = {
-          text: comment,
-          createdAt: new Date().toISOString()
-        };
-        
-        // 更新任务的评论列表
-        const updatedComments = [...(task.comments || []), newComment];
-        
-        // 更新任务，将状态设为"In Progress"
-        dispatch(updateTask({ 
-          ...task, 
-          status: 'In Progress',
-          comments: updatedComments 
-        }));
-        
-        // 清除输入框
-        setCommentText(prev => ({
-          ...prev,
-          [taskId]: ''
-        }));
-      }
-    }
+  const handleNewTaskChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setNewTask({
+      ...newTask,
+      [name]: value
+    });
   };
 
   const handleCommentChange = (taskId: string, text: string) => {
-    setCommentText({ ...commentText, [taskId]: text });
+    setCommentText({
+      ...commentText,
+      [taskId]: text
+    });
   };
 
-  // 快速更新任务状态
+  const handleAddComment = (taskId: string) => {
+    const text = commentText[taskId];
+    if (text && text.trim()) {
+      const task = tasks.find(t => t._id === taskId);
+      if (task) {
+        const newComment = {
+          text: text.trim(),
+          createdAt: new Date().toISOString()
+        };
+        const updatedTask = {
+          ...task,
+          comments: [...(task.comments || []), newComment]
+        };
+        dispatch(updateTask(updatedTask));
+        setCommentText({
+          ...commentText,
+          [taskId]: ''
+        });
+      }
+    }
+  };
+
   const updateTaskStatus = (task: Task, status: 'To Do' | 'In Progress' | 'Done') => {
     const updatedTask = { ...task, status };
     dispatch(updateTask(updatedTask));
   };
 
-  // 快速筛选任务
+  const toggleTaskDetails = (taskId: string) => {
+    setExpandedTaskId(expandedTaskId === taskId ? null : taskId);
+  };
+
   const setFilter = (status: string) => {
     setFilterStatus(status);
   };
 
-  // 检查任务是否临近截止日期
-  const isTaskNearDeadline = (task: Task) => {
-    if (!task.deadline) return false;
-    
-    const deadline = new Date(task.deadline);
-    const now = new Date();
-    const diffTime = deadline.getTime() - now.getTime();
-    const diffDays = diffTime / (1000 * 3600 * 24);
-    
-    // 如果截止日期已过或在1天内，则标记为临近截止日期
-    return diffDays <= 1 && diffDays >= 0;
-  };
-
-  // 检查任务是否已过截止日期
-  const isTaskOverdue = (task: Task) => {
-    if (!task.deadline) return false;
-    
-    const deadline = new Date(task.deadline);
-    const now = new Date();
-    
-    return deadline < now;
-  };
-
-  const filteredAndSortedTasks = tasks
-    .filter(task => filterStatus === 'All' || task.status === filterStatus)
-    .filter(task => filterPriority === 'All' || task.priority === filterPriority)
-    .sort((a, b) => {
-      // 首先按是否有截止日期排序（有截止日期的优先）
-      const aHasDeadline = a.deadline ? 1 : 0;
-      const bHasDeadline = b.deadline ? 1 : 0;
-      
-      if (aHasDeadline !== bHasDeadline) {
-        return bHasDeadline - aHasDeadline;
-      }
-      
-      // 如果都有截止日期或都没有，按截止日期排序（早的在前）
-      if (a.deadline && b.deadline) {
-        return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
-      }
-      
-      // 按创建时间排序
-      if (sortOrder === 'newest') {
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-      } else {
-        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-      }
-    });
-
   const getStatusClass = (status: string) => {
     switch (status) {
-      case 'To Do':
-        return 'bg-secondary';
-      case 'In Progress':
-        return 'bg-warning text-dark';
-      case 'Done':
-        return 'bg-success';
-      default:
-        return 'bg-secondary';
+      case 'To Do': return 'bg-secondary';
+      case 'In Progress': return 'bg-warning text-dark';
+      case 'Done': return 'bg-success';
+      default: return 'bg-secondary';
     }
   };
 
   const getPriorityClass = (priority: string) => {
     switch (priority) {
-      case 'Low':
-        return 'bg-info';
-      case 'Medium':
-        return 'bg-warning text-dark';
-      case 'High':
-        return 'bg-danger';
-      default:
-        return 'bg-secondary';
+      case 'Low': return 'bg-info';
+      case 'Medium': return 'bg-warning text-dark';
+      case 'High': return 'bg-danger';
+      default: return 'bg-secondary';
     }
   };
 
-  // 获取截止日期徽章样式
+  const isTaskNearDeadline = (task: Task) => {
+    if (!task.deadline) return false;
+    const deadline = new Date(task.deadline);
+    const now = new Date();
+    return (deadline.getTime() - now.getTime()) / (1000 * 3600 * 24) <= 1;
+  };
+
+  const isTaskOverdue = (task: Task) => {
+    if (!task.deadline) return false;
+    const deadline = new Date(task.deadline);
+    const now = new Date();
+    return deadline < now;
+  };
+
   const getDeadlineClass = (task: Task) => {
     if (isTaskOverdue(task)) {
       return 'bg-danger';
@@ -320,33 +247,21 @@ const DashboardPage: React.FC = () => {
     return 'bg-secondary';
   };
 
-  const toggleTaskDetails = (taskId: string) => {
-    setExpandedTaskId(expandedTaskId === taskId ? null : taskId);
-  };
-
   const translateStatus = (status: string) => {
     switch (status) {
-      case 'To Do':
-        return t('status.todo');
-      case 'In Progress':
-        return t('status.inProgress');
-      case 'Done':
-        return t('status.done');
-      default:
-        return status;
+      case 'To Do': return t('status.todo');
+      case 'In Progress': return t('status.inProgress');
+      case 'Done': return t('status.done');
+      default: return status;
     }
   };
 
   const translatePriority = (priority: string) => {
     switch (priority) {
-      case 'Low':
-        return t('priority.low');
-      case 'Medium':
-        return t('priority.medium');
-      case 'High':
-        return t('priority.high');
-      default:
-        return priority;
+      case 'Low': return t('priority.low');
+      case 'Medium': return t('priority.medium');
+      case 'High': return t('priority.high');
+      default: return priority;
     }
   };
 
@@ -368,6 +283,31 @@ const DashboardPage: React.FC = () => {
       </div>
     );
   }
+
+  // 筛选和排序任务
+  const filteredAndSortedTasks = tasks
+    .filter(task => filterStatus === 'All' || task.status === filterStatus)
+    .filter(task => filterPriority === 'All' || task.priority === filterPriority)
+    .sort((a, b) => {
+      // 首先按是否有截止日期排序（有截止日期的排在前面）
+      const aHasDeadline = a.deadline ? 1 : 0;
+      const bHasDeadline = b.deadline ? 1 : 0;
+      if (aHasDeadline !== bHasDeadline) {
+        return bHasDeadline - aHasDeadline;
+      }
+      
+      // 如果都有截止日期，按截止日期排序
+      if (a.deadline && b.deadline) {
+        return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
+      }
+      
+      // 按创建时间排序（最新的在前）
+      if (sortOrder === 'newest') {
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      } else {
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      }
+    });
 
   return (
     <div className="container py-4">
@@ -497,7 +437,7 @@ const DashboardPage: React.FC = () => {
                 <option value="High">{t('priority.high')}</option>
               </select>
             </div>
-            <div className="col-md-4 col-sm-6 mb-3">
+            <div className="col-md-4 col-sm-12 mb-3">
               <label htmlFor="sortOrder" className="form-label">{t('dashboard.sort.label')}</label>
               <select
                 className="form-select"
@@ -522,7 +462,7 @@ const DashboardPage: React.FC = () => {
                   {error}
                 </div>
               )}
-
+              
               {filteredAndSortedTasks.length === 0 ? (
                 <div className="text-center py-5">
                   <p className="mb-0">{t('dashboard.noTasks')}</p>
@@ -530,18 +470,22 @@ const DashboardPage: React.FC = () => {
               ) : (
                 <div className="row">
                   {filteredAndSortedTasks.map((task) => (
-                    <div key={task._id} className="col-12 mb-3">
+                    <div className="col-12 mb-3" key={task._id}>
                       <div className={`card ${isTaskOverdue(task) ? 'border-danger' : ''}`}>
                         <div className="card-body">
-                          <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-start gap-2">
+                          <div className="d-flex justify-content-between align-items-start">
                             <div>
-                              <h5 className="mb-1">{task.title}</h5>
-                              <p className="mb-2 text-muted">
-                                {task.description && task.description.length > 100 
-                                  ? `${task.description.substring(0, 100)}...` 
-                                  : task.description}
-                              </p>
-                              <div className="d-flex flex-wrap gap-2 mb-2">
+                              <h5 className="card-title">
+                                {task.title}
+                                {task.deadline && (
+                                  <span className={`badge ${getDeadlineClass(task)} ms-2`}>
+                                    {isTaskOverdue(task) ? t('dashboard.overdue') : t('dashboard.dueSoon')}
+                                  </span>
+                                )}
+                              </h5>
+                              <p className="card-text text-muted">{task.description}</p>
+                              
+                              <div className="d-flex gap-2 mb-2">
                                 <span className={`badge ${getStatusClass(task.status)}`}>
                                   {translateStatus(task.status)}
                                 </span>
@@ -549,102 +493,107 @@ const DashboardPage: React.FC = () => {
                                   {translatePriority(task.priority)}
                                 </span>
                                 {task.deadline && (
-                                  <span className={`badge ${getDeadlineClass(task)}`}>
+                                  <span className="badge bg-secondary">
                                     <i className="bi bi-calendar me-1"></i>
-                                    {new Date(task.deadline).toLocaleDateString()}
-                                    {(isTaskNearDeadline(task) || isTaskOverdue(task)) && (
-                                      <span className="ms-1">
-                                        {isTaskOverdue(task) ? t('dashboard.overdue') : t('dashboard.dueSoon')}
-                                      </span>
-                                    )}
+                                    {new Date(task.deadline).toLocaleDateString(i18n.language)}
+                                  </span>
+                                )}
+                                {task.scheduledDate && (
+                                  <span className="badge bg-info">
+                                    <i className="bi bi-clock me-1"></i>
+                                    {new Date(task.scheduledDate).toLocaleDateString(i18n.language)}
                                   </span>
                                 )}
                               </div>
-                              <p className="mb-0 small text-muted">
-                                <i className="bi bi-clock me-1"></i>
-                                {t('dashboard.created')}: {new Date(task.createdAt).toLocaleDateString(i18n.language)}
+                              
+                              {task.assignee && (
+                                <p className="mb-1">
+                                  <small className="text-muted">
+                                    <i className="bi bi-person me-1"></i>
+                                    {task.assignee}
+                                  </small>
+                                </p>
+                              )}
+                              
+                              <p className="mb-1">
+                                <small className="text-muted">
+                                  <i className="bi bi-calendar me-1"></i>
+                                  {t('dashboard.created')}: {new Date(task.createdAt).toLocaleString(i18n.language)}
+                                </small>
+                              </p>
+                              <p className="mb-1">
+                                <small className="text-muted">
+                                  <i className="bi bi-arrow-repeat me-1"></i>
+                                  {t('dashboard.updated')}: {new Date(task.updatedAt).toLocaleString(i18n.language)}
+                                </small>
                               </p>
                             </div>
-                            <div className="d-flex flex-wrap gap-2">
-                              {/* 快速状态更新按钮 */}
+                            
+                            <div className="d-flex gap-2">
                               {task.status !== 'Done' && (
-                                <button
-                                  className="btn btn-sm btn-success"
+                                <button 
+                                  className="btn btn-sm btn-success" 
                                   onClick={() => updateTaskStatus(task, 'Done')}
                                   title={t('dashboard.markAsDone')}
                                 >
                                   <i className="bi bi-check-circle"></i>
-                                  <span className="d-none d-sm-inline ms-1">{t('dashboard.done')}</span>
                                 </button>
                               )}
                               {task.status !== 'In Progress' && task.status !== 'Done' && (
-                                <button
-                                  className="btn btn-sm btn-warning"
+                                <button 
+                                  className="btn btn-sm btn-warning" 
                                   onClick={() => updateTaskStatus(task, 'In Progress')}
                                   title={t('dashboard.markAsInProgress')}
                                 >
                                   <i className="bi bi-arrow-right-circle"></i>
-                                  <span className="d-none d-sm-inline ms-1">{t('dashboard.inProgress')}</span>
                                 </button>
                               )}
-                              <button
+                              <button 
                                 className="btn btn-sm btn-outline-primary"
                                 onClick={() => toggleTaskDetails(task._id)}
                               >
-                                {expandedTaskId === task._id 
-                                  ? t('dashboard.hideDetails') 
-                                  : t('dashboard.showDetails')}
+                                {expandedTaskId === task._id ? t('dashboard.hideDetails') : t('dashboard.showDetails')}
                               </button>
-                              <button
+                              <button 
                                 className="btn btn-sm btn-outline-secondary"
                                 onClick={() => handleEdit(task)}
                               >
-                                <i className="bi bi-pencil"></i>
-                                <span className="d-none d-sm-inline ms-1">{t('dashboard.edit')}</span>
+                                {t('dashboard.edit')}
                               </button>
-                              <button
+                              <button 
                                 className="btn btn-sm btn-outline-danger"
                                 onClick={() => handleDelete(task._id)}
                               >
-                                <i className="bi bi-trash"></i>
-                                <span className="d-none d-sm-inline ms-1">{t('dashboard.delete')}</span>
+                                {t('dashboard.delete')}
                               </button>
                             </div>
                           </div>
-
-                          {/* 任务详情和评论 */}
-                          {(expandedTaskId === task._id) && (
+                          
+                          {/* 任务详情和评论部分 */}
+                          {(expandedTaskId === task._id || task.status === 'In Progress') && (
                             <div className="mt-3 pt-3 border-top">
                               <h6>{t('dashboard.comments')}</h6>
                               <div className="timeline">
-                                {/* 任务创建事件 */}
                                 <div className="d-flex mb-3">
                                   <div className="flex-shrink-0">
-                                    <div className="rounded-circle bg-success d-flex align-items-center justify-content-center" 
-                                         style={{ width: '32px', height: '32px' }}>
+                                    <div className="rounded-circle bg-success d-flex align-items-center justify-content-center" style={{ width: '32px', height: '32px' }}>
                                       <i className="bi bi-plus text-white"></i>
                                     </div>
                                   </div>
                                   <div className="flex-grow-1 ms-3">
                                     <div className="card">
                                       <div className="card-body py-2 px-3">
-                                        <p className="mb-0">
-                                          <strong>{t('dashboard.created')}</strong>
-                                        </p>
-                                        <small className="text-muted">
-                                          {new Date(task.createdAt).toLocaleString(i18n.language)}
-                                        </small>
+                                        <p className="mb-0"><strong>{t('dashboard.created')}</strong></p>
+                                        <small className="text-muted">{new Date(task.createdAt).toLocaleString(i18n.language)}</small>
                                       </div>
                                     </div>
                                   </div>
                                 </div>
-
-                                {/* 评论列表 */}
+                                
                                 {task.comments && task.comments.map((comment, index) => (
                                   <div className="d-flex mb-3" key={index}>
                                     <div className="flex-shrink-0">
-                                      <div className="rounded-circle bg-primary d-flex align-items-center justify-content-center" 
-                                           style={{ width: '32px', height: '32px' }}>
+                                      <div className="rounded-circle bg-primary d-flex align-items-center justify-content-center" style={{ width: '32px', height: '32px' }}>
                                         <i className="bi bi-chat text-white"></i>
                                       </div>
                                     </div>
@@ -652,17 +601,14 @@ const DashboardPage: React.FC = () => {
                                       <div className="card">
                                         <div className="card-body py-2 px-3">
                                           <p className="mb-1">{comment.text}</p>
-                                          <small className="text-muted">
-                                            {new Date(comment.createdAt).toLocaleString(i18n.language)}
-                                          </small>
+                                          <small className="text-muted">{new Date(comment.createdAt).toLocaleString(i18n.language)}</small>
                                         </div>
                                       </div>
                                     </div>
                                   </div>
                                 ))}
                               </div>
-
-                              {/* 添加评论 */}
+                              
                               <div className="mt-3">
                                 <div className="input-group">
                                   <input
@@ -677,8 +623,8 @@ const DashboardPage: React.FC = () => {
                                       }
                                     }}
                                   />
-                                  <button
-                                    className="btn btn-outline-primary"
+                                  <button 
+                                    className="btn btn-outline-primary" 
                                     type="button"
                                     onClick={() => handleAddComment(task._id)}
                                   >
@@ -706,11 +652,7 @@ const DashboardPage: React.FC = () => {
             <div className="modal-content">
               <div className="modal-header">
                 <h5 className="modal-title">{t('dashboard.newTask')}</h5>
-                <button
-                  type="button"
-                  className="btn-close"
-                  onClick={() => setShowCreateModal(false)}
-                ></button>
+                <button type="button" className="btn-close" onClick={() => setShowCreateModal(false)}></button>
               </div>
               <form onSubmit={handleCreateTask}>
                 <div className="modal-body">
@@ -726,6 +668,7 @@ const DashboardPage: React.FC = () => {
                       required
                     />
                   </div>
+                  
                   <div className="mb-3">
                     <label htmlFor="assignee" className="form-label">{t('dashboard.assignee')}</label>
                     <input
@@ -737,6 +680,7 @@ const DashboardPage: React.FC = () => {
                       onChange={handleNewTaskChange}
                     />
                   </div>
+                  
                   <div className="mb-3">
                     <label htmlFor="status" className="form-label">{t('dashboard.status')}</label>
                     <select
@@ -751,6 +695,7 @@ const DashboardPage: React.FC = () => {
                       <option value="Done">{t('status.done')}</option>
                     </select>
                   </div>
+                  
                   <div className="mb-3">
                     <label htmlFor="priority" className="form-label">{t('dashboard.priority')}</label>
                     <select
@@ -765,6 +710,7 @@ const DashboardPage: React.FC = () => {
                       <option value="High">{t('priority.high')}</option>
                     </select>
                   </div>
+                  
                   <div className="mb-3">
                     <label htmlFor="deadline" className="form-label">{t('dashboard.deadline')}</label>
                     <input
@@ -776,43 +722,24 @@ const DashboardPage: React.FC = () => {
                       onChange={handleNewTaskChange}
                     />
                     <div className="mt-1">
-                      <button 
-                        type="button" 
-                        className="btn btn-sm btn-outline-primary me-1"
-                        onClick={() => setQuickDate('deadline', 0)}
-                      >
+                      <button type="button" className="btn btn-sm btn-outline-primary me-1" onClick={() => setQuickDate('deadline', 0)}>
                         {t('dashboard.today')}
                       </button>
-                      <button 
-                        type="button" 
-                        className="btn btn-sm btn-outline-primary me-1"
-                        onClick={() => setQuickDate('deadline', 1)}
-                      >
+                      <button type="button" className="btn btn-sm btn-outline-primary me-1" onClick={() => setQuickDate('deadline', 1)}>
                         {t('dashboard.tomorrow')}
                       </button>
-                      <button 
-                        type="button" 
-                        className="btn btn-sm btn-outline-primary me-1"
-                        onClick={() => setQuickDate('deadline', 2)}
-                      >
+                      <button type="button" className="btn btn-sm btn-outline-primary me-1" onClick={() => setQuickDate('deadline', 2)}>
                         {t('dashboard.dayAfterTomorrow')}
                       </button>
-                      <button 
-                        type="button" 
-                        className="btn btn-sm btn-outline-primary me-1"
-                        onClick={() => setQuickDate('deadline', 7)}
-                      >
+                      <button type="button" className="btn btn-sm btn-outline-primary me-1" onClick={() => setQuickDate('deadline', 7)}>
                         {t('dashboard.nextWeek')}
                       </button>
-                      <button 
-                        type="button" 
-                        className="btn btn-sm btn-outline-primary"
-                        onClick={() => setQuickDate('deadline', 30)}
-                      >
+                      <button type="button" className="btn btn-sm btn-outline-primary" onClick={() => setQuickDate('deadline', 30)}>
                         {t('dashboard.nextMonth')}
                       </button>
                     </div>
                   </div>
+                  
                   <div className="mb-3">
                     <label htmlFor="scheduledDate" className="form-label">{t('dashboard.scheduledDate')}</label>
                     <input
@@ -824,43 +751,24 @@ const DashboardPage: React.FC = () => {
                       onChange={handleNewTaskChange}
                     />
                     <div className="mt-1">
-                      <button 
-                        type="button" 
-                        className="btn btn-sm btn-outline-primary me-1"
-                        onClick={() => setQuickDate('scheduledDate', 0)}
-                      >
+                      <button type="button" className="btn btn-sm btn-outline-primary me-1" onClick={() => setQuickDate('scheduledDate', 0)}>
                         {t('dashboard.today')}
                       </button>
-                      <button 
-                        type="button" 
-                        className="btn btn-sm btn-outline-primary me-1"
-                        onClick={() => setQuickDate('scheduledDate', 1)}
-                      >
+                      <button type="button" className="btn btn-sm btn-outline-primary me-1" onClick={() => setQuickDate('scheduledDate', 1)}>
                         {t('dashboard.tomorrow')}
                       </button>
-                      <button 
-                        type="button" 
-                        className="btn btn-sm btn-outline-primary me-1"
-                        onClick={() => setQuickDate('scheduledDate', 2)}
-                      >
+                      <button type="button" className="btn btn-sm btn-outline-primary me-1" onClick={() => setQuickDate('scheduledDate', 2)}>
                         {t('dashboard.dayAfterTomorrow')}
                       </button>
-                      <button 
-                        type="button" 
-                        className="btn btn-sm btn-outline-primary me-1"
-                        onClick={() => setQuickDate('scheduledDate', 7)}
-                      >
+                      <button type="button" className="btn btn-sm btn-outline-primary me-1" onClick={() => setQuickDate('scheduledDate', 7)}>
                         {t('dashboard.nextWeek')}
                       </button>
-                      <button 
-                        type="button" 
-                        className="btn btn-sm btn-outline-primary"
-                        onClick={() => setQuickDate('scheduledDate', 30)}
-                      >
+                      <button type="button" className="btn btn-sm btn-outline-primary" onClick={() => setQuickDate('scheduledDate', 30)}>
                         {t('dashboard.nextMonth')}
                       </button>
                     </div>
                   </div>
+                  
                   <div className="mb-3">
                     <label htmlFor="description" className="form-label">{t('dashboard.description')}</label>
                     <textarea
@@ -874,11 +782,7 @@ const DashboardPage: React.FC = () => {
                   </div>
                 </div>
                 <div className="modal-footer">
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={() => setShowCreateModal(false)}
-                  >
+                  <button type="button" className="btn btn-secondary" onClick={() => setShowCreateModal(false)}>
                     {t('common.cancel')}
                   </button>
                   <button type="submit" className="btn btn-primary">
@@ -898,11 +802,7 @@ const DashboardPage: React.FC = () => {
             <div className="modal-content">
               <div className="modal-header">
                 <h5 className="modal-title">{t('dashboard.edit')}</h5>
-                <button
-                  type="button"
-                  className="btn-close"
-                  onClick={() => setEditingTask(null)}
-                ></button>
+                <button type="button" className="btn-close" onClick={() => setEditingTask(null)}></button>
               </div>
               <form onSubmit={handleUpdateTask}>
                 <div className="modal-body">
@@ -918,6 +818,7 @@ const DashboardPage: React.FC = () => {
                       required
                     />
                   </div>
+                  
                   <div className="mb-3">
                     <label htmlFor="editDescription" className="form-label">{t('dashboard.description')}</label>
                     <textarea
@@ -929,6 +830,7 @@ const DashboardPage: React.FC = () => {
                       onChange={handleEditChange}
                     ></textarea>
                   </div>
+                  
                   <div className="mb-3">
                     <label htmlFor="editStatus" className="form-label">{t('dashboard.status')}</label>
                     <select
@@ -943,6 +845,7 @@ const DashboardPage: React.FC = () => {
                       <option value="Done">{t('status.done')}</option>
                     </select>
                   </div>
+                  
                   <div className="mb-3">
                     <label htmlFor="editPriority" className="form-label">{t('dashboard.priority')}</label>
                     <select
@@ -957,6 +860,7 @@ const DashboardPage: React.FC = () => {
                       <option value="High">{t('priority.high')}</option>
                     </select>
                   </div>
+                  
                   <div className="mb-3">
                     <label htmlFor="editDeadline" className="form-label">{t('dashboard.deadline')}</label>
                     <input
@@ -968,58 +872,24 @@ const DashboardPage: React.FC = () => {
                       onChange={handleEditChange}
                     />
                     <div className="mt-1">
-                      <button 
-                        type="button" 
-                        className="btn btn-sm btn-outline-primary me-1"
-                        onClick={() => editingTask && setEditingTask({
-                          ...editingTask,
-                          deadline: getDateAfterDays(0)
-                        })}
-                      >
+                      <button type="button" className="btn btn-sm btn-outline-primary me-1" onClick={() => editingTask && setEditingTask({...editingTask, deadline: getDateAfterDays(0)})}>
                         {t('dashboard.today')}
                       </button>
-                      <button 
-                        type="button" 
-                        className="btn btn-sm btn-outline-primary me-1"
-                        onClick={() => editingTask && setEditingTask({
-                          ...editingTask,
-                          deadline: getDateAfterDays(1)
-                        })}
-                      >
+                      <button type="button" className="btn btn-sm btn-outline-primary me-1" onClick={() => editingTask && setEditingTask({...editingTask, deadline: getDateAfterDays(1)})}>
                         {t('dashboard.tomorrow')}
                       </button>
-                      <button 
-                        type="button" 
-                        className="btn btn-sm btn-outline-primary me-1"
-                        onClick={() => editingTask && setEditingTask({
-                          ...editingTask,
-                          deadline: getDateAfterDays(2)
-                        })}
-                      >
+                      <button type="button" className="btn btn-sm btn-outline-primary me-1" onClick={() => editingTask && setEditingTask({...editingTask, deadline: getDateAfterDays(2)})}>
                         {t('dashboard.dayAfterTomorrow')}
                       </button>
-                      <button 
-                        type="button" 
-                        className="btn btn-sm btn-outline-primary me-1"
-                        onClick={() => editingTask && setEditingTask({
-                          ...editingTask,
-                          deadline: getDateAfterDays(7)
-                        })}
-                      >
+                      <button type="button" className="btn btn-sm btn-outline-primary me-1" onClick={() => editingTask && setEditingTask({...editingTask, deadline: getDateAfterDays(7)})}>
                         {t('dashboard.nextWeek')}
                       </button>
-                      <button 
-                        type="button" 
-                        className="btn btn-sm btn-outline-primary"
-                        onClick={() => editingTask && setEditingTask({
-                          ...editingTask,
-                          deadline: getDateAfterDays(30)
-                        })}
-                      >
+                      <button type="button" className="btn btn-sm btn-outline-primary" onClick={() => editingTask && setEditingTask({...editingTask, deadline: getDateAfterDays(30)})}>
                         {t('dashboard.nextMonth')}
                       </button>
                     </div>
                   </div>
+                  
                   <div className="mb-3">
                     <label htmlFor="editScheduledDate" className="form-label">{t('dashboard.scheduledDate')}</label>
                     <input
@@ -1031,58 +901,24 @@ const DashboardPage: React.FC = () => {
                       onChange={handleEditChange}
                     />
                     <div className="mt-1">
-                      <button 
-                        type="button" 
-                        className="btn btn-sm btn-outline-primary me-1"
-                        onClick={() => editingTask && setEditingTask({
-                          ...editingTask,
-                          scheduledDate: getDateAfterDays(0)
-                        })}
-                      >
+                      <button type="button" className="btn btn-sm btn-outline-primary me-1" onClick={() => editingTask && setEditingTask({...editingTask, scheduledDate: getDateAfterDays(0)})}>
                         {t('dashboard.today')}
                       </button>
-                      <button 
-                        type="button" 
-                        className="btn btn-sm btn-outline-primary me-1"
-                        onClick={() => editingTask && setEditingTask({
-                          ...editingTask,
-                          scheduledDate: getDateAfterDays(1)
-                        })}
-                      >
+                      <button type="button" className="btn btn-sm btn-outline-primary me-1" onClick={() => editingTask && setEditingTask({...editingTask, scheduledDate: getDateAfterDays(1)})}>
                         {t('dashboard.tomorrow')}
                       </button>
-                      <button 
-                        type="button" 
-                        className="btn btn-sm btn-outline-primary me-1"
-                        onClick={() => editingTask && setEditingTask({
-                          ...editingTask,
-                          scheduledDate: getDateAfterDays(2)
-                        })}
-                      >
+                      <button type="button" className="btn btn-sm btn-outline-primary me-1" onClick={() => editingTask && setEditingTask({...editingTask, scheduledDate: getDateAfterDays(2)})}>
                         {t('dashboard.dayAfterTomorrow')}
                       </button>
-                      <button 
-                        type="button" 
-                        className="btn btn-sm btn-outline-primary me-1"
-                        onClick={() => editingTask && setEditingTask({
-                          ...editingTask,
-                          scheduledDate: getDateAfterDays(7)
-                        })}
-                      >
+                      <button type="button" className="btn btn-sm btn-outline-primary me-1" onClick={() => editingTask && setEditingTask({...editingTask, scheduledDate: getDateAfterDays(7)})}>
                         {t('dashboard.nextWeek')}
                       </button>
-                      <button 
-                        type="button" 
-                        className="btn btn-sm btn-outline-primary"
-                        onClick={() => editingTask && setEditingTask({
-                          ...editingTask,
-                          scheduledDate: getDateAfterDays(30)
-                        })}
-                      >
+                      <button type="button" className="btn btn-sm btn-outline-primary" onClick={() => editingTask && setEditingTask({...editingTask, scheduledDate: getDateAfterDays(30)})}>
                         {t('dashboard.nextMonth')}
                       </button>
                     </div>
                   </div>
+                  
                   <div className="mb-3">
                     <label htmlFor="editAssignee" className="form-label">{t('dashboard.assignee')}</label>
                     <input
@@ -1096,11 +932,7 @@ const DashboardPage: React.FC = () => {
                   </div>
                 </div>
                 <div className="modal-footer">
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={() => setEditingTask(null)}
-                  >
+                  <button type="button" className="btn btn-secondary" onClick={() => setEditingTask(null)}>
                     {t('common.cancel')}
                   </button>
                   <button type="submit" className="btn btn-primary">

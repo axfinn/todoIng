@@ -243,20 +243,6 @@ const RegisterPage: React.FC = () => {
                   {t('auth.register.haveAccount')} <Link to="/login" className="text-decoration-none">{t('auth.register.login')}</Link>
                 </p>
               </div>
-
-              <div className="text-center mt-4">
-                <div className="d-flex align-items-center justify-content-center">
-                  <i className="bi bi-github me-2"></i>
-                  <a 
-                    href="https://github.com/axfinn/todoIng" 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="text-decoration-none"
-                  >
-                    Fork me on GitHub
-                  </a>
-                </div>
-              </div>
             </div>
           </div>
         </div>

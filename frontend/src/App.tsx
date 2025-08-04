@@ -16,11 +16,54 @@ const App: React.FC = () => {
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
   const { t, i18n } = useTranslation();
   const [currentLanguage, setCurrentLanguage] = useState('en');
+  const [githubStats, setGithubStats] = useState({ stars: 0, forks: 0 });
+  const [isGitHubLoading, setIsGitHubLoading] = useState(false);
+  const [githubError, setGithubError] = useState(false);
+  const [backgroundImage, setBackgroundImage] = useState('');
+
+  // 背景图片数组
+  const backgroundImages = [
+    'https://picsum.photos/1920/1080?random=1',
+    'https://picsum.photos/1920/1080?random=2',
+    'https://picsum.photos/1920/1080?random=3'
+  ];
+
+  // 设置随机背景图片
+  useEffect(() => {
+    const randomIndex = Math.floor(Math.random() * backgroundImages.length);
+    setBackgroundImage(backgroundImages[randomIndex]);
+  }, []);
 
   useEffect(() => {
     // 初始化时设置当前语言
     setCurrentLanguage(i18n.language);
   }, [i18n.language]);
+
+  useEffect(() => {
+    // 获取GitHub项目统计信息
+    setIsGitHubLoading(true);
+    setGithubError(false);
+    
+    fetch('https://api.github.com/repos/axfinn/todoIng')
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then(data => {
+        setGithubStats({
+          stars: data.stargazers_count || 0,
+          forks: data.forks_count || 0
+        });
+        setIsGitHubLoading(false);
+      })
+      .catch(error => {
+        console.error('Failed to fetch GitHub stats:', error);
+        setIsGitHubLoading(false);
+        setGithubError(true);
+      });
+  }, []);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -32,120 +75,104 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="App min-vh-100 d-flex flex-column">
-      <nav className="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
-        <div className="container-fluid">
-          <Link className="navbar-brand fw-bold d-flex align-items-center" to="/">
-            <i className="bi bi-check2-circle me-2"></i>
-            <span className="d-none d-sm-inline">todoIng</span>
-            <span className="d-inline d-sm-none">todo</span>
-          </Link>
-          <button 
-            className="navbar-toggler" 
-            type="button" 
-            data-bs-toggle="collapse" 
-            data-bs-target="#navbarNav"
-            aria-controls="navbarNav" 
-            aria-expanded="false" 
-            aria-label="Toggle navigation"
-          >
-            <span className="navbar-toggler-icon"></span>
-          </button>
-          <div className="collapse navbar-collapse" id="navbarNav">
-            <ul className="navbar-nav me-auto mb-2 mb-lg-0">
-              <li className="nav-item">
-                <Link className="nav-link" to="/">
-                  {t('nav.home')}
-                </Link>
-              </li>
-              {isAuthenticated && (
-                <>
+    <div 
+      className="d-flex flex-column min-vh-100"
+      style={{
+        backgroundImage: `url(${backgroundImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'fixed'
+      }}
+    >
+      <header>
+        <nav className="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+          <div className="container">
+            <Link className="navbar-brand fw-bold d-flex align-items-center" to="/">
+              <i className="bi bi-check2-circle me-2"></i>
+              todoIng
+            </Link>
+            <button
+              className="navbar-toggler"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#navbarNav"
+              aria-controls="navbarNav"
+              aria-expanded="false"
+              aria-label="Toggle navigation"
+            >
+              <span className="navbar-toggler-icon"></span>
+            </button>
+            <div className="collapse navbar-collapse" id="navbarNav">
+              <ul className="navbar-nav me-auto mb-2 mb-lg-0">
+                <li className="nav-item">
+                  <Link className="nav-link" to="/">
+                    {t('nav.home')}
+                  </Link>
+                </li>
+                {isAuthenticated && (
                   <li className="nav-item">
                     <Link className="nav-link" to="/dashboard">
                       {t('nav.dashboard')}
                     </Link>
                   </li>
+                )}
+                {isAuthenticated && (
                   <li className="nav-item">
                     <Link className="nav-link" to="/reports">
                       {t('nav.reports')}
                     </Link>
                   </li>
-                </>
-              )}
-            </ul>
-            <ul className="navbar-nav d-flex align-items-center mb-2 mb-lg-0">
-              <li className="nav-item dropdown me-2 mb-2 mb-lg-0">
-                <a 
-                  className="btn btn-sm btn-outline-light dropdown-toggle w-100" 
-                  href="#"
-                  role="button" 
-                  data-bs-toggle="dropdown" 
-                  aria-expanded="false"
-                >
-                  {currentLanguage === 'en' ? 'EN' : '中'}
-                </a>
-                <ul className="dropdown-menu">
-                  <li>
-                    <a 
-                      className="dropdown-item" 
-                      href="#"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        changeLanguage('en');
-                      }}
-                    >
-                      English
-                    </a>
-                  </li>
-                  <li>
-                    <hr className="dropdown-divider" />
-                  </li>
-                  <li>
-                    <a 
-                      className="dropdown-item" 
-                      href="#"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        changeLanguage('zh');
-                      }}
-                    >
-                      中文
-                    </a>
-                  </li>
-                </ul>
-              </li>
-              {!isAuthenticated ? (
-                <>
-                  <li className="nav-item">
-                    <Link className="nav-link" to="/register">
-                      {t('nav.register')}
-                    </Link>
-                  </li>
-                  <li className="nav-item">
-                    <Link className="nav-link" to="/login">
-                      {t('nav.login')}
-                    </Link>
-                  </li>
-                </>
-              ) : (
-                <li className="nav-item">
-                  <button className="btn btn-sm btn-outline-light d-flex align-items-center" onClick={handleLogout}>
-                    <i className="bi bi-box-arrow-right me-1"></i>
-                    <span className="d-none d-sm-inline">{t('nav.logout')}</span>
-                    <span className="d-inline d-sm-none">{t('nav.logoutShort')}</span>
-                  </button>
+                )}
+              </ul>
+              <ul className="navbar-nav mb-2 mb-lg-0">
+                <li className="nav-item dropdown">
+                  <a className="btn btn-outline-light dropdown-toggle me-2" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    {currentLanguage === 'en' ? 'English' : '中文'}
+                  </a>
+                  <ul className="dropdown-menu">
+                    <li><a className="dropdown-item" href="#" onClick={(e) => { e.preventDefault(); changeLanguage('en'); }}>English</a></li>
+                    <li><hr className="dropdown-divider" /></li>
+                    <li><a className="dropdown-item" href="#" onClick={(e) => { e.preventDefault(); changeLanguage('zh'); }}>中文</a></li>
+                  </ul>
                 </li>
-              )}
-            </ul>
+                {isAuthenticated ? (
+                  <li className="nav-item">
+                    <button className="btn btn-outline-light" onClick={handleLogout}>
+                      <i className="bi bi-box-arrow-right me-1"></i>
+                      {t('nav.logout')}
+                    </button>
+                  </li>
+                ) : (
+                  <>
+                    <li className="nav-item">
+                      <Link className="nav-link" to="/register">
+                        {t('nav.register')}
+                      </Link>
+                    </li>
+                    <li className="nav-item">
+                      <Link className="nav-link" to="/login">
+                        {t('nav.login')}
+                      </Link>
+                    </li>
+                  </>
+                )}
+              </ul>
+            </div>
           </div>
-        </div>
-      </nav>
+        </nav>
+      </header>
       <main className="flex-grow-1">
         <Routes>
           <Route path="/" element={
             <div className="container py-5">
               <div className="row justify-content-center">
-                <div className="col-md-8 text-center">
+                <div className="col-md-8 text-center" style={{ 
+                  backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                  borderRadius: '10px',
+                  padding: '2rem',
+                  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+                }}>
                   <h1 className="display-4 fw-bold mb-4">{t('home.title')}</h1>
                   <p className="lead mb-4">
                     {t('home.description')}
@@ -169,11 +196,31 @@ const App: React.FC = () => {
                   )}
                   
                   <div className="mt-5">
-                    <div className="d-flex align-items-center justify-content-center">
+                    <div className="d-flex align-items-center justify-content-center mb-3">
                       <i className="bi bi-github me-2"></i>
                       <a href="https://github.com/axfinn/todoIng" target="_blank" rel="noopener noreferrer" className="text-decoration-none">
                         Fork me on GitHub
                       </a>
+                    </div>
+                    <div className="d-flex justify-content-center gap-3">
+                      <>
+                        <button 
+                          className="btn btn-outline-dark btn-sm d-flex align-items-center"
+                          onClick={() => window.open('https://github.com/axfinn/todoIng', '_blank')}
+                        >
+                          <i className="bi bi-star-fill me-1"></i> 
+                          <span>Star</span>
+                          {githubStats.stars > 0 && (
+                            <span className="badge bg-secondary ms-1">{githubStats.stars}</span>
+                          )}
+                        </button>
+                        <span className="d-flex align-items-center">
+                          <i className="bi bi-git me-1"></i> 
+                          {githubStats.forks > 0 && (
+                            <span className="badge bg-secondary">{githubStats.forks}</span>
+                          )}
+                        </span>
+                      </>
                     </div>
                   </div>
                 </div>
