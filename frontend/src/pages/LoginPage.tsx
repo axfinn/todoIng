@@ -4,6 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { loginUser } from '../features/auth/authSlice';
 import { useTranslation } from 'react-i18next';
 import type { AppDispatch, RootState } from '../app/store';
+import api from '../config/api';
 
 const LoginPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -29,28 +30,72 @@ const LoginPage: React.FC = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    captcha: ''
+    captcha: '',
+    emailCode: ''
   });
 
-  const [captchaImage, setCaptchaImage] = useState<string | null>(null);
-  const [captchaId, setCaptchaId] = useState<string | null>(null);
+  const [captchaData, setCaptchaData] = useState<{ image: string; id: string } | null>(null);
+  const [isCaptchaFetching, setIsCaptchaFetching] = useState(false);
+  const [emailCodeData, setEmailCodeData] = useState<{ id: string } | null>(null);
+  const [isEmailCodeSending, setIsEmailCodeSending] = useState(false);
+  const [countdown, setCountdown] = useState(0);
+  const [loginMethod, setLoginMethod] = useState<'password' | 'emailCode'>('password');
 
-  // 从环境变量获取验证码功能开关状态
+  // 从环境变量获取功能开关状态
   const isCaptchaEnabled = import.meta.env.VITE_ENABLE_CAPTCHA === 'true';
+  const isEmailVerificationEnabled = import.meta.env.VITE_ENABLE_EMAIL_VERIFICATION === 'true';
 
   // 获取验证码
   const getCaptcha = async () => {
+    if (!isCaptchaEnabled) return;
+    
+    setIsCaptchaFetching(true);
     try {
-      const response = await fetch('/api/auth/captcha');
-      const data = await response.json();
-      if (data.image && data.id) {
-        setCaptchaImage(data.image);
-        setCaptchaId(data.id);
-      }
-    } catch (error) {
-      console.error('获取验证码失败:', error);
+      const res = await api.get('/auth/captcha');
+      setCaptchaData({
+        image: res.data.image,
+        id: res.data.id
+      });
+    } catch (err) {
+      console.error('获取验证码失败:', err);
+    } finally {
+      setIsCaptchaFetching(false);
     }
   };
+
+  // 发送邮箱验证码
+  const sendEmailCode = async () => {
+    if (!isEmailVerificationEnabled || !formData.email || !/\S+@\S+\.\S+/.test(formData.email)) {
+      return;
+    }
+    
+    if (countdown > 0) return;
+    
+    setIsEmailCodeSending(true);
+    try {
+      const res = await api.post('/auth/send-email-code', { email: formData.email });
+      setEmailCodeData({
+        id: res.data.id
+      });
+      setCountdown(60); // 60秒倒计时
+    } catch (err: any) {
+      console.error(err);
+      alert(err.response?.data?.msg || 'Failed to send verification code');
+    } finally {
+      setIsEmailCodeSending(false);
+    }
+  };
+
+  // 倒计时效果
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (countdown > 0) {
+      timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [countdown]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -59,13 +104,13 @@ const LoginPage: React.FC = () => {
   }, [isAuthenticated, navigate]);
 
   useEffect(() => {
-    // 如果启用了验证码功能，则获取验证码
-    if (isCaptchaEnabled) {
+    // 如果启用了验证码功能且使用密码登录，则获取验证码
+    if (isCaptchaEnabled && loginMethod === 'password') {
       getCaptcha();
     }
-  }, [isCaptchaEnabled]);
+  }, [isCaptchaEnabled, loginMethod]);
 
-  const { email, password, captcha } = formData;
+  const { email, password, captcha, emailCode } = formData;
 
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -75,17 +120,24 @@ const LoginPage: React.FC = () => {
     e.preventDefault();
     
     // 准备登录数据
-    const userData: Record<string, string> = { email, password };
+    const userData: Record<string, string> = { email };
     
-    // 如果启用了验证码且有验证码ID，则添加验证码相关数据
-    if (isCaptchaEnabled && captchaId) {
+    // 根据登录方式添加相应数据
+    if (loginMethod === 'password') {
+      userData.password = password;
+    } else if (loginMethod === 'emailCode' && emailCodeData) {
+      userData.emailCode = emailCode;
+      userData.emailCodeId = emailCodeData.id;
+    }
+    
+    // 如果启用了验证码且有验证码ID，并且使用密码登录，则添加验证码相关数据
+    if (isCaptchaEnabled && captchaData && loginMethod === 'password') {
       userData.captcha = captcha;
-      userData.captchaId = captchaId;
+      userData.captchaId = captchaData.id;
     }
     
     dispatch(loginUser(userData));
   };
-
 
   if (isLoading) {
     return (
@@ -145,21 +197,88 @@ const LoginPage: React.FC = () => {
                     />
                   </div>
                   
-                  <div className="mb-3">
-                    <label htmlFor="password" className="form-label">{t('auth.login.password')}</label>
-                    <input
-                      type="password"
-                      className="form-control"
-                      id="password"
-                      name="password"
-                      value={password}
-                      onChange={onChange}
-                      required
-                    />
-                  </div>
+                  {/* 登录方式切换 */}
+                  {isEmailVerificationEnabled && (
+                    <div className="mb-3">
+                      <div className="btn-group w-100" role="group">
+                        <input
+                          type="radio"
+                          className="btn-check"
+                          name="loginMethod"
+                          id="passwordLogin"
+                          checked={loginMethod === 'password'}
+                          onChange={() => setLoginMethod('password')}
+                        />
+                        <label className="btn btn-outline-primary" htmlFor="passwordLogin">
+                          {t('auth.login.passwordLogin')}
+                        </label>
+                        
+                        <input
+                          type="radio"
+                          className="btn-check"
+                          name="loginMethod"
+                          id="emailCodeLogin"
+                          checked={loginMethod === 'emailCode'}
+                          onChange={() => setLoginMethod('emailCode')}
+                        />
+                        <label className="btn btn-outline-primary" htmlFor="emailCodeLogin">
+                          {t('auth.login.emailCodeLogin')}
+                        </label>
+                      </div>
+                    </div>
+                  )}
                   
-                  {/* 验证码输入框 - 与注册页面保持一致 */}
-                  {isCaptchaEnabled && (
+                  {/* 密码输入框 */}
+                  {loginMethod === 'password' && (
+                    <div className="mb-3">
+                      <label htmlFor="password" className="form-label">{t('auth.login.password')}</label>
+                      <input
+                        type="password"
+                        className="form-control"
+                        id="password"
+                        name="password"
+                        value={password}
+                        onChange={onChange}
+                        required={loginMethod === 'password'}
+                      />
+                    </div>
+                  )}
+                  
+                  {/* 邮箱验证码输入框 */}
+                  {loginMethod === 'emailCode' && isEmailVerificationEnabled && (
+                    <div className="mb-3">
+                      <label htmlFor="emailCode" className="form-label">{t('auth.login.emailCode')}</label>
+                      <div className="input-group">
+                        <input
+                          type="text"
+                          className="form-control"
+                          id="emailCode"
+                          name="emailCode"
+                          value={emailCode}
+                          onChange={onChange}
+                          required={loginMethod === 'emailCode'}
+                          placeholder={t('auth.login.enterEmailCode')}
+                        />
+                        <button 
+                          type="button"
+                          className="btn btn-outline-secondary"
+                          onClick={sendEmailCode}
+                          disabled={isEmailCodeSending || countdown > 0 || !email || !/\S+@\S+\.\S+/.test(email)}
+                        >
+                          {isEmailCodeSending ? (
+                            t('common.loading')
+                          ) : countdown > 0 ? (
+                            t('auth.login.resendCode', { seconds: countdown })
+                          ) : (
+                            t('auth.login.getCode')
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* 验证码输入框 - 仅在密码登录时显示 */}
+                  {isCaptchaEnabled && loginMethod === 'password' && (
                     <div className="mb-3 position-relative">
                       <label htmlFor="captcha" className="form-label">{t('auth.login.captcha')}</label>
                       <div className="input-group">
@@ -176,22 +295,30 @@ const LoginPage: React.FC = () => {
                           type="button" 
                           className="btn btn-outline-secondary"
                           onClick={getCaptcha}
-                          disabled={isLoading}
+                          disabled={isCaptchaFetching}
                         >
-                          {t('auth.login.refreshCaptcha')}
+                          {isCaptchaFetching ? t('common.loading') : t('auth.login.refreshCaptcha')}
                         </button>
                       </div>
-                      {captchaImage && (
-                        <div className="mt-2 text-center">
-                          <img 
-                            src={captchaImage} 
-                            alt={t('auth.login.captcha')} 
-                            className="img-fluid rounded"
-                            style={{ maxHeight: '80px', cursor: 'pointer' }}
-                            onClick={getCaptcha}
-                          />
-                        </div>
-                      )}
+                      <div className="mt-2 d-flex justify-content-center">
+                        {isCaptchaFetching ? (
+                          <div className="captcha-placeholder">{t('common.loading')}</div>
+                        ) : (
+                          <>
+                            {captchaData?.image ? (
+                              <img 
+                                src={captchaData.image} 
+                                alt={t('auth.login.captcha')} 
+                                className="captcha-image"
+                                onClick={getCaptcha}
+                                style={{ cursor: 'pointer', maxHeight: '50px' }}
+                              />
+                            ) : (
+                              <div className="captcha-placeholder">{t('auth.login.captcha')}</div>
+                            )}
+                          </>
+                        )}
+                      </div>
                     </div>
                   )}
                   

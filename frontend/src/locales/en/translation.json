@@ -41,7 +41,11 @@
   "common": {
     "loading": "Loading...",
     "save": "Save",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "confirm": "Confirm",
+    "close": "Close"
   },
   "error": "Error",
   "success": "Success",
@@ -66,12 +70,19 @@
       "title": "Login to Your Account",
       "email": "Email Address",
       "password": "Password",
+      "passwordLogin": "Password Login",
+      "emailCodeLogin": "Email Code Login",
       "submit": "Login",
       "forgotPassword": "Forgot Password?",
       "noAccount": "Don't have an account?",
       "register": "Register here",
       "refreshCaptcha": "Refresh",
-      "captcha": "Captcha"
+      "captcha": "Captcha",
+      "getCaptcha": "Get Captcha",
+      "emailCode": "Email Verification Code",
+      "enterEmailCode": "Enter Email Verification Code",
+      "getCode": "Get Code",
+      "resendCode": "Resend in {{seconds}}s"
     },
     "register": {
       "title": "Create an Account",
@@ -86,7 +97,23 @@
       "disabledMessage": "New user registration is currently disabled. Please contact the administrator for assistance.",
       "captcha": "Captcha",
       "enterCaptcha": "Enter the captcha",
-      "refreshCaptcha": "Refresh"
+      "refreshCaptcha": "Refresh",
+      "verifyCaptcha": "Verify Captcha",
+      "captchaRequired": "Please verify the captcha first",
+      "captchaVerified": "Captcha verified",
+      "emailCode": "Email Verification Code",
+      "enterEmailCode": "Enter Email Verification Code",
+      "getCode": "Get Code",
+      "resendCode": "Resend in {{seconds}}s",
+      "emailCodeSent": "Verification code sent to your email",
+      "emailCodeRequired": "Please get and enter the email verification code first",
+      "passwordMismatch": "Passwords do not match",
+      "errors": {
+        "userExists": "Email already registered",
+        "invalidCaptcha": "Invalid captcha",
+        "invalidEmailCode": "Invalid email verification code",
+        "sendEmailCodeFailed": "Failed to send email verification code"
+      }
     }
   },
   "task": {
