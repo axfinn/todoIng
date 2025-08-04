@@ -9,7 +9,7 @@
   },
   "auth": {
     "login": {
-      "title": "登录",
+      "title": "登录到您的账户",
       "email": "邮箱地址",
       "password": "密码",
       "passwordLogin": "密码登录",
@@ -22,7 +22,7 @@
       "getCode": "获取验证码",
       "resendCode": "重新发送 ({{seconds}}s)",
       "submit": "登录",
-      "register": "没有账户？立即注册",
+      "register": "还没有账户？立即注册",
       "forgotPassword": "忘记密码？",
       "rememberMe": "记住我",
       "noAccount": "还没有账户？",
@@ -33,7 +33,7 @@
       }
     },
     "register": {
-      "title": "注册",
+      "title": "创建新账户",
       "name": "姓名",
       "email": "邮箱地址",
       "password": "密码",
@@ -54,7 +54,7 @@
       "haveAccount": "已经有账户？",
       "login": "立即登录",
       "disabledTitle": "注册已禁用",
-      "disabledMessage": "当前已禁用新用户注册。请联系系统管理员获取访问权限。",
+      "disabledMessage": "管理员已禁用新用户注册功能。",
       "passwordMismatch": "两次输入的密码不一致",
       "invalidEmail": "邮箱格式不正确",
       "error": "错误",
@@ -135,17 +135,11 @@
     "done": "完成",
     "inProgress": "进行中",
     "deadlineBeforeScheduledDate": "截止日期必须在计划日期之后",
-    "confirmDelete": "确定要删除这个任务吗？",
     "createTask": "创建任务",
     "quickStats": "快速统计",
-    "totalTasks": "总任务数",
-    "completedTasks": "已完成任务",
-    "pendingTasks": "待处理任务",
     "inProgressTasks": "进行中任务",
-    "overdueTasks": "逾期任务",
     "recentTasks": "最近任务",
-    "taskDistribution": "任务分布",
-    "noTasks": "暂无任务"
+    "taskDistribution": "任务分布"
   },
   "tasks": {
     "title": "任务管理",
@@ -198,11 +192,6 @@
     "close": "关闭",
     "submit": "提交",
     "back": "返回",
-    "loading": "加载中...",
-    "save": "保存",
-    "cancel": "取消",
-    "edit": "编辑",
-    "delete": "删除",
     "confirm": "确认",
     "actions": "操作"
   },
@@ -245,13 +234,7 @@
     "exportMarkdown": "导出Markdown",
     "textPreview": "文本预览",
     "markdownPreview": "Markdown预览",
-    "preview": "预览",
-    "delete": "删除",
-    "deleteConfirm": "您确定要删除此报告吗？",
-    "deleteSuccess": "报告删除成功",
-    "deleteFailed": "报告删除失败",
     "preview": "报告预览",
-    "generate": "生成报告",
     "download": "下载报告",
     "period": "报告周期",
     "startDate": "开始日期",
@@ -261,7 +244,11 @@
     "format": "报告格式",
     "loading": "正在生成报告...",
     "noData": "所选时间段内无数据",
-    "error": "生成报告时出错"
+    "error": "生成报告时出错",
+    "delete": "删除",
+    "deleteConfirm": "您确定要删除此报告吗？",
+    "deleteSuccess": "报告删除成功",
+    "deleteFailed": "报告删除失败"
   },
   "navbar": {
     "dashboard": "仪表板",
