@@ -13,6 +13,8 @@ todoIng 是一个创新的任务管理系统，它不仅提供基本的任务管
 - [x] 多语言支持
 - [x] 登录验证码功能（可选）
 - [x] 注册控制功能（可选）
+- [x] 报告生成功能（支持日报、周报、月报）
+- [x] AI报告润色功能（集成OpenAI）
 - [ ] 通知系统
 - [x] Docker 容器化部署
 
@@ -28,6 +30,7 @@ todoIng 是一个创新的任务管理系统，它不仅提供基本的任务管
 - i18next (国际化)
 - Vite (构建工具)
 - Axios (HTTP客户端)
+- Marked (Markdown解析)
 
 ### 后端
 - Node.js
@@ -38,6 +41,7 @@ todoIng 是一个创新的任务管理系统，它不仅提供基本的任务管
 - Bcrypt.js (密码加密)
 - Speakeasy (双因素认证)
 - QRCode (二维码生成)
+- OpenAI (AI润色功能)
 
 ## 配置管理
 
@@ -49,7 +53,7 @@ todoIng 是一个创新的任务管理系统，它不仅提供基本的任务管
 | `ENABLE_CAPTCHA` | 是否启用登录验证码 | `false` |
 | `DEFAULT_USERNAME` | 默认用户名 | 无 |
 | `DEFAULT_EMAIL` | 默认用户邮箱 | 无 |
-| `DEFAULT_PASSWORD` | 默认用户密码 | 无 |
+| `OPENAI_API_KEY` | OpenAI API密钥，用于报告AI润色功能 | 无 |
 
 更多配置信息请查看 [配置文档](./docs/configuration.md)。
 

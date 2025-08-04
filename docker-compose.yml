@@ -33,7 +33,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "80:80"
+      - "81:80"
     environment:
       - VITE_API_BASE_URL=/api
       - VITE_DISABLE_REGISTRATION=false
