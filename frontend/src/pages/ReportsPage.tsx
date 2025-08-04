@@ -27,6 +27,9 @@ const ReportsPage: React.FC = () => {
   const [reportType, setReportType] = useState<'daily' | 'weekly' | 'monthly'>('daily');
   const [reportDate, setReportDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [apiKey, setApiKey] = useState<string>('');
+  const [apiUrl, setApiUrl] = useState<string>('https://api.openai.com/v1/chat/completions');
+  const [provider, setProvider] = useState<string>('openai');
+  const [model, setModel] = useState<string>('gpt-3.5-turbo');
   const [showGenerateForm, setShowGenerateForm] = useState<boolean>(true);
   const [previewMode, setPreviewMode] = useState<'text' | 'preview'>('text');
   
@@ -79,14 +82,17 @@ const ReportsPage: React.FC = () => {
   const handlePolishReport = () => {
     if (!currentReport) return;
     if (!apiKey) {
-      alert('Please enter your OpenAI API key');
+      alert('Please enter your API key');
       return;
     }
     
     dispatch(polishReport({
       reportId: currentReport._id,
       polishData: {
-        apiKey
+        apiKey,
+        model,
+        apiUrl,
+        provider
       }
     }));
   };
@@ -214,8 +220,8 @@ const ReportsPage: React.FC = () => {
       </div>
       
       <div className="row">
-        {/* 左侧报告列表 */}
-        <div className="col-md-4">
+        {/* 左侧报告列表 - 响应式调整 */}
+        <div className="col-md-4 reports-sidebar">
           <div className="card">
             <div className="card-header d-flex justify-content-between align-items-center">
               <span>{t('reports.list')}</span>
@@ -248,13 +254,13 @@ const ReportsPage: React.FC = () => {
                         </div>
                       </div>
                       <button 
-                        className="btn btn-outline-danger btn-sm"
+                        className="btn btn-outline-danger btn-sm ms-2"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDeleteReport(report._id);
                         }}
                       >
-                        {t('reports.delete')}
+                        <i className="bi bi-trash"></i>
                       </button>
                     </li>
                   ))}
@@ -268,34 +274,54 @@ const ReportsPage: React.FC = () => {
           </div>
         </div>
         
-        {/* 右侧报告详情 */}
+        {/* 右侧报告详情 - 响应式调整 */}
         <div className="col-md-8">
           {currentReport ? (
             <div className="card">
-              <div className="card-header d-flex justify-content-between align-items-center">
-                <h5 className="mb-0">{currentReport.title}</h5>
-                <div className="btn-group">
-                  <button 
-                    type="button" 
-                    className={`btn btn-outline-secondary btn-sm ${previewMode === 'text' ? 'active' : ''}`}
-                    onClick={() => setPreviewMode('text')}
-                  >
-                    {t('reports.textPreview')}
-                  </button>
-                  <button 
-                    type="button" 
-                    className={`btn btn-outline-secondary btn-sm ${previewMode === 'preview' ? 'active' : ''}`}
-                    onClick={() => setPreviewMode('preview')}
-                  >
-                    {t('reports.preview')}
-                  </button>
+              <div className="card-header d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 flex-wrap">
+                <h5 className="mb-2 mb-md-0">{currentReport.title}</h5>
+                <div className="d-flex flex-wrap gap-2">
+                  <div className="btn-group btn-group-sm" role="group">
+                    <button 
+                      type="button" 
+                      className={`btn btn-outline-secondary ${previewMode === 'text' ? 'active' : ''}`}
+                      onClick={() => setPreviewMode('text')}
+                    >
+                      {t('reports.textPreview')}
+                    </button>
+                    <button 
+                      type="button" 
+                      className={`btn btn-outline-secondary ${previewMode === 'preview' ? 'active' : ''}`}
+                      onClick={() => setPreviewMode('preview')}
+                    >
+                      {t('reports.preview')}
+                    </button>
+                  </div>
+                  <div className="btn-group btn-group-sm" role="group">
+                    <button 
+                      type="button" 
+                      className="btn btn-outline-primary"
+                      onClick={() => handleExportReport('text')}
+                    >
+                      <i className="bi bi-filetype-txt me-1"></i>
+                      <span className="d-none d-sm-inline">{t('reports.exportText')}</span>
+                    </button>
+                    <button 
+                      type="button" 
+                      className="btn btn-outline-primary"
+                      onClick={() => handleExportReport('markdown')}
+                    >
+                      <i className="bi bi-filetype-md me-1"></i>
+                      <span className="d-none d-sm-inline">{t('reports.exportMarkdown')}</span>
+                    </button>
+                  </div>
                 </div>
               </div>
               
               <div className="card-body">
-                {/* 统计信息 */}
+                {/* 统计信息 - 响应式调整 */}
                 <div className="row mb-4">
-                  <div className="col-md-12">
+                  <div className="col-12">
                     <h6>{t('reports.statistics')}</h6>
                     <div className="row">
                       <div className="col-sm-6 col-md-4 mb-2">
@@ -342,92 +368,108 @@ const ReportsPage: React.FC = () => {
                   </div>
                 </div>
                 
-                {/* AI润色 */}
+                {/* AI润色功能 - 响应式调整 */}
                 <div className="row mb-4">
-                  <div className="col-md-12">
+                  <div className="col-12">
                     <div className="card">
-                      <div className="card-header">
-                        {t('reports.polish')}
-                      </div>
                       <div className="card-body">
+                        <h6 className="card-title">{t('reports.aiPolish')}</h6>
+                        
+                        {/* AI服务提供商选择 */}
                         <div className="mb-3">
-                          <label htmlFor="apiKey" className="form-label">{t('reports.apiKey')}</label>
+                          <label className="form-label">{t('reports.aiProvider')}</label>
+                          <select
+                            className="form-select"
+                            value={provider}
+                            onChange={(e) => setProvider(e.target.value)}
+                          >
+                            <option value="openai">OpenAI</option>
+                            <option value="custom">Custom AI Service</option>
+                          </select>
+                        </div>
+                        
+                        {/* 模型选择 (仅OpenAI) */}
+                        {provider === 'openai' && (
+                          <div className="mb-3">
+                            <label className="form-label">{t('reports.model')}</label>
+                            <select
+                              className="form-select"
+                              value={model}
+                              onChange={(e) => setModel(e.target.value)}
+                            >
+                              <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                              <option value="gpt-4">GPT-4</option>
+                              <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                            </select>
+                          </div>
+                        )}
+                        
+                        {/* API URL输入 */}
+                        <div className="mb-3">
+                          <label className="form-label">{t('reports.apiUrl')}</label>
+                          <input
+                            type="text"
+                            className="form-control"
+                            placeholder={provider === 'openai' 
+                              ? 'https://api.openai.com/v1/chat/completions' 
+                              : 'https://your-custom-ai-api.com/endpoint'}
+                            value={apiUrl}
+                            onChange={(e) => setApiUrl(e.target.value)}
+                          />
+                        </div>
+                        
+                        {/* API Key输入 */}
+                        <div className="mb-3">
+                          <label className="form-label">{t('reports.apiKey')}</label>
                           <input
                             type="password"
                             className="form-control"
-                            id="apiKey"
+                            placeholder={t('reports.enterApiKey')}
                             value={apiKey}
                             onChange={(e) => setApiKey(e.target.value)}
-                            placeholder="sk-..."
                           />
                         </div>
-                        <button
-                          className="btn btn-outline-primary"
+                        
+                        <button 
+                          className="btn btn-success d-flex align-items-center justify-content-center"
                           onClick={handlePolishReport}
-                          disabled={isPolishing}
+                          disabled={loading}
                         >
-                          {isPolishing ? (
+                          {loading ? (
                             <>
                               <span className="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-                              {t('common.loading')}
+                              {t('reports.polishing')}
                             </>
                           ) : (
-                            t('reports.polish')
+                            <>
+                              <i className="bi bi-stars me-1"></i>
+                              {t('reports.polish')}
+                            </>
                           )}
                         </button>
+                        <div className="form-text mt-2">
+                          {t('reports.apiKeyNote')}
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
                 
-                {/* 报告内容 */}
+                {/* 报告内容 - 响应式调整 */}
                 <div className="row">
-                  <div className="col-md-12">
-                    <div className="card">
-                      <div className="card-header d-flex justify-content-between align-items-center">
-                        <span>{t('reports.content')}</span>
-                        <div className="dropdown">
-                          <button 
-                            className="btn btn-outline-secondary dropdown-toggle btn-sm" 
-                            type="button" 
-                            id="exportDropdown" 
-                            data-bs-toggle="dropdown" 
-                            aria-expanded="false"
-                          >
-                            {t('reports.export')}
-                          </button>
-                          <ul className="dropdown-menu">
-                            <li>
-                              <button 
-                                className="dropdown-item"
-                                onClick={() => handleExportReport('md')}
-                              >
-                                Markdown
-                              </button>
-                            </li>
-                            <li>
-                              <button 
-                                className="dropdown-item"
-                                onClick={() => handleExportReport('txt')}
-                              >
-                                Text
-                              </button>
-                            </li>
-                          </ul>
-                        </div>
+                  <div className="col-12">
+                    <h6>{t('reports.content')}</h6>
+                    {previewMode === 'preview' ? (
+                      <div className="border rounded p-3 bg-light">
+                        <div dangerouslySetInnerHTML={{ __html: currentReport.content }} />
                       </div>
-                      <div className="card-body">
-                        {previewMode === 'text' ? (
-                          <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                            {currentReport.polishedContent || currentReport.content}
-                          </pre>
-                        ) : (
-                          <div dangerouslySetInnerHTML={{ 
-                            __html: renderMarkdown(currentReport.polishedContent || currentReport.content) 
-                          }} />
-                        )}
+                    ) : (
+                      <div className="border rounded p-3 bg-light">
+                        <pre className="mb-0" style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit' }}>
+                          {currentReport.polishedContent || currentReport.content}
+                        </pre>
                       </div>
-                    </div>
+                    )}
                   </div>
                 </div>
               </div>

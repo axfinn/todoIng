@@ -34,10 +34,11 @@ const App: React.FC = () => {
   return (
     <div className="App min-vh-100 d-flex flex-column">
       <nav className="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
-        <div className="container">
+        <div className="container-fluid">
           <Link className="navbar-brand fw-bold d-flex align-items-center" to="/">
             <i className="bi bi-check2-circle me-2"></i>
-            todoIng
+            <span className="d-none d-sm-inline">todoIng</span>
+            <span className="d-inline d-sm-none">todo</span>
           </Link>
           <button 
             className="navbar-toggler" 
@@ -72,16 +73,16 @@ const App: React.FC = () => {
                 </>
               )}
             </ul>
-            <ul className="navbar-nav mb-2 mb-lg-0">
-              <li className="nav-item dropdown">
+            <ul className="navbar-nav d-flex align-items-center mb-2 mb-lg-0">
+              <li className="nav-item dropdown me-2 mb-2 mb-lg-0">
                 <a 
-                  className="btn btn-outline-light dropdown-toggle me-2" 
+                  className="btn btn-sm btn-outline-light dropdown-toggle w-100" 
                   href="#"
                   role="button" 
                   data-bs-toggle="dropdown" 
                   aria-expanded="false"
                 >
-                  {currentLanguage === 'en' ? 'English' : '中文'}
+                  {currentLanguage === 'en' ? 'EN' : '中'}
                 </a>
                 <ul className="dropdown-menu">
                   <li>
@@ -128,9 +129,10 @@ const App: React.FC = () => {
                 </>
               ) : (
                 <li className="nav-item">
-                  <button className="btn btn-outline-light" onClick={handleLogout}>
+                  <button className="btn btn-sm btn-outline-light d-flex align-items-center" onClick={handleLogout}>
                     <i className="bi bi-box-arrow-right me-1"></i>
-                    {t('nav.logout')}
+                    <span className="d-none d-sm-inline">{t('nav.logout')}</span>
+                    <span className="d-inline d-sm-none">{t('nav.logoutShort')}</span>
                   </button>
                 </li>
               )}

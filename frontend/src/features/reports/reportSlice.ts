@@ -36,6 +36,8 @@ export interface GenerateReportRequest {
 export interface PolishReportRequest {
   apiKey: string;
   model?: string;
+  apiUrl?: string;
+  provider?: string;
 }
 
 // 状态接口

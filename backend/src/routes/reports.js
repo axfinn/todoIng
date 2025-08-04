@@ -198,6 +198,145 @@ router.post('/generate', auth, async (req, res) => {
   }
 });
 
+// AI 润色报告
+router.post('/:id/polish', auth, async (req, res) => {
+  try {
+    const { 
+      apiKey, 
+      model = 'gpt-3.5-turbo',
+      apiUrl = 'https://api.openai.com/v1/chat/completions',
+      provider = 'openai'
+    } = req.body;
+    
+    // 验证参数
+    if (!apiKey) {
+      return res.status(400).json({ msg: 'API key is required' });
+    }
+    
+    // 获取报告
+    const report = await Report.findById(req.params.id);
+    
+    if (!report) {
+      return res.status(404).json({ msg: 'Report not found' });
+    }
+    
+    if (report.userId.toString() !== req.user.id) {
+      return res.status(401).json({ msg: 'User not authorized' });
+    }
+    
+    // 根据不同提供商调用相应的AI服务
+    let polishedContent;
+    
+    switch(provider.toLowerCase()) {
+      case 'openai':
+        // 调用OpenAI API
+        polishedContent = await polishWithOpenAI(report.content, apiKey, model, apiUrl);
+        break;
+        
+      case 'custom':
+        // 调用自定义AI服务
+        polishedContent = await polishWithCustomAI(report.content, apiKey, apiUrl);
+        break;
+        
+      default:
+        // 默认使用OpenAI
+        polishedContent = await polishWithOpenAI(report.content, apiKey, model, apiUrl);
+    }
+    
+    // 更新报告
+    report.polishedContent = polishedContent;
+    await report.save();
+    
+    res.json({
+      msg: 'Report polished successfully',
+      polishedContent: report.polishedContent
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// 使用OpenAI API润色内容
+async function polishWithOpenAI(content, apiKey, model, apiUrl) {
+  try {
+    const prompt = `Please polish and improve the following task report while maintaining its structure and meaning. Make the language more professional and clear:
+    
+${content}`;
+
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: model,
+        messages: [
+          {
+            role: "system",
+            content: "You are an assistant that polishes and improves task reports while maintaining their structure."
+          },
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        temperature: 0.7
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
+    }
+
+    const data = await response.json();
+    return data.choices[0].message.content;
+  } catch (error) {
+    console.error('Error polishing with OpenAI:', error);
+    // 如果AI调用失败，返回原始内容
+    return content;
+  }
+}
+
+// 使用自定义AI服务润色内容
+async function polishWithCustomAI(content, apiKey, apiUrl) {
+  try {
+    const prompt = `Please polish and improve the following task report while maintaining its structure and meaning. Make the language more professional and clear:
+    
+${content}`;
+
+    // 自定义AI服务的调用格式，可以根据实际API调整
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+        // 可以根据需要添加其他头部信息
+      },
+      body: JSON.stringify({
+        prompt: prompt,
+        // 可以根据自定义API的要求添加其他参数
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Custom AI API error: ${response.status} - ${errorText}`);
+    }
+
+    const data = await response.json();
+    // 根据自定义API的响应格式提取内容
+    // 这里假设响应中有一个content字段包含润色后的内容
+    return data.content || data.result || data.response || content;
+  } catch (error) {
+    console.error('Error polishing with Custom AI:', error);
+    // 如果AI调用失败，返回原始内容
+    return content;
+  }
+}
+
 // 删除报告
 router.delete('/:id', auth, async (req, res) => {
   try {

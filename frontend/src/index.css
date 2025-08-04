@@ -179,4 +179,120 @@ footer {
     flex-direction: column !important;
     gap: 1rem !important;
   }
+  
+  /* 移动端导航栏优化 */
+  .navbar-brand {
+    font-size: 1.25rem;
+  }
+  
+  .navbar-nav .nav-link {
+    padding: 0.5rem 1rem;
+  }
+  
+  /* 任务面板按钮优化 */
+  .btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
+  
+  /* 任务列表优化 */
+  .list-group-item {
+    padding: 1rem;
+  }
+  
+  /* 表单控件优化 */
+  .form-control, .form-select {
+    padding: 0.5rem 0.75rem;
+    font-size: 1rem;
+  }
+  
+  .input-group-text {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+  }
+  
+  /* 卡片间距优化 */
+  .card {
+    margin-bottom: 1rem;
+  }
+  
+  /* 快速筛选按钮换行 */
+  .d-flex.flex-wrap {
+    flex-wrap: wrap !important;
+  }
+  
+  /* 模态框适配 */
+  .modal-dialog {
+    margin: 1rem;
+  }
+  
+  /* 报告页面适配 */
+  .reports-sidebar {
+    margin-bottom: 1rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .container {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+  
+  .py-4 {
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+  }
+  
+  .mb-4 {
+    margin-bottom: 1rem !important;
+  }
+  
+  /* 任务详情区域优化 */
+  .timeline .card-body {
+    padding: 0.5rem !important;
+  }
+  
+  /* 按钮组垂直排列 */
+  .btn-group-responsive {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .btn-group-responsive .btn {
+    width: 100%;
+  }
+  
+  /* 表格适配 */
+  .table-responsive {
+    font-size: 0.875rem;
+  }
+  
+  /* 徽章大小调整 */
+  .badge {
+    font-size: 0.75rem;
+    padding: 0.25em 0.5em;
+  }
+}
+
+/* 任务列表时间线优化 */
+.timeline {
+  position: relative;
+  padding-left: 20px;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background-color: #dee2e6;
+}
+
+/* 语言切换下拉菜单在移动端的优化 */
+@media (max-width: 992px) {
+  .dropdown-menu {
+    position: absolute !important;
+  }
 }

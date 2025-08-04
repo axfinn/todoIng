@@ -104,6 +104,7 @@
   "nav": {
     "home": "Home",
     "dashboard": "Dashboard",
+    "reports": "Reports",
     "login": "Login",
     "register": "Register",
     "logout": "Logout"
@@ -147,6 +148,7 @@
     "status": "Status",
     "priority": "Priority",
     "deadline": "Deadline",
+    "deadlineBeforeScheduledDate": "Deadline must be after scheduled date",
     "today": "Today",
     "tomorrow": "Tomorrow",
     "dayAfterTomorrow": "Day After Tomorrow",
@@ -167,9 +169,38 @@
     "addComment": "Add a comment...",
     "addCommentButton": "Add Comment",
     "edit": "Edit Task",
-    "delete": "Delete"
+    "delete": "Delete",
+    "down": "Down",
+    "done": "Done",
+    "inProgress": "In Progress"
   },
   "footer": {
     "copyright": "todoIng Task Manager"
+  },
+  "reports": {
+    "title": "Reports",
+    "generate": "Generate",
+    "generateNew": "Generate New Report",
+    "list": "Report List",
+    "noReports": "No reports found",
+    "selectReport": "Select a report to view",
+    "daily": "Daily",
+    "weekly": "Weekly",
+    "monthly": "Monthly",
+    "type": "Report Type",
+    "date": "Date",
+    "statistics": "Statistics",
+    "content": "Content",
+    "totalTasks": "Total Tasks",
+    "completedTasks": "Completed Tasks",
+    "inProgressTasks": "In Progress Tasks",
+    "overdueTasks": "Overdue Tasks",
+    "completionRate": "Completion Rate",
+    "polish": "Polish with AI",
+    "apiKey": "API Key",
+    "export": "Export",
+    "tasks": "Tasks",
+    "textPreview": "Text Preview",
+    "markdownPreview": "Markdown Preview"
   }
 }

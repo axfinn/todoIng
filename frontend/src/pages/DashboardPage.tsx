@@ -86,6 +86,16 @@ const DashboardPage: React.FC = () => {
   const handleCreateTask = (e: React.FormEvent) => {
     e.preventDefault();
     
+    // 验证截止日期必须在计划日期之后
+    if (newTask.deadline && newTask.scheduledDate) {
+      const deadline = new Date(newTask.deadline);
+      const scheduledDate = new Date(newTask.scheduledDate);
+      if (deadline < scheduledDate) {
+        alert(t('dashboard.deadlineBeforeScheduledDate'));
+        return;
+      }
+    }
+    
     // 处理日期字段，如果为空则设为null
     const taskToCreate = {
       ...newTask,
@@ -117,6 +127,16 @@ const DashboardPage: React.FC = () => {
   const handleUpdateTask = (e: React.FormEvent) => {
     e.preventDefault();
     if (editingTask) {
+      // 验证截止日期必须在计划日期之后
+      if (editingTask.deadline && editingTask.scheduledDate) {
+        const deadline = new Date(editingTask.deadline);
+        const scheduledDate = new Date(editingTask.scheduledDate);
+        if (deadline < scheduledDate) {
+          alert(t('dashboard.deadlineBeforeScheduledDate'));
+          return;
+        }
+      }
+      
       // 处理日期字段，如果为空则设为null
       const taskToUpdate = {
         ...editingTask,
@@ -137,24 +157,32 @@ const DashboardPage: React.FC = () => {
   };
 
   const handleAddComment = (taskId: string) => {
-    if (commentText[taskId]?.trim()) {
-      const updatedTask = tasks.find(task => task._id === taskId);
-      if (updatedTask) {
-        // 获取当前用户信息，这里假设用户信息存储在localStorage中
-        const currentUser = localStorage.getItem('user');
-        const creator = currentUser ? JSON.parse(currentUser).name : 'Anonymous';
-        
+    const comment = commentText[taskId];
+    if (comment?.trim()) {
+      // 查找当前任务
+      const task = tasks.find(t => t._id === taskId);
+      if (task) {
+        // 创建新的评论对象
         const newComment = {
-          text: commentText[taskId],
-          createdAt: new Date().toISOString(),
-          creator: creator // 添加评论创建者信息
+          text: comment,
+          createdAt: new Date().toISOString()
         };
         
-        const updatedComments = [...(updatedTask.comments || []), newComment];
+        // 更新任务的评论列表
+        const updatedComments = [...(task.comments || []), newComment];
         
-        dispatch(updateTask({ ...updatedTask, comments: updatedComments }));
+        // 更新任务，将状态设为"In Progress"
+        dispatch(updateTask({ 
+          ...task, 
+          status: 'In Progress',
+          comments: updatedComments 
+        }));
         
-        setCommentText({ ...commentText, [taskId]: '' });
+        // 清除输入框
+        setCommentText(prev => ({
+          ...prev,
+          [taskId]: ''
+        }));
       }
     }
   };
@@ -184,7 +212,7 @@ const DashboardPage: React.FC = () => {
     const diffDays = diffTime / (1000 * 3600 * 24);
     
     // 如果截止日期已过或在1天内，则标记为临近截止日期
-    return diffDays <= 1;
+    return diffDays <= 1 && diffDays >= 0;
   };
 
   // 检查任务是否已过截止日期
@@ -222,7 +250,7 @@ const DashboardPage: React.FC = () => {
       }
     });
 
-  const getStatusBadgeClass = (status: string) => {
+  const getStatusClass = (status: string) => {
     switch (status) {
       case 'To Do':
         return 'bg-secondary';
@@ -235,7 +263,7 @@ const DashboardPage: React.FC = () => {
     }
   };
 
-  const getPriorityBadgeClass = (priority: string) => {
+  const getPriorityClass = (priority: string) => {
     switch (priority) {
       case 'Low':
         return 'bg-info';
@@ -249,7 +277,7 @@ const DashboardPage: React.FC = () => {
   };
 
   // 获取截止日期徽章样式
-  const getDeadlineBadgeClass = (task: Task) => {
+  const getDeadlineClass = (task: Task) => {
     if (isTaskOverdue(task)) {
       return 'bg-danger';
     } else if (isTaskNearDeadline(task)) {
@@ -313,9 +341,9 @@ const DashboardPage: React.FC = () => {
         <div className="col-12">
           <h2 className="mb-4">{t('dashboard.title')}</h2>
           
-          {/* 创建任务按钮和GitHub信息 */}
-          <div className="d-flex justify-content-between align-items-center mb-4">
-            <div className="d-flex gap-2">
+          {/* 创建任务按钮和GitHub信息 - 响应式调整 */}
+          <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+            <div className="d-flex flex-wrap gap-2">
               <button 
                 className="btn btn-primary" 
                 onClick={() => setShowCreateModal(true)}
@@ -330,7 +358,8 @@ const DashboardPage: React.FC = () => {
                 title={t('dashboard.exportCalendar')}
               >
                 <i className="bi bi-calendar-plus me-1"></i>
-                {t('dashboard.exportCalendar')}
+                <span className="d-none d-sm-inline">{t('dashboard.exportCalendar')}</span>
+                <span className="d-inline d-sm-none">{t('dashboard.exportCalendarShort')}</span>
               </button>
             </div>
             
@@ -341,50 +370,50 @@ const DashboardPage: React.FC = () => {
                 onClick={handleStarRepo}
               >
                 <i className="bi bi-star-fill me-1"></i> 
-                <span>Star</span>
+                <span className="d-none d-sm-inline">Star</span>
               </button>
               <div className="d-flex">
-                <span className="badge bg-secondary me-2">
-                  <i className="bi bi-star me-1"></i> {githubStats.stars}
+                <span className="badge bg-secondary me-2 d-flex align-items-center">
+                  <i className="bi bi-star me-1"></i> <span className="d-none d-sm-inline"> {githubStats.stars}</span>
                 </span>
-                <span className="badge bg-secondary">
-                  <i className="bi bi-git me-1"></i> {githubStats.forks}
+                <span className="badge bg-secondary d-flex align-items-center">
+                  <i className="bi bi-git me-1"></i> <span className="d-none d-sm-inline"> {githubStats.forks}</span>
                 </span>
               </div>
             </div>
           </div>
 
-          {/* 快速筛选按钮 */}
-          <div className="d-flex gap-2 mb-4">
+          {/* 快速筛选按钮 - 响应式调整 */}
+          <div className="d-flex flex-wrap gap-2 mb-4">
             <button 
-              className={`btn ${filterStatus === 'All' ? 'btn-primary' : 'btn-outline-primary'}`}
+              className={`btn ${filterStatus === 'All' ? 'btn-primary' : 'btn-outline-primary'} d-flex align-items-center`}
               onClick={() => setFilter('All')}
             >
               {t('dashboard.allTasks')} <span className="badge bg-white text-primary ms-1">{tasks.length}</span>
             </button>
             <button 
-              className={`btn ${filterStatus === 'To Do' ? 'btn-secondary' : 'btn-outline-secondary'}`}
+              className={`btn ${filterStatus === 'To Do' ? 'btn-secondary' : 'btn-outline-secondary'} d-flex align-items-center`}
               onClick={() => setFilter('To Do')}
             >
               {t('status.todo')} <span className="badge bg-white text-secondary ms-1">{todoTasksCount}</span>
             </button>
             <button 
-              className={`btn ${filterStatus === 'In Progress' ? 'btn-warning' : 'btn-outline-warning'}`}
+              className={`btn ${filterStatus === 'In Progress' ? 'btn-warning' : 'btn-outline-warning'} d-flex align-items-center`}
               onClick={() => setFilter('In Progress')}
             >
               {t('status.inProgress')} <span className="badge bg-white text-warning ms-1">{inProgressTasksCount}</span>
             </button>
             <button 
-              className={`btn ${filterStatus === 'Done' ? 'btn-success' : 'btn-outline-success'}`}
+              className={`btn ${filterStatus === 'Done' ? 'btn-success' : 'btn-outline-success'} d-flex align-items-center`}
               onClick={() => setFilter('Done')}
             >
               {t('status.done')} <span className="badge bg-white text-success ms-1">{doneTasksCount}</span>
             </button>
           </div>
 
-          {/* 筛选和排序控件 */}
+          {/* 筛选和排序控件 - 响应式调整 */}
           <div className="row mb-4">
-            <div className="col-md-4 mb-3">
+            <div className="col-md-4 col-sm-6 mb-3">
               <label htmlFor="filterStatus" className="form-label">{t('dashboard.filter.status')}</label>
               <select
                 className="form-select"
@@ -398,7 +427,7 @@ const DashboardPage: React.FC = () => {
                 <option value="Done">{t('status.done')}</option>
               </select>
             </div>
-            <div className="col-md-4 mb-3">
+            <div className="col-md-4 col-sm-6 mb-3">
               <label htmlFor="filterPriority" className="form-label">{t('dashboard.filter.priority')}</label>
               <select
                 className="form-select"
@@ -412,7 +441,7 @@ const DashboardPage: React.FC = () => {
                 <option value="High">{t('priority.high')}</option>
               </select>
             </div>
-            <div className="col-md-4 mb-3">
+            <div className="col-md-4 col-sm-6 mb-3">
               <label htmlFor="sortOrder" className="form-label">{t('dashboard.sort.label')}</label>
               <select
                 className="form-select"
@@ -448,59 +477,39 @@ const DashboardPage: React.FC = () => {
                     <div key={task._id} className="col-12 mb-3">
                       <div className={`card ${isTaskOverdue(task) ? 'border-danger' : ''}`}>
                         <div className="card-body">
-                          <div className="d-flex justify-content-between align-items-start">
+                          <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-start gap-2">
                             <div>
-                              <h5 className="card-title">
-                                {task.title}
-                                {task.deadline && (
-                                  <span className={`badge ${getDeadlineBadgeClass(task)} ms-2`}>
-                                    {isTaskOverdue(task) ? t('dashboard.overdue') : t('dashboard.dueSoon')}
-                                  </span>
-                                )}
-                              </h5>
-                              <p className="card-text text-muted">{task.description}</p>
-                              <div className="d-flex gap-2 mb-2">
-                                <span className={`badge ${getStatusBadgeClass(task.status)}`}>
+                              <h5 className="mb-1">{task.title}</h5>
+                              <p className="mb-2 text-muted">
+                                {task.description && task.description.length > 100 
+                                  ? `${task.description.substring(0, 100)}...` 
+                                  : task.description}
+                              </p>
+                              <div className="d-flex flex-wrap gap-2 mb-2">
+                                <span className={`badge ${getStatusClass(task.status)}`}>
                                   {translateStatus(task.status)}
                                 </span>
-                                <span className={`badge ${getPriorityBadgeClass(task.priority)}`}>
+                                <span className={`badge ${getPriorityClass(task.priority)}`}>
                                   {translatePriority(task.priority)}
                                 </span>
                                 {task.deadline && (
-                                  <span className="badge bg-secondary">
+                                  <span className={`badge ${getDeadlineClass(task)}`}>
                                     <i className="bi bi-calendar me-1"></i>
-                                    {new Date(task.deadline).toLocaleDateString(i18n.language)}
-                                  </span>
-                                )}
-                                {task.scheduledDate && (
-                                  <span className="badge bg-info">
-                                    <i className="bi bi-clock me-1"></i>
-                                    {new Date(task.scheduledDate).toLocaleDateString(i18n.language)}
+                                    {new Date(task.deadline).toLocaleDateString()}
+                                    {(isTaskNearDeadline(task) || isTaskOverdue(task)) && (
+                                      <span className="ms-1">
+                                        {isTaskOverdue(task) ? t('dashboard.overdue') : t('dashboard.dueSoon')}
+                                      </span>
+                                    )}
                                   </span>
                                 )}
                               </div>
-                              {task.assignee && (
-                                <p className="mb-1">
-                                  <small className="text-muted">
-                                    <i className="bi bi-person me-1"></i>
-                                    {task.assignee}
-                                  </small>
-                                </p>
-                              )}
-                              <p className="mb-1">
-                                <small className="text-muted">
-                                  <i className="bi bi-calendar me-1"></i>
-                                  {t('dashboard.created')}: {new Date(task.createdAt).toLocaleString(i18n.language)}
-                                </small>
-                              </p>
-                              <p className="mb-1">
-                                <small className="text-muted">
-                                  <i className="bi bi-arrow-repeat me-1"></i>
-                                  {t('dashboard.updated')}: {new Date(task.updatedAt).toLocaleString(i18n.language)}
-                                </small>
+                              <p className="mb-0 small text-muted">
+                                <i className="bi bi-clock me-1"></i>
+                                {t('dashboard.created')}: {new Date(task.createdAt).toLocaleDateString(i18n.language)}
                               </p>
                             </div>
-                            <div className="d-flex gap-2">
+                            <div className="d-flex flex-wrap gap-2">
                               {/* 快速状态更新按钮 */}
                               {task.status !== 'Done' && (
                                 <button
@@ -509,6 +518,7 @@ const DashboardPage: React.FC = () => {
                                   title={t('dashboard.markAsDone')}
                                 >
                                   <i className="bi bi-check-circle"></i>
+                                  <span className="d-none d-sm-inline ms-1">{t('dashboard.done')}</span>
                                 </button>
                               )}
                               {task.status !== 'In Progress' && task.status !== 'Done' && (
@@ -518,6 +528,7 @@ const DashboardPage: React.FC = () => {
                                   title={t('dashboard.markAsInProgress')}
                                 >
                                   <i className="bi bi-arrow-right-circle"></i>
+                                  <span className="d-none d-sm-inline ms-1">{t('dashboard.inProgress')}</span>
                                 </button>
                               )}
                               <button
@@ -532,19 +543,21 @@ const DashboardPage: React.FC = () => {
                                 className="btn btn-sm btn-outline-secondary"
                                 onClick={() => handleEdit(task)}
                               >
-                                {t('dashboard.edit')}
+                                <i className="bi bi-pencil"></i>
+                                <span className="d-none d-sm-inline ms-1">{t('dashboard.edit')}</span>
                               </button>
                               <button
                                 className="btn btn-sm btn-outline-danger"
                                 onClick={() => handleDelete(task._id)}
                               >
-                                {t('dashboard.delete')}
+                                <i className="bi bi-trash"></i>
+                                <span className="d-none d-sm-inline ms-1">{t('dashboard.delete')}</span>
                               </button>
                             </div>
                           </div>
 
                           {/* 任务详情和评论 */}
-                          {(expandedTaskId === task._id || task.status === 'In Progress') && (
+                          {(expandedTaskId === task._id) && (
                             <div className="mt-3 pt-3 border-top">
                               <h6>{t('dashboard.comments')}</h6>
                               <div className="timeline">
