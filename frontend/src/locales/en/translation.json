@@ -41,7 +41,20 @@
   "common": {
     "loading": "Loading...",
     "save": "Save",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View",
+    "close": "Close",
+    "submit": "Submit",
+    "back": "Back",
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "confirm": "Confirm",
+    "actions": "Actions"
   },
   "error": "Error",
   "success": "Success",
@@ -66,12 +79,24 @@
       "title": "Login to Your Account",
       "email": "Email Address",
       "password": "Password",
+      "passwordLogin": "Password Login",
+      "emailCodeLogin": "Email Code Login",
       "submit": "Login",
       "forgotPassword": "Forgot Password?",
       "noAccount": "Don't have an account?",
       "register": "Register here",
       "refreshCaptcha": "Refresh",
-      "captcha": "Captcha"
+      "captcha": "Captcha",
+      "getCaptcha": "Get Captcha",
+      "emailCode": "Email Verification Code",
+      "enterEmailCode": "Enter Email Verification Code",
+      "getCode": "Get Code",
+      "resendCode": "Resend in {{seconds}}s",
+      "errors": {
+        "invalidCredentials": "Invalid email or password",
+        "accountDisabled": "Account has been disabled",
+        "missingCaptcha": "Please enter the captcha"
+      }
     },
     "register": {
       "title": "Create an Account",
@@ -86,7 +111,27 @@
       "disabledMessage": "New user registration is currently disabled. Please contact the administrator for assistance.",
       "captcha": "Captcha",
       "enterCaptcha": "Enter the captcha",
-      "refreshCaptcha": "Refresh"
+      "refreshCaptcha": "Refresh",
+      "verifyCaptcha": "Verify Captcha",
+      "captchaRequired": "Please verify the captcha first",
+      "captchaVerified": "Captcha verified",
+      "emailCode": "Email Verification Code",
+      "enterEmailCode": "Enter Email Verification Code",
+      "getCode": "Get Code",
+      "resendCode": "Resend in {{seconds}}s",
+      "emailCodeSent": "Verification code sent to your email",
+      "emailCodeRequired": "Please get and enter the email verification code first",
+      "passwordMismatch": "Passwords do not match",
+      "invalidEmail": "Invalid email format",
+      "error": "Error",
+      "pleaseWait": "Please wait...",
+      "errors": {
+        "userExists": "Email already registered",
+        "invalidCaptcha": "Invalid captcha",
+        "invalidEmailCode": "Invalid email verification code",
+        "sendEmailCodeFailed": "Failed to send email verification code",
+        "registrationFailed": "Registration failed"
+      }
     }
   },
   "task": {
@@ -181,7 +226,18 @@
     "delete": "Delete",
     "down": "Down",
     "done": "Done",
-    "inProgress": "In Progress"
+    "inProgress": "In Progress",
+    "confirmDelete": "Are you sure you want to delete this task?",
+    "createTask": "Create Task",
+    "quickStats": "Quick Stats",
+    "totalTasks": "Total Tasks",
+    "completedTasks": "Completed Tasks",
+    "pendingTasks": "Pending Tasks",
+    "inProgressTasks": "In Progress Tasks",
+    "overdueTasks": "Overdue Tasks",
+    "recentTasks": "Recent Tasks",
+    "taskDistribution": "Task Distribution",
+    "noTasks": "No tasks found"
   },
   "footer": {
     "copyright": "todoIng Task Manager"
@@ -210,139 +266,7 @@
     "export": "Export",
     "tasks": "Tasks",
     "textPreview": "Text Preview",
-    "markdownPreview": "Markdown Preview"
-  },
-  "common": {
-    "loading": "Loading...",
-    "save": "Save",
-    "cancel": "Cancel",
-    "delete": "Delete",
-    "edit": "Edit",
-    "view": "View",
-    "close": "Close",
-    "submit": "Submit",
-    "back": "Back"
-  },
-  "auth": {
-    "login": {
-      "title": "Login to Your Account",
-      "email": "Email Address",
-      "password": "Password",
-      "passwordLogin": "Password Login",
-      "emailCodeLogin": "Email Code Login",
-      "submit": "Login",
-      "forgotPassword": "Forgot Password?",
-      "noAccount": "Don't have an account?",
-      "register": "Register here",
-      "refreshCaptcha": "Refresh",
-      "captcha": "Captcha",
-      "getCaptcha": "Get Captcha",
-      "emailCode": "Email Verification Code",
-      "enterEmailCode": "Enter Email Verification Code",
-      "getCode": "Get Code",
-      "resendCode": "Resend in {{seconds}}s",
-      "errors": {
-        "invalidCredentials": "Invalid email or password",
-        "accountDisabled": "Account has been disabled",
-        "missingCaptcha": "Please enter the captcha"
-      }
-    },
-    "register": {
-      "title": "Create an Account",
-      "name": "Full Name",
-      "email": "Email Address",
-      "password": "Password",
-      "confirmPassword": "Confirm Password",
-      "submit": "Register",
-      "haveAccount": "Already have an account?",
-      "login": "Login here",
-      "disabledTitle": "Registration Disabled",
-      "disabledMessage": "New user registration is currently disabled. Please contact the administrator for assistance.",
-      "captcha": "Captcha",
-      "enterCaptcha": "Enter the captcha",
-      "refreshCaptcha": "Refresh",
-      "verifyCaptcha": "Verify Captcha",
-      "captchaRequired": "Please verify the captcha first",
-      "captchaVerified": "Captcha verified",
-      "emailCode": "Email Verification Code",
-      "enterEmailCode": "Enter Email Verification Code",
-      "getCode": "Get Code",
-      "resendCode": "Resend in {{seconds}}s",
-      "emailCodeSent": "Verification code sent to your email",
-      "emailCodeRequired": "Please get and enter the email verification code first",
-      "passwordMismatch": "Passwords do not match",
-      "errors": {
-        "userExists": "Email already registered",
-        "invalidCaptcha": "Invalid captcha",
-        "invalidEmailCode": "Invalid email verification code",
-        "sendEmailCodeFailed": "Failed to send email verification code"
-      }
-    }
-  },
-  "dashboard": {
-    "title": "Task Dashboard",
-    "createTask": "Create Task",
-    "quickStats": "Quick Stats",
-    "totalTasks": "Total Tasks",
-    "completedTasks": "Completed Tasks",
-    "pendingTasks": "Pending Tasks",
-    "inProgressTasks": "In Progress Tasks",
-    "overdueTasks": "Overdue Tasks",
-    "recentTasks": "Recent Tasks",
-    "taskDistribution": "Task Distribution",
-    "noTasks": "No tasks found",
-    "down": "Offline"
-  },
-  "task": {
-    "title": "Task Title",
-    "description": "Task Description",
-    "status": "Status",
-    "priority": "Priority",
-    "assignee": "Assignee",
-    "dueDate": "Due Date",
-    "actions": "Actions",
-    "create": "Create Task",
-    "edit": "Edit Task",
-    "delete": "Delete Task",
-    "confirmDelete": "Confirm delete task \"{{title}}\"?",
-    "statuses": {
-      "todo": "To Do",
-      "inProgress": "In Progress",
-      "done": "Done"
-    },
-    "priorities": {
-      "low": "Low",
-      "medium": "Medium",
-      "high": "High"
-    },
-    "noDueDate": "No due date"
-  },
-  "common": {
-    "loading": "Loading...",
-    "save": "Save",
-    "cancel": "Cancel",
-    "edit": "Edit",
-    "delete": "Delete",
-    "confirm": "Confirm",
-    "actions": "Actions"
-  },
-  "nav": {
-    "dashboard": "Dashboard",
-    "reports": "Reports",
-    "logout": "Logout"
-  },
-  "status": {
-    "todo": "To Do",
-    "inProgress": "In Progress",
-    "done": "Done"
-  },
-  "priority": {
-    "low": "Low",
-    "medium": "Medium",
-    "high": "High"
-  },
-  "reports": {
-    "title": "Reports",
+    "markdownPreview": "Markdown Preview",
     "preview": "Report Preview",
     "generate": "Generate Report",
     "download": "Download Report",
@@ -355,5 +279,11 @@
     "loading": "Generating report...",
     "noData": "No data for selected period",
     "error": "Error generating report"
+  },
+  "navbar": {
+    "dashboard": "Dashboard",
+    "tasks": "Tasks",
+    "reports": "Reports",
+    "logout": "Logout"
   }
 }
