@@ -44,13 +44,15 @@ Authorization: Bearer <token>
 
 #### 用户注册
 - **URL**: `POST /auth/register`
-- **描述**: 创建新用户账户
+- **描述**: 创建新用户账户（支持邮箱验证码注册）
 - **请求参数**:
   ```json
   {
     "username": "string",
     "email": "string",
-    "password": "string"
+    "password": "string",
+    "emailCode": "string",     // 邮箱验证码（可选，当启用邮箱验证时必填）
+    "emailCodeId": "string"    // 邮箱验证码ID（可选，当启用邮箱验证时必填）
   }
   ```
 - **响应**:
@@ -71,12 +73,16 @@ Authorization: Bearer <token>
 
 #### 用户登录
 - **URL**: `POST /auth/login`
-- **描述**: 用户登录获取访问令牌
+- **描述**: 用户登录获取访问令牌（支持密码登录和邮箱验证码登录）
 - **请求参数**:
   ```json
   {
     "email": "string",
-    "password": "string"
+    "password": "string",      // 密码（密码登录时必填）
+    "emailCode": "string",     // 邮箱验证码（邮箱验证码登录时必填）
+    "emailCodeId": "string",   // 邮箱验证码ID（邮箱验证码登录时必填）
+    "captcha": "string",       // 图片验证码（可选，当启用验证码且使用密码登录时必填）
+    "captchaId": "string"      // 图片验证码ID（可选，当启用验证码且使用密码登录时必填）
   }
   ```
 - **响应**:
@@ -90,6 +96,41 @@ Authorization: Bearer <token>
         "email": "string"
       },
       "token": "jwt_token"
+    }
+  }
+  ```
+
+#### 发送邮箱验证码
+- **URL**: `POST /auth/send-email-code`
+- **描述**: 发送邮箱验证码（用于登录或注册）
+- **请求参数**:
+  ```json
+  {
+    "email": "string"
+  }
+  ```
+- **响应**:
+  ```json
+  {
+    "success": true,
+    "data": {
+      "id": "验证码ID"
+    },
+    "message": "Verification code sent successfully"
+  }
+  ```
+
+#### 获取图片验证码
+- **URL**: `GET /auth/captcha`
+- **描述**: 获取图片验证码（当启用验证码功能时）
+- **请求参数**: 无
+- **响应**:
+  ```json
+  {
+    "success": true,
+    "data": {
+      "image": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjUwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNmMGYwZjAiLz48bGluZSB4MT0iNzMuMDQ5MTMzMzg0MDQ4OTQiIHkxPSIyNy4wMjI0NzU4MzA2NzQxNyIgeDI9IjcwLjM5MTc5MjM0NTM5MjY4NSIgeTI9IjI0LjUxMjg1MzA0NTQ2MzU2MiIgc3Ryb2tlPSIjZjRlY2Y1IiBzdHJva2Utd2lkdGg9IjEiLz48dGV4dCB4PSIzNi43NjQ3MDU4ODIzNTI5NDkiIHk9IjMwLjY2NjY2NjY2NjY2NjY2NSIgZm9udC1zaXplPSIyNCIgZmlsbD0iI2U1Y2M1NiIgdHJhbnNmb3JtPSJyb3RhdGUoLTI0LjUxMzMxMzYwOTQ2NzQ1NiA1Mi4yMzUyOTQxMTc2NDcwNiAzMC42NjY2NjY2NjY2NjY2NjUpIiBmb250LWZhbWlseT0iQXJpYWwiPjA8L3RleHQ+PC9zdmc+",
+      "id": "验证码ID"
     }
   }
   ```

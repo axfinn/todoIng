@@ -1,300 +1,198 @@
 # 技术设计
 
-## 系统架构
+## 概述
 
-todoIng 采用前后端分离的架构模式，支持任务生命周期追踪和变更历史记录：
+todoIng 是一个基于现代 Web 技术栈构建的任务管理系统，它采用前后端分离架构，提供完整的任务生命周期管理和变更历史追踪功能。
 
-```
-┌─────────────────┐    HTTP API    ┌──────────────────┐
-│   Web Browser   │◄──────────────►│  Node.js Server  │
-└─────────────────┘                └──────────────────┘
-                                            │
-                                     MongoDB│
-                                            ▼
-                                  ┌──────────────────┐
-                                  │     Database     │
-                                  └──────────────────┘
-```
+## 技术架构
 
-## 核心概念
+### 前端架构
+- **框架**: React 18 + TypeScript
+- **状态管理**: Redux Toolkit
+- **路由管理**: React Router v6
+- **UI框架**: Bootstrap 5
+- **构建工具**: Vite
+- **HTTP客户端**: Axios
+- **国际化**: i18next
 
-### 任务生命周期
-每个任务都有完整的生命周期，包括：
-- 创建 (Created)
-- 进行中 (In Progress)
-- 暂停 (Paused)
-- 完成 (Completed)
-- 取消 (Cancelled)
+### 后端架构
+- **运行环境**: Node.js
+- **框架**: Express.js
+- **数据库**: MongoDB
+- **ODM**: Mongoose
+- **认证**: JWT + Bcrypt.js
+- **邮件发送**: Nodemailer
+- **容器化**: Docker
 
-### 变更追踪
-系统将追踪任务的所有变更，包括：
-- 状态变更
-- 内容更新
-- 分配变更
-- 优先级调整
+### 数据库设计
+- **用户集合**: 存储用户基本信息和认证数据
+- **任务集合**: 存储任务数据和变更历史
+- **验证码存储**: 内存存储（生产环境建议使用 Redis）
 
-## 扩展功能架构
+## 核心功能设计
 
-### 用户模块扩展
-- 用户个人资料管理
-- 用户偏好设置
-- 用户成就系统
-- 用户活跃度统计
+### 用户认证系统
 
-### 回溯模块
-- 任务状态快照功能
-- 时间点任务状态恢复
-- 任务历史对比功能
+#### 传统认证流程
+1. 用户通过邮箱和密码进行注册/登录
+2. 密码通过 Bcrypt.js 加密存储
+3. 使用 JWT 进行会话管理
+4. 可选的图片验证码增强安全性
 
-### 生命历程
-- 用户所有任务的总时间线视图
-- 任务完成里程碑展示
-- 个人成长轨迹分析
+#### 邮箱验证码认证流程
+1. **注册流程**:
+   - 用户输入邮箱地址并请求验证码
+   - 系统生成验证码并通过邮件发送给用户
+   - 用户在注册表单中输入收到的验证码
+   - 后端验证验证码有效性并完成注册
 
-### 事项总结
-- 任务完成情况统计
-- 个人/团队绩效分析
-- 任务模式识别和建议
+2. **登录流程**:
+   - 用户选择邮箱验证码登录方式
+   - 用户输入邮箱地址并请求验证码
+   - 系统生成验证码并通过邮件发送给用户
+   - 用户在登录表单中输入收到的验证码
+   - 后端验证验证码有效性并完成登录
 
-### 团队管理
-- 团队和组织结构管理
-- 团队任务分配和跟踪
-- 团队绩效统计和分析
+#### 验证码管理
+1. **图片验证码**:
+   - 使用 SVG 生成图形验证码
+   - 验证码存储在内存中，有过期时间限制
+   - 验证一次后立即失效
 
-## 前端技术设计
+2. **邮箱验证码**:
+   - 使用 crypto 库生成安全的随机验证码
+   - 通过 Nodemailer 发送邮件
+   - 验证码存储在内存中，有过期时间限制（默认10分钟）
+   - 有尝试次数限制（默认3次）
+   - 验证一次后立即失效
 
-### 技术栈
-- React 18.x
-- TypeScript
-- React Router v6
-- Redux Toolkit 状态管理
-- Axios HTTP 客户端
-- D3.js 或 Chart.js 用于历史数据可视化
+### 任务管理系统
 
-### 项目结构
-```
-src/
-├── components/        # 可复用组件
-├── pages/             # 页面组件
-├── store/             # Redux 状态管理
-├── services/          # API 服务层
-├── utils/             # 工具函数
-├── hooks/             # 自定义 hooks
-├── styles/            # 全局样式
-├── types/             # TypeScript 类型定义
-└── App.tsx            # 根组件
-```
+#### 任务数据结构
+- 标题、描述、状态、优先级等基本信息
+- 计划日期和截止日期
+- 分配给特定用户
+- 创建和更新时间戳
 
-### 核心组件设计
+#### 任务历史追踪
+- 记录每次任务变更的详细信息
+- 包括变更时间、变更内容和变更类型
+- 提供完整的任务生命周期视图
 
-#### 1. 任务列表组件
-展示所有任务及其当前状态
+#### 任务筛选和排序
+- 按状态、优先级、日期等条件筛选
+- 支持分页和搜索功能
+- 多种排序选项
 
-#### 2. 任务详情组件
-展示任务详细信息和变更历史时间线
+### 安全设计
 
-#### 3. 任务编辑组件
-用于创建和编辑任务
-
-#### 4. 历史时间线组件
-以图形化方式展示任务变更历史，类似Git提交历史
-
-#### 5. 状态统计面板
-展示任务状态分布和统计信息
-
-### 扩展组件设计
-
-#### 1. 团队管理组件
-- 团队列表和详情展示
-- 团队成员管理
-- 团队任务视图
-
-#### 2. 用户个人资料组件
-- 用户信息展示和编辑
-- 个人成就展示
-- 个人任务统计
-
-#### 3. 生命历程时间线组件
-- 用户所有任务的时间线视图
-- 里程碑标记和展示
-- 成长轨迹可视化
-
-#### 4. 数据分析和总结组件
-- 任务完成情况图表
-- 性能统计面板
-- 个性化建议展示
-
-### 状态管理
-使用 Redux Toolkit 进行全局状态管理，主要管理以下状态：
-- 用户认证状态
-- 任务列表数据
-- 任务详情及变更历史
-- 团队信息
-- UI 状态（加载状态、错误信息等）
-
-### 路由设计
-- `/` - 主页/仪表板
-- `/tasks` - 任务列表
-- `/tasks/:id` - 任务详情和历史
-- `/tasks/new` - 创建新任务
-- `/tasks/:id/edit` - 编辑任务
-- `/teams` - 团队列表
-- `/teams/:id` - 团队详情
-- `/profile` - 用户个人资料
-- `/timeline` - 生命历程时间线
-- `/analytics` - 数据分析和可视化
-- `/login` - 登录页
-- `/register` - 注册页
-
-## 后端技术设计
-
-### 技术栈
-- Node.js
-- Express.js
-- MongoDB + Mongoose
-- JWT 认证
-- bcryptjs 密码加密
-
-### 项目结构
-```
-src/
-├── controllers/       # 控制器层
-├── models/            # 数据模型
-├── routes/            # 路由定义
-├── middleware/        # 中间件
-├── utils/             # 工具函数
-├── config/            # 配置文件
-└── app.js             # 应用入口
-```
-
-### API 设计规范
-- RESTful API 风格
-- JSON 数据格式
-- 统一的响应格式
-- JWT Token 认证
-
-### 数据模型设计
-
-#### 用户模型 (User)
-- `_id`: ObjectId
-- `username`: String
-- `email`: String
-- `password`: String (hashed)
-- `profile`: Object (头像、简介等个人信息)
-- `preferences`: Object (用户偏好设置)
-- `achievements`: Array (用户成就)
-- `createdAt`: Date
-- `updatedAt`: Date
-
-#### 团队模型 (Team)
-- `_id`: ObjectId
-- `name`: String
-- `description`: String
-- `members`: Array of Objects (成员及角色)
-- `createdAt`: Date
-- `updatedAt`: Date
-
-#### 任务模型 (Task)
-- `_id`: ObjectId
-- `title`: String
-- `description`: String
-- `status`: Enum (created, in-progress, paused, completed, cancelled)
-- `priority`: Enum (low, medium, high)
-- `assignee`: ObjectId (reference to User)
-- `team`: ObjectId (reference to Team, 可选)
-- `tags`: [String]
-- `dueDate`: Date
-- `createdAt`: Date
-- `updatedAt`: Date
-- `createdBy`: ObjectId (reference to User)
-
-#### 任务历史记录模型 (TaskHistory)
-- `_id`: ObjectId
-- `taskId`: ObjectId (reference to Task)
-- `field`: String (变更的字段)
-- `oldValue`: Mixed (变更前的值)
-- `newValue`: Mixed (变更后的值)
-- `changedBy`: ObjectId (reference to User)
-- `changeType`: String (status-change, update, assign, etc.)
-- `timestamp`: Date
-- `comment`: String (可选的变更说明)
-
-#### 用户统计模型 (UserStatistics)
-- `_id`: ObjectId (reference to User)
-- `tasksCompleted`: Number
-- `tasksCreated`: Number
-- `completionRate`: Number
-- `activeDays`: Array of Dates
-- `lastActive`: Date
-- `achievements`: Array
-
-#### 任务总结模型 (TaskSummary)
-- `_id`: ObjectId
-- `userId`: ObjectId (reference to User)
-- `period`: String (统计周期: daily, weekly, monthly)
-- `tasksCompleted`: Number
-- `tasksCreated`: Number
-- `averageCompletionTime`: Number
-- `insights`: Array (系统生成的洞察)
-- `generatedAt`: Date
-
-### 核心API端点
-
-#### 认证相关
-- `POST /api/auth/register` - 用户注册
-- `POST /api/auth/login` - 用户登录
-
-#### 任务相关
-- `GET /api/tasks` - 获取任务列表
-- `POST /api/tasks` - 创建新任务
-- `GET /api/tasks/:id` - 获取任务详情
-- `PUT /api/tasks/:id` - 更新任务
-- `DELETE /api/tasks/:id` - 删除任务
-- `GET /api/tasks/:id/history` - 获取任务变更历史
-
-#### 团队相关
-- `GET /api/teams` - 获取团队列表
-- `POST /api/teams` - 创建新团队
-- `GET /api/teams/:id` - 获取团队详情
-- `PUT /api/teams/:id` - 更新团队信息
-- `DELETE /api/teams/:id` - 删除团队
-- `POST /api/teams/:id/members` - 添加团队成员
-- `DELETE /api/teams/:id/members/:userId` - 移除团队成员
-
-#### 用户相关
-- `GET /api/users/:id` - 获取用户详情
-- `PUT /api/users/:id` - 更新用户信息
-- `GET /api/users/:id/statistics` - 获取用户统计信息
-
-#### 历史记录相关
-- `GET /api/history` - 获取所有历史记录
-- `GET /api/history/:id` - 获取特定历史记录详情
-- `GET /api/history/timeline` - 获取历史时间线
-
-#### 统计和总结相关
-- `GET /api/analytics/tasks` - 获取任务分析数据
-- `GET /api/summaries/tasks` - 获取任务总结
-- `GET /api/users/:id/summaries` - 获取用户任务总结
-
-## 数据库设计
-
-### MongoDB 设计考虑
-1. 使用嵌套结构存储任务和历史记录以提高查询性能
-2. 为常用查询字段创建索引（status, assignee, dueDate等）
-3. 实现数据分页以处理大量任务和历史记录
-4. 为团队和用户扩展信息设计合理的数据结构
-
-## 安全设计
-- JWT Token 认证
+#### 认证安全
 - 密码加密存储
-- 请求验证和清理
+- JWT Token 认证
+- 可选的双因素验证（图片验证码）
+- 邮箱真实性验证
+
+#### 数据安全
+- 输入验证和清理
+- 防止常见的 Web 攻击（XSS、CSRF等）
+- 数据库查询参数化
+
+#### 通信安全
+- HTTPS 支持
 - CORS 配置
-- 速率限制
-- 团队权限控制
+- 安全的 HTTP 头部设置
+
+### 国际化支持
+
+#### 多语言实现
+- 支持中文和英文
+- 使用 i18next 管理语言资源
+- 动态切换语言
+
+#### 本地化内容
+- UI 文本翻译
+- 日期和时间格式本地化
+- 数字格式本地化
+
+## 部署架构
+
+### Docker 容器化部署
+- 前端容器（Nginx）
+- 后端容器（Node.js）
+- 数据库容器（MongoDB）
+- Docker Compose 编排
+
+### 环境配置
+- 开发环境
+- 测试环境
+- 生产环境
 
 ## 性能优化
+
+### 前端优化
+- 代码分割和懒加载
+- 组件缓存
+- 图片优化
+
+### 后端优化
 - 数据库索引优化
 - API 响应缓存
-- 前端数据缓存
-- 分页加载大数据集
-- 团队和用户数据的懒加载
+- 连接池管理
+
+### 网络优化
+- Gzip 压缩
+- CDN 支持
+- 资源合并
+
+## 扩展性设计
+
+### 模块化架构
+- 功能模块解耦
+- 可插拔的组件设计
+- 清晰的接口定义
+
+### 可配置性
+- 环境变量配置
+- 功能开关
+- 灵活的参数调整
+
+## 错误处理
+
+### 前端错误处理
+- 全局错误捕获
+- 用户友好的错误提示
+- 错误日志记录
+
+### 后端错误处理
+- 统一的错误响应格式
+- 详细的错误日志
+- 异常恢复机制
+
+## 监控和日志
+
+### 日志管理
+- 结构化日志记录
+- 日志级别控制
+- 日志轮转
+
+### 性能监控
+- API 响应时间监控
+- 数据库查询性能
+- 系统资源使用情况
+
+## 测试策略
+
+### 单元测试
+- 关键业务逻辑测试
+- 工具函数测试
+- 数据验证测试
+
+### 集成测试
+- API 接口测试
+- 数据库操作测试
+- 认证流程测试
+
+### 端到端测试
+- 用户流程测试
+- UI 交互测试
+- 跨浏览器兼容性测试
