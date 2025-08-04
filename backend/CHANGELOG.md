@@ -1,3 +1,11 @@
+## [1.8.9] - 2025-08-05
+### 修复
+- 解决前端Docker构建跨平台兼容性问题
+- 移除Dockerfile中的平台指定
+- 添加.dockerignore文件避免复制本地node_modules
+- 安装esbuild-wasm确保跨平台构建兼容性
+- 简化nginx配置
+
 ## [1.8.8] - 2025-08-05
 ### 优化
 - 更新.gitignore文件，忽略临时脚本文件
