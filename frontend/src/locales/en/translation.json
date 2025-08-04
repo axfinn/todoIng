@@ -41,10 +41,7 @@
   "common": {
     "loading": "Loading...",
     "save": "Save",
-    "cancel": "Cancel",
-    "delete": "Delete",
-    "edit": "Edit",
-    "view": "View"
+    "cancel": "Cancel"
   },
   "error": "Error",
   "success": "Success",
@@ -66,23 +63,30 @@
   "refresh": "Refresh",
   "auth": {
     "login": {
-      "title": "Login",
-      "email": "Email",
+      "title": "Login to Your Account",
+      "email": "Email Address",
       "password": "Password",
-      "captcha": "Captcha",
       "submit": "Login",
-      "register": "No account? Register now",
-      "forgotPassword": "Forgot password?"
+      "forgotPassword": "Forgot Password?",
+      "noAccount": "Don't have an account?",
+      "register": "Register here",
+      "refreshCaptcha": "Refresh",
+      "captcha": "Captcha"
     },
     "register": {
-      "title": "Register",
-      "username": "Username",
-      "email": "Email",
+      "title": "Create an Account",
+      "name": "Full Name",
+      "email": "Email Address",
       "password": "Password",
       "confirmPassword": "Confirm Password",
-      "captcha": "Captcha",
       "submit": "Register",
-      "login": "Have an account? Login now"
+      "haveAccount": "Already have an account?",
+      "login": "Login here",
+      "disabledTitle": "Registration Disabled",
+      "disabledMessage": "New user registration is currently disabled. Please contact the administrator for assistance.",
+      "captcha": "Captcha",
+      "enterCaptcha": "Enter the captcha",
+      "refreshCaptcha": "Refresh"
     }
   },
   "task": {
@@ -102,75 +106,13 @@
     "dashboard": "Dashboard",
     "login": "Login",
     "register": "Register",
-    "logout": "Logout",
-    "reports": "Reports"
+    "logout": "Logout"
   },
-  "auth": {
-    "login": {
-      "title": "Login",
-      "email": "Email address",
-      "password": "Password",
-      "submit": "Login",
-      "noAccount": "Don't have an account?",
-      "register": "Register"
-    },
-    "register": {
-      "title": "Register",
-      "name": "Username",
-      "email": "Email address",
-      "password": "Password",
-      "confirmPassword": "Confirm Password",
-      "submit": "Register",
-      "haveAccount": "Already have an account?",
-      "login": "Login",
-      "disabledTitle": "Registration Disabled",
-      "disabledMessage": "New user registration is currently disabled. Please contact the system administrator for access."
-    }
-  },
-  "dashboard": {
-    "title": "Task Dashboard",
-    "newTask": "New Task",
-    "taskList": "Task List",
-    "taskTitle": "Task Title",
-    "description": "Description",
-    "status": "Status",
-    "priority": "Priority",
-    "assignee": "Assignee",
-    "deadline": "Deadline",
-    "scheduledDate": "Scheduled Date",
-    "createTask": "Create Task",
-    "noTasks": "No tasks found",
-    "edit": "Edit",
-    "delete": "Delete",
-    "confirmDelete": "Are you sure you want to delete this task?",
-    "showDetails": "Show Details",
-    "hideDetails": "Hide Details",
-    "comments": "Comments",
-    "addComment": "Add a comment...",
-    "addCommentButton": "Add Comment",
-    "created": "Created",
-    "updated": "Updated",
-    "overdue": "Overdue",
-    "dueSoon": "Due Soon",
-    "exportCalendar": "Export to Calendar",
-    "today": "Today",
-    "tomorrow": "Tomorrow",
-    "dayAfterTomorrow": "Day after tomorrow",
-    "nextWeek": "Next week",
-    "nextMonth": "Next month",
-    "filter": {
-      "status": "Filter by Status",
-      "priority": "Filter by Priority",
-      "all": "All"
-    },
-    "sort": {
-      "label": "Sort Order",
-      "newest": "Newest First",
-      "oldest": "Oldest First"
-    },
-    "markAsDone": "Mark as Done",
-    "markAsInProgress": "Mark as In Progress",
-    "allTasks": "All Tasks"
+  "home": {
+    "title": "Welcome to todoIng",
+    "description": "A modern task management application to help you organize your work and life.",
+    "getStarted": "Get Started",
+    "login": "Login"
   },
   "status": {
     "todo": "To Do",
@@ -182,53 +124,52 @@
     "medium": "Medium",
     "high": "High"
   },
-  "common": {
-    "loading": "Loading...",
-    "cancel": "Cancel",
-    "save": "Save"
-  },
-  "home": {
-    "title": "Welcome to todoIng",
-    "description": "A modern task management application built with React, TypeScript, and Node.js",
-    "getStarted": "Get Started",
-    "login": "Login"
+  "dashboard": {
+    "title": "Dashboard",
+    "newTask": "New Task",
+    "exportCalendar": "Export Calendar",
+    "allTasks": "All Tasks",
+    "filter": {
+      "status": "Filter by Status",
+      "priority": "Filter by Priority",
+      "all": "All"
+    },
+    "sort": {
+      "label": "Sort by",
+      "newest": "Newest First",
+      "oldest": "Oldest First"
+    },
+    "taskList": "Task List",
+    "noTasks": "No tasks found",
+    "confirmDelete": "Are you sure you want to delete this task?",
+    "taskTitle": "Task Title",
+    "assignee": "Assignee",
+    "status": "Status",
+    "priority": "Priority",
+    "deadline": "Deadline",
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "dayAfterTomorrow": "Day After Tomorrow",
+    "nextWeek": "Next Week",
+    "nextMonth": "Next Month",
+    "scheduledDate": "Scheduled Date",
+    "description": "Description",
+    "createTask": "Create Task",
+    "created": "Created",
+    "updated": "Updated",
+    "overdue": "Overdue",
+    "dueSoon": "Due Soon",
+    "markAsDone": "Mark as Done",
+    "markAsInProgress": "Mark as In Progress",
+    "hideDetails": "Hide Details",
+    "showDetails": "Show Details",
+    "comments": "Comments",
+    "addComment": "Add a comment...",
+    "addCommentButton": "Add Comment",
+    "edit": "Edit Task",
+    "delete": "Delete"
   },
   "footer": {
     "copyright": "todoIng Task Manager"
-  },
-  "reports": {
-    "title": "Reports",
-    "generate": "Generate Report",
-    "generateNew": "Generate New Report",
-    "list": "Report List",
-    "noReports": "No reports available",
-    "daily": "Daily",
-    "weekly": "Weekly",
-    "monthly": "Monthly",
-    "type": "Report Type",
-    "date": "Date",
-    "statistics": "Statistics",
-    "totalTasks": "Total Tasks",
-    "completedTasks": "Completed Tasks",
-    "inProgressTasks": "In Progress Tasks",
-    "overdueTasks": "Overdue Tasks",
-    "completionRate": "Completion Rate",
-    "content": "Report Content",
-    "selectReport": "Please select a report to view",
-    "polish": "AI Polish",
-    "apiKey": "API Key",
-    "export": "Export",
-    "textPreview": "Text Preview",
-    "preview": "Preview",
-    "delete": "Delete",
-    "deleteConfirm": "Are you sure you want to delete this report?",
-    "deleteSuccess": "Report deleted successfully",
-    "deleteFailed": "Failed to delete report"
-  },
-  "navbar": {
-    "dashboard": "Dashboard",
-    "tasks": "Tasks",
-    "reports": "Reports",
-    "logout": "Logout"
   }
 }
