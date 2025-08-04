@@ -30,3 +30,6 @@ yarn.lock
 coverage/
 *.test.js
 *.spec.js
+
+# Temporary script files
+check_translations.*
