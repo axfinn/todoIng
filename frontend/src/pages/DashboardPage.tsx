@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
-import { fetchTasks, deleteTask, createTask, updateTask } from '../features/tasks/taskSlice';
+import { fetchTasks, deleteTask, createTask, updateTask, exportTasks, importTasks } from '../features/tasks/taskSlice';
 import { generateCalendarICS, downloadICSFile } from '../utils/calendarUtils';
 import type { RootState, AppDispatch } from '../app/store';
 import type { Task } from '../features/tasks/taskSlice';
@@ -44,6 +44,7 @@ const DashboardPage: React.FC = () => {
   const [sortOrder, setSortOrder] = useState<string>('newest');
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null); // 用于跟踪展开的任务
   const [githubStats, setGithubStats] = useState({ stars: 0, forks: 0 });
+  const [importFile, setImportFile] = useState<File | null>(null);
 
   // 计算各类任务的数量
   const todoTasksCount = tasks.filter(task => task.status === 'To Do').length;
@@ -76,6 +77,39 @@ const DashboardPage: React.FC = () => {
   const handleExportCalendar = () => {
     const icsContent = generateCalendarICS(tasks);
     downloadICSFile(icsContent, 'todoing-tasks.ics');
+  };
+
+  const handleExportTasks = () => {
+    dispatch(exportTasks()).then((action: any) => {
+      if (exportTasks.fulfilled.match(action)) {
+        const { data, filename } = action.payload;
+        const blob = new Blob([data], { type: 'application/json' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      }
+    });
+  };
+
+  const handleImportTasks = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      dispatch(importTasks(file)).then((action: any) => {
+        if (importTasks.fulfilled.match(action)) {
+          const { imported, errors } = action.payload;
+          alert(t('dashboard.importSuccess', { count: imported, errors: errors.length }));
+          // 刷新任务列表
+          dispatch(fetchTasks());
+        } else if (importTasks.rejected.match(action)) {
+          alert(t('dashboard.importFailed') + ': ' + action.payload);
+        }
+      });
+    }
   };
 
   const handleNewTaskChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -361,6 +395,28 @@ const DashboardPage: React.FC = () => {
                 <span className="d-none d-sm-inline">{t('dashboard.exportCalendar')}</span>
                 <span className="d-inline d-sm-none">{t('dashboard.exportCalendarShort')}</span>
               </button>
+              
+              <button 
+                className="btn btn-outline-info"
+                onClick={handleExportTasks}
+                title={t('dashboard.exportTasks')}
+              >
+                <i className="bi bi-download me-1"></i>
+                <span className="d-none d-sm-inline">{t('dashboard.exportTasks')}</span>
+                <span className="d-inline d-sm-none">{t('dashboard.exportTasksShort')}</span>
+              </button>
+              
+              <label className="btn btn-outline-success mb-0">
+                <i className="bi bi-upload me-1"></i>
+                <span className="d-none d-sm-inline">{t('dashboard.importTasks')}</span>
+                <span className="d-inline d-sm-none">{t('dashboard.importTasksShort')}</span>
+                <input 
+                  type="file" 
+                  accept=".json" 
+                  onChange={handleImportTasks} 
+                  style={{ display: 'none' }} 
+                />
+              </label>
             </div>
             
             <div className="d-flex align-items-center">

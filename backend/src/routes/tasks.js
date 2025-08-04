@@ -166,4 +166,72 @@ router.delete('/:id', auth, async (req, res) => {
   }
 });
 
+// Helper function to format date for filename
+function formatDateForFilename(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-based
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+// Export all tasks
+router.get('/export/all', auth, async (req, res) => {
+  try {
+    const tasks = await Task.find({ createdBy: req.user.id });
+    
+    // Set response headers
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename="todoing-backup-${formatDateForFilename(new Date())}.json"`);
+    
+    // Send tasks data
+    res.json(tasks);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// Import tasks
+router.post('/import', auth, async (req, res) => {
+  try {
+    const tasksData = req.body.tasks;
+    
+    if (!Array.isArray(tasksData)) {
+      return res.status(400).json({ msg: 'Invalid data format. Expected an array of tasks.' });
+    }
+    
+    // Validate and import tasks
+    const importedTasks = [];
+    const errors = [];
+    
+    for (let i = 0; i < tasksData.length; i++) {
+      const taskData = tasksData[i];
+      
+      try {
+        // Remove _id field to avoid conflicts
+        delete taskData._id;
+        
+        // Set creator to current user
+        taskData.createdBy = req.user.id;
+        
+        // Create new task
+        const newTask = new Task(taskData);
+        const savedTask = await newTask.save();
+        importedTasks.push(savedTask);
+      } catch (error) {
+        errors.push({ index: i, error: error.message });
+      }
+    }
+    
+    res.json({
+      msg: `Imported ${importedTasks.length} tasks successfully`,
+      imported: importedTasks.length,
+      errors
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
 module.exports = router;
