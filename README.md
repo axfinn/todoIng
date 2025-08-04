@@ -80,7 +80,7 @@ todoIng 是一个创新的任务管理系统，它不仅提供基本的任务管
 
 ### 使用 Docker Compose 部署（推荐）
 
-```bash
+```
 # 克隆项目
 git clone https://github.com/axfinn/todoIng.git
 cd todoIng
@@ -89,13 +89,13 @@ cd todoIng
 docker-compose up -d
 
 # 访问应用
-# 前端: http://localhost
+# 前端: http://localhost:81
 # 后端 API: http://localhost:5001/api
 ```
 
 ### 使用 Docker Hub 镜像
 
-```bash
+```
 # 拉取镜像
 docker pull axiu/todoing:latest
 docker pull axiu/todoing-frontend:latest
@@ -105,7 +105,7 @@ docker-compose -f docker-compose.local.yml up -d
 ```
 
 #### 开发环境部署
-```bash
+```
 # 克隆项目
 git clone <repository-url>
 cd todoIng
@@ -131,7 +131,7 @@ docker-compose -f docker-compose.dev.yml up -d
 ### 方法二：手动部署
 
 #### 后端设置
-```bash
+```
 # 进入后端目录
 cd backend
 
@@ -149,7 +149,7 @@ npm run dev
 ```
 
 #### 前端设置
-```bash
+```
 # 进入前端目录
 cd frontend
 
