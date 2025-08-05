@@ -8,9 +8,7 @@ services:
       - todoing_network
 
   backend:
-    build: 
-      context: ./backend
-      dockerfile: Dockerfile
+    image: axiu/todoing
     ports:
       - "5001:5001"
     environment:
@@ -29,11 +27,7 @@ services:
       - todoing_network
 
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-      args:
-        - TARGETPLATFORM=linux/amd64
+    image: axiu/todoing-frontend
     ports:
       - "81:80"
     environment:
