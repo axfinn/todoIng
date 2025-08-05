@@ -75,10 +75,10 @@ router.post(
     const { email } = req.body;
 
     try {
-      // 检查用户是否已存在
+      // 检查用户是否已存在（注册场景应该是用户不存在）
       let user = await User.findOne({ email });
-      if (!user) {
-        return res.status(400).json({ msg: 'User does not exist' });
+      if (user) {
+        return res.status(400).json({ msg: 'User already exists' });
       }
 
       // 生成邮箱验证码

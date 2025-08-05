@@ -73,7 +73,7 @@ const LoginPage: React.FC = () => {
     
     setIsEmailCodeSending(true);
     try {
-      const res = await api.post('/auth/send-email-code', { email: formData.email });
+      const res = await api.post('/auth/send-login-email-code', { email: formData.email });
       setEmailCodeData({
         id: res.data.id
       });
