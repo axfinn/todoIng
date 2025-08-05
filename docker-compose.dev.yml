@@ -47,11 +47,11 @@ services:
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
     container_name: todoing_frontend_dev
     restart: always
     ports:
-      - "3000:3000"
+      - "81:81"
     environment:
       - VITE_API_BASE_URL=http://localhost:5001/api
       # 是否禁用注册功能
