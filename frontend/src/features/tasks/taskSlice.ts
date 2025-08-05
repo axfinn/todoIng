@@ -64,9 +64,19 @@ export const createTask = createAsyncThunk<Task, Omit<Task, '_id' | 'createdAt' 
   }
 );
 
-export const updateTask = createAsyncThunk<Task, Partial<Task> & { _id: string }, { rejectValue: string }>(
+// Define the specific fields we want to allow updating
+interface UpdateTaskFields {
+  title?: string;
+  description?: string;
+  status?: 'To Do' | 'In Progress' | 'Done';
+  assignee?: string;
+  deadline?: string | null;
+  scheduledDate?: string | null;
+}
+
+export const updateTask = createAsyncThunk<Task, { _id: string } & UpdateTaskFields, { rejectValue: string }>(
   'tasks/updateTask',
-  async (taskData: Partial<Task> & { _id: string }, { rejectWithValue }) => {
+  async (taskData: { _id: string } & UpdateTaskFields, { rejectWithValue }) => {
     try {
       const { _id, ...taskUpdate } = taskData;
       const res = await api.put(`/tasks/${_id}`, taskUpdate);
