@@ -461,7 +461,7 @@ const ReportsPage: React.FC = () => {
                     <h6>{t('reports.content')}</h6>
                     {previewMode === 'preview' ? (
                       <div className="border rounded p-3 bg-light">
-                        <div dangerouslySetInnerHTML={{ __html: currentReport.content }} />
+                        <div dangerouslySetInnerHTML={{ __html: renderMarkdown(currentReport.polishedContent || currentReport.content) }} />
                       </div>
                     ) : (
                       <div className="border rounded p-3 bg-light">
