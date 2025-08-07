@@ -81,6 +81,34 @@ func GetTasksByUserID(userID primitive.ObjectID) ([]*Task, error) {
 	return tasks, nil
 }
 
+// StringToTaskStatus 将字符串转换为TaskStatus
+func StringToTaskStatus(s string) TaskStatus {
+	switch s {
+	case "To Do", "TO_DO":
+		return StatusToDo
+	case "In Progress", "IN_PROGRESS":
+		return StatusInProgress
+	case "Done", "DONE":
+		return StatusDone
+	default:
+		return StatusToDo
+	}
+}
+
+// StringToTaskPriority 将字符串转换为TaskPriority
+func StringToTaskPriority(s string) TaskPriority {
+	switch s {
+	case "Low", "LOW":
+		return PriorityLow
+	case "Medium", "MEDIUM":
+		return PriorityMedium
+	case "High", "HIGH":
+		return PriorityHigh
+	default:
+		return PriorityMedium
+	}
+}
+
 // CreateTask 创建新任务
 func CreateTask(task *Task) error {
 	// 设置创建时间和更新时间

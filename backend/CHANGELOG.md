@@ -1,3 +1,17 @@
+## [1.8.15] - 2025-08-07
+### 修复
+- 修复 backend-go 与前端的兼容性问题
+  - 修改任务和评论的 ID 字段从 `id` 改为 `_id`
+  - 修正任务状态格式从 `TO_DO` 改为 `To Do` 等
+  - 修正任务优先级格式从 `HIGH` 改为 `High` 等
+  - 修复报告相关 API 的响应格式
+  - 确保所有错误响应使用 `msg` 字段而不是 `error`
+- 添加报告相关路由的实现
+  - 实现 `/api/reports/generate` 端点
+  - 实现 `/api/reports/:id/polish` 端点
+  - 实现 `/api/reports/:id/export/:format` 端点
+- 修复报告数据结构的字段命名，确保与前端一致
+
 ## [1.8.14] - 2025-08-07
 ### 新增
 - 在 backend-go 中实现验证码验证端点 `/api/auth/verify-captcha`

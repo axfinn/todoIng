@@ -127,7 +127,7 @@ type AddCommentResponse struct {
 // swagger:model
 type Task struct {
 	// 任务ID
-	Id string `json:"id"`
+	Id string `json:"_id"`
 	// 任务标题
 	Title string `json:"title"`
 	// 任务描述
@@ -156,7 +156,7 @@ type Task struct {
 // swagger:model
 type Comment struct {
 	// 评论ID
-	Id string `json:"id"`
+	Id string `json:"_id"`
 	// 评论内容
 	Text string `json:"text"`
 	// 创建者
@@ -308,13 +308,13 @@ func convertTaskPriorityToProto(priority models.TaskPriority) pb.TaskPriority {
 func convertTaskStatusToString(status models.TaskStatus) string {
 	switch status {
 	case models.StatusToDo:
-		return "TO_DO"
+		return "To Do"
 	case models.StatusInProgress:
-		return "IN_PROGRESS"
+		return "In Progress"
 	case models.StatusDone:
-		return "DONE"
+		return "Done"
 	default:
-		return "TO_DO"
+		return "To Do"
 	}
 }
 
@@ -322,13 +322,13 @@ func convertTaskStatusToString(status models.TaskStatus) string {
 func convertTaskPriorityToString(priority models.TaskPriority) string {
 	switch priority {
 	case models.PriorityLow:
-		return "LOW"
+		return "Low"
 	case models.PriorityMedium:
-		return "MEDIUM"
+		return "Medium"
 	case models.PriorityHigh:
-		return "HIGH"
+		return "High"
 	default:
-		return "MEDIUM"
+		return "Medium"
 	}
 }
 
@@ -1135,7 +1135,7 @@ func exportTasks(c *gin.Context) {
 	c.Header("Content-Type", "application/json")
 	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", filename))
 
-	// 返回任务数据
+	// 返回任务数据作为JSON数组
 	c.JSON(http.StatusOK, respTasks)
 }
 

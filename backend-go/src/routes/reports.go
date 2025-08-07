@@ -1,11 +1,11 @@
 package routes
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	_ "todoing-backend/docs" // Swagger docs
-	pb "todoing-backend/proto/gen/proto"
 )
 
 // GetReportsResponse 获取报告列表响应
@@ -30,15 +30,13 @@ type GetReportResponse struct {
 // swagger:model
 type GenerateReportRequest struct {
 	// 报告类型
-	Type int32 `json:"type"`
+	Type string `json:"type"`
 	// 周期
 	Period string `json:"period"`
 	// 开始日期
-	StartDate string `json:"start_date"`
+	StartDate string `json:"startDate"`
 	// 结束日期
-	EndDate string `json:"end_date"`
-	// Token
-	Token string `json:"token"`
+	EndDate string `json:"endDate"`
 }
 
 // GenerateReportResponse 生成报告响应
@@ -83,8 +81,6 @@ type ExportReportRequest struct {
 	Id string `json:"id"`
 	// 格式
 	Format string `json:"format"`
-	// Token
-	Token string `json:"token"`
 }
 
 // ExportReportResponse 导出报告响应
@@ -109,11 +105,11 @@ type DeleteReportResponse struct {
 // swagger:model
 type Report struct {
 	// 报告ID
-	Id string `json:"id"`
+	Id string `json:"_id"`
 	// 用户ID
-	UserId string `json:"user_id"`
+	UserId string `json:"userId"`
 	// 报告类型
-	Type int32 `json:"type"`
+	Type string `json:"type"`
 	// 周期
 	Period string `json:"period"`
 	// 标题
@@ -121,7 +117,7 @@ type Report struct {
 	// 内容
 	Content string `json:"content"`
 	// 润色后的内容
-	PolishedContent string `json:"polished_content"`
+	PolishedContent string `json:"polishedContent"`
 	// 任务列表
 	Tasks []string `json:"tasks"`
 	// 统计信息
@@ -132,15 +128,15 @@ type Report struct {
 // swagger:model
 type ReportStatistics struct {
 	// 总任务数
-	TotalTasks int32 `json:"total_tasks"`
+	TotalTasks int32 `json:"totalTasks"`
 	// 完成任务数
-	CompletedTasks int32 `json:"completed_tasks"`
+	CompletedTasks int32 `json:"completedTasks"`
 	// 进行中任务数
-	InProgressTasks int32 `json:"in_progress_tasks"`
+	InProgressTasks int32 `json:"inProgressTasks"`
 	// 逾期任务数
-	OverdueTasks int32 `json:"overdue_tasks"`
+	OverdueTasks int32 `json:"overdueTasks"`
 	// 完成率
-	CompletionRate int32 `json:"completion_rate"`
+	CompletionRate int32 `json:"completionRate"`
 }
 
 // RegisterReportRoutes 注册报告相关路由
@@ -149,7 +145,9 @@ func RegisterReportRoutes(router gin.IRouter) {
 	{
 		reports.GET("", getReports)
 		reports.GET("/:id", getReport)
-		// reports.POST("", createReport) // 暂时注释掉未实现的路由
+		reports.POST("/generate", generateReport)
+		reports.POST("/:id/polish", polishReport)
+		reports.GET("/:id/export/:format", exportReport)
 		reports.DELETE("/:id", deleteReport)
 	}
 }
@@ -166,22 +164,17 @@ func RegisterReportRoutes(router gin.IRouter) {
 // @Failure 500 {object} ErrorResponse
 // @Router /reports [get]
 func getReports(c *gin.Context) {
-	userId := c.Query("userId")
-	if userId == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "userId is required"})
-		return
-	}
-
+	// TODO: 从JWT token获取用户ID，而不是从查询参数
 	// 实际实现中，这里会从数据库获取报告列表
-	reports := []*pb.Report{
+	reports := []Report{
 		{
 			Id:      "report-1",
-			UserId:  userId,
-			Type:    pb.ReportType_DAILY,
+			UserId:  "user-id",
+			Type:    "daily",
 			Period:  "2023-01-01",
 			Title:   "Sample Report 1",
 			Content: "Sample report content",
-			Statistics: &pb.ReportStatistics{
+			Statistics: ReportStatistics{
 				TotalTasks:       10,
 				CompletedTasks:   5,
 				InProgressTasks:  3,
@@ -191,10 +184,8 @@ func getReports(c *gin.Context) {
 		},
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"reports": reports,
-		"message": "Reports retrieved successfully",
-	})
+	// 前端期望直接返回报告数组
+	c.JSON(http.StatusOK, reports)
 }
 
 // getReport 获取单个报告
@@ -217,14 +208,14 @@ func getReport(c *gin.Context) {
 	}
 
 	// 实际实现中，这里会从数据库获取报告
-	report := &pb.Report{
+	report := Report{
 		Id:      id,
 		UserId:  "user-id",
-		Type:    pb.ReportType_DAILY,
+		Type:    "daily",
 		Period:  "2023-01-01",
 		Title:   "Sample Report",
 		Content: "Sample report content",
-		Statistics: &pb.ReportStatistics{
+		Statistics: ReportStatistics{
 			TotalTasks:       0,
 			CompletedTasks:   0,
 			InProgressTasks:  0,
@@ -233,10 +224,8 @@ func getReport(c *gin.Context) {
 		},
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"report":  report,
-		"message": "Report retrieved successfully",
-	})
+	// 前端期望直接返回报告对象
+	c.JSON(http.StatusOK, report)
 }
 
 // generateReport 生成报告
@@ -251,21 +240,26 @@ func getReport(c *gin.Context) {
 // @Failure 500 {object} ErrorResponse
 // @Router /reports/generate [post]
 func generateReport(c *gin.Context) {
-	var req pb.GenerateReportRequest
+	var req GenerateReportRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"msg": err.Error()})
 		return
 	}
 
-	// 实际实现中，这里会处理生成报告逻辑
-	report := &pb.Report{
+	// TODO: 实际实现报告生成逻辑
+	// 1. 从JWT获取用户ID
+	// 2. 根据时间范围查询任务
+	// 3. 生成统计信息
+	// 4. 生成报告内容
+	
+	report := Report{
 		Id:      "generated-report-id",
-		UserId:  "user-id", // 这里应该是从上下文获取的用户ID
+		UserId:  "user-id",
 		Type:    req.Type,
 		Period:  req.Period,
 		Title:   "Generated Report",
 		Content: "Generated report content",
-		Statistics: &pb.ReportStatistics{
+		Statistics: ReportStatistics{
 			TotalTasks:       0,
 			CompletedTasks:   0,
 			InProgressTasks:  0,
@@ -274,10 +268,8 @@ func generateReport(c *gin.Context) {
 		},
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"report":  report,
-		"message": "Report generated successfully",
-	})
+	// 前端期望直接返回报告对象
+	c.JSON(http.StatusOK, report)
 }
 
 // polishReport 润色报告
@@ -292,22 +284,23 @@ func generateReport(c *gin.Context) {
 // @Failure 500 {object} ErrorResponse
 // @Router /reports/polish [post]
 func polishReport(c *gin.Context) {
-	var req pb.PolishReportRequest
+	reportId := c.Param("id")
+	var req PolishReportRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"msg": err.Error()})
 		return
 	}
 
-	// 实际实现中，这里会处理润色报告逻辑
-	report := &pb.Report{
-		Id:              req.ReportId,
+	// TODO: 实际实现AI润色逻辑
+	report := Report{
+		Id:              reportId,
 		UserId:          "user-id",
-		Type:            pb.ReportType_DAILY,
+		Type:            "daily",
 		Period:          "2023-01-01",
 		Title:           "Polished Report",
 		Content:         "Original report content",
 		PolishedContent: "Polished report content",
-		Statistics: &pb.ReportStatistics{
+		Statistics: ReportStatistics{
 			TotalTasks:       0,
 			CompletedTasks:   0,
 			InProgressTasks:  0,
@@ -316,10 +309,8 @@ func polishReport(c *gin.Context) {
 		},
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"report":  report,
-		"message": "Report polished successfully",
-	})
+	// 前端期望直接返回报告对象
+	c.JSON(http.StatusOK, report)
 }
 
 // exportReport 导出报告
@@ -334,18 +325,36 @@ func polishReport(c *gin.Context) {
 // @Failure 500 {object} ErrorResponse
 // @Router /reports/export [post]
 func exportReport(c *gin.Context) {
-	var req pb.ExportReportRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	reportId := c.Param("id")
+	format := c.Param("format")
+	
+	if reportId == "" || format == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"msg": "Invalid parameters"})
 		return
 	}
 
-	// 实际实现中，这里会处理导出报告逻辑
-	c.JSON(http.StatusOK, gin.H{
-		"content":  "Report content",
-		"filename": "report.txt",
-		"message":  "Report exported successfully",
-	})
+	// TODO: 从数据库获取报告内容
+	content := "Sample report content for export"
+	
+	// 设置响应头
+	contentType := "text/plain"
+	fileExtension := "txt"
+	
+	switch format {
+	case "md", "markdown":
+		contentType = "text/markdown"
+		fileExtension = "md"
+	case "txt":
+		contentType = "text/plain"
+		fileExtension = "txt"
+	}
+	
+	filename := fmt.Sprintf("report-%s.%s", reportId, fileExtension)
+	c.Header("Content-Type", contentType)
+	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", filename))
+	
+	// 返回文件内容
+	c.String(http.StatusOK, content)
 }
 
 // deleteReport 删除报告
