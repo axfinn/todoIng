@@ -10,6 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+
 	"todoing-backend/src/config"
 	"todoing-backend/src/middleware"
 	"todoing-backend/src/models"
@@ -750,3 +751,4 @@ func formatReportAsText(report models.Report, content string) string {
 	text += fmt.Sprintf("报告生成时间: %s", time.Now().Format("2006-01-02 15:04:05"))
 	return text
 }
+

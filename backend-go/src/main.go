@@ -11,25 +11,22 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	ginSwagger "github.com/swaggo/gin-swagger"
-	"github.com/swaggo/files"
-
+	_ "todoing-backend/docs" // Swagger docs
 	"todoing-backend/src/config"
 	"todoing-backend/src/middleware"
 	"todoing-backend/src/routes"
-
-	// Swagger docs
-	_ "todoing-backend/docs"
 )
 
 var (
 	// 默认环境变量值
-	defaultPort     = "5001"
+	defaultPort = "5001"
 	// 修改MongoDB URI指向docker-compose中的mongodb服务
-	defaultMongoURI = "mongodb://todoing_mongodb_dev:27017/todoing"
+	defaultMongoURI  = "mongodb://todoing_mongodb_dev:27017/todoing"
 	defaultJWTSecret = "todoing_secret_key"
 )
 
@@ -75,13 +72,12 @@ func main() {
 	// 设置数据库
 	config.DB = client.Database("todoing")
 
-
 	// 创建 Gin 路由
 	router := gin.Default()
 
 	// 注册路由
 	routes.RegisterAuthRoutes(router)
-	
+
 	// 为任务和报告路由添加认证中间件
 	authorized := router.Group("/")
 	authorized.Use(middleware.AuthMiddleware())
@@ -133,3 +129,4 @@ func getEnv(key, defaultValue string) string {
 	}
 	return value
 }
+

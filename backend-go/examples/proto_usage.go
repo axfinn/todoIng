@@ -5,17 +5,18 @@ import (
 	"log"
 	"time"
 
-	"todoing-backend/proto/gen/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
+
+	"todoing-backend/proto/gen/proto"
 )
 
 // 示例：展示如何使用protobuf生成的结构
 func main() {
 	// 创建一个用户对象
 	user := &proto.User{
-		Id:       "12345",
-		Username: "john_doe",
-		Email:    "john@example.com",
+		Id:        "12345",
+		Username:  "john_doe",
+		Email:     "john@example.com",
 		CreatedAt: timestamppb.New(time.Now()),
 	}
 
@@ -60,11 +61,11 @@ func main() {
 		Title:   "Weekly Report",
 		Content: "# Weekly Report\n\nThis is a sample report content.",
 		Statistics: &proto.ReportStatistics{
-			TotalTasks:       10,
-			CompletedTasks:   7,
-			InProgressTasks:  2,
-			OverdueTasks:     1,
-			CompletionRate:   70,
+			TotalTasks:      10,
+			CompletedTasks:  7,
+			InProgressTasks: 2,
+			OverdueTasks:    1,
+			CompletionRate:  70,
 		},
 		CreatedAt: timestamppb.New(time.Now()),
 		UpdatedAt: timestamppb.New(time.Now()),
@@ -95,15 +96,15 @@ type UserService struct{}
 func (s *UserService) Register(req *proto.RegisterRequest) (*proto.RegisterResponse, error) {
 	// 实际实现中，这里会处理用户注册逻辑
 	log.Printf("Registering user: %s (%s)", req.Username, req.Email)
-	
+
 	// 创建用户对象
 	user := &proto.User{
-		Id:       "generated-user-id",
-		Username: req.Username,
-		Email:    req.Email,
+		Id:        "generated-user-id",
+		Username:  req.Username,
+		Email:     req.Email,
 		CreatedAt: timestamppb.New(time.Now()),
 	}
-	
+
 	// 返回响应
 	return &proto.RegisterResponse{
 		Token:   "generated-jwt-token",
@@ -115,15 +116,15 @@ func (s *UserService) Register(req *proto.RegisterRequest) (*proto.RegisterRespo
 func (s *UserService) Login(req *proto.LoginRequest) (*proto.LoginResponse, error) {
 	// 实际实现中，这里会处理用户登录逻辑
 	log.Printf("Logging in user: %s", req.Email)
-	
+
 	// 创建用户对象
 	user := &proto.User{
-		Id:       "found-user-id",
-		Username: "found-username",
-		Email:    req.Email,
+		Id:        "found-user-id",
+		Username:  "found-username",
+		Email:     req.Email,
 		CreatedAt: timestamppb.New(time.Now()),
 	}
-	
+
 	// 返回响应
 	return &proto.LoginResponse{
 		Token:   "generated-jwt-token",
@@ -138,22 +139,22 @@ type TaskService struct{}
 func (s *TaskService) CreateTask(req *proto.CreateTaskRequest) (*proto.CreateTaskResponse, error) {
 	// 实际实现中，这里会处理创建任务逻辑
 	log.Printf("Creating task: %s", req.Title)
-	
+
 	// 创建任务对象
 	task := &proto.Task{
-		Id:          "generated-task-id",
-		Title:       req.Title,
-		Description: req.Description,
-		Status:      req.Status,
-		Priority:    req.Priority,
-		Assignee:    req.Assignee,
-		CreatedBy:   "user-id",
-		CreatedAt:   timestamppb.New(time.Now()),
-		UpdatedAt:   timestamppb.New(time.Now()),
-		Deadline:    req.Deadline,
+		Id:            "generated-task-id",
+		Title:         req.Title,
+		Description:   req.Description,
+		Status:        req.Status,
+		Priority:      req.Priority,
+		Assignee:      req.Assignee,
+		CreatedBy:     "user-id",
+		CreatedAt:     timestamppb.New(time.Now()),
+		UpdatedAt:     timestamppb.New(time.Now()),
+		Deadline:      req.Deadline,
 		ScheduledDate: req.ScheduledDate,
 	}
-	
+
 	// 返回响应
 	return &proto.CreateTaskResponse{
 		Task:    task,
@@ -164,7 +165,7 @@ func (s *TaskService) CreateTask(req *proto.CreateTaskRequest) (*proto.CreateTas
 func (s *TaskService) GetTasks(req *proto.GetTasksRequest) (*proto.GetTasksResponse, error) {
 	// 实际实现中，这里会从数据库获取任务列表
 	log.Printf("Getting tasks for user with token: %s", req.Token)
-	
+
 	// 返回响应
 	return &proto.GetTasksResponse{
 		Tasks:   []*proto.Task{}, // 实际实现中会包含任务列表
@@ -178,7 +179,7 @@ type ReportService struct{}
 func (s *ReportService) GenerateReport(req *proto.GenerateReportRequest) (*proto.GenerateReportResponse, error) {
 	// 实际实现中，这里会处理生成报告逻辑
 	log.Printf("Generating %s report for period: %s", req.Type, req.Period)
-	
+
 	// 创建报告对象
 	report := &proto.Report{
 		Id:      "generated-report-id",
@@ -188,19 +189,20 @@ func (s *ReportService) GenerateReport(req *proto.GenerateReportRequest) (*proto
 		Title:   fmt.Sprintf("%s Report", req.Type),
 		Content: "Generated report content",
 		Statistics: &proto.ReportStatistics{
-			TotalTasks:       0,
-			CompletedTasks:   0,
-			InProgressTasks:  0,
-			OverdueTasks:     0,
-			CompletionRate:   0,
+			TotalTasks:      0,
+			CompletedTasks:  0,
+			InProgressTasks: 0,
+			OverdueTasks:    0,
+			CompletionRate:  0,
 		},
 		CreatedAt: timestamppb.New(time.Now()),
 		UpdatedAt: timestamppb.New(time.Now()),
 	}
-	
+
 	// 返回响应
 	return &proto.GenerateReportResponse{
 		Report:  report,
 		Message: "Report generated successfully",
 	}, nil
 }
+

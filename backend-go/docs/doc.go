@@ -2,27 +2,27 @@
 //
 // The purpose of this service is to provide a RESTful API for the TodoIng application.
 //
-//     Schemes: http
-//     Host: localhost:5001
-//     BasePath: /api
-//     Version: 1.0.0
-//     License: MIT http://opensource.org/licenses/MIT
+//	Schemes: http
+//	Host: localhost:5001
+//	BasePath: /api
+//	Version: 1.0.0
+//	License: MIT http://opensource.org/licenses/MIT
 //
-//     Consumes:
-//     - application/json
+//	Consumes:
+//	- application/json
 //
-//     Produces:
-//     - application/json
+//	Produces:
+//	- application/json
 //
-//     Security:
-//     - BearerAuth:
+//	Security:
+//	- BearerAuth:
 //
-//     SecurityDefinitions:
-//     BearerAuth:
-//          type: apiKey
-//          name: Authorization
-//          in: header
-//          description: 'Type "Bearer" followed by a space and JWT token.'
+//	SecurityDefinitions:
+//	BearerAuth:
+//	     type: apiKey
+//	     name: Authorization
+//	     in: header
+//	     description: 'Type "Bearer" followed by a space and JWT token.'
 //
 // swagger:meta
 package docs
@@ -404,3 +404,4 @@ type ReportStatistics struct {
 	// 完成率
 	CompletionRate int32 `json:"completion_rate"`
 }
+

@@ -11,9 +11,10 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	pb "todoing-backend/proto/gen/proto"
 	"todoing-backend/src/config"
 	"todoing-backend/src/models"
-	pb "todoing-backend/proto/gen/proto"
 )
 
 type UserServiceServer struct {
@@ -179,3 +180,4 @@ func (s *UserServiceServer) VerifyCaptcha(ctx context.Context, req *pb.CaptchaRe
 		Message: "Captcha verified successfully",
 	}, nil
 }
+

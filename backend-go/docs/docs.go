@@ -4,7 +4,7 @@ package docs
 
 import (
 	"strings"
-	
+
 	"github.com/swaggo/swag"
 )
 
@@ -1312,3 +1312,4 @@ func (s *s) ReadDoc() string {
 func init() {
 	swag.Register(swag.Name, &s{})
 }
+

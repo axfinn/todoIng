@@ -33,9 +33,9 @@ var EMAIL_CODE_CONFIG = struct {
 	Lifetime    int64
 	MaxAttempts int
 }{
-	Length:      6,              // 验证码长度
-	Lifetime:    5 * 60 * 1000,  // 5分钟有效期（毫秒）
-	MaxAttempts: 3,              // 最大尝试次数
+	Length:      6,             // 验证码长度
+	Lifetime:    5 * 60 * 1000, // 5分钟有效期（毫秒）
+	MaxAttempts: 3,             // 最大尝试次数
 }
 
 // GenerateEmailCode 生成邮箱验证码
@@ -67,7 +67,7 @@ func SendVerificationEmail(email string, code string) error {
 func CleanupExpiredEmailCodes() {
 	EmailCodeStore.mu.Lock()
 	defer EmailCodeStore.mu.Unlock()
-	
+
 	now := time.Now().UnixMilli()
 	for id, codeData := range EmailCodeStore.store {
 		if codeData.ExpiresAt < now {
@@ -114,3 +114,4 @@ func init() {
 		}
 	}()
 }
+

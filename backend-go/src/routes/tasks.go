@@ -11,6 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+
 	pb "todoing-backend/proto/gen/proto"
 	"todoing-backend/src/config"
 	"todoing-backend/src/models"
@@ -185,13 +186,13 @@ func getTasks(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"msg": "Invalid user data in token"})
 		return
 	}
-	
+
 	userId, ok := userData["id"].(string)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"msg": "Invalid user ID in token"})
 		return
 	}
-	
+
 	// 将用户ID字符串转换为ObjectID
 	userObjId, err := primitive.ObjectIDFromHex(userId)
 	if err != nil {
@@ -213,7 +214,7 @@ func getTasks(c *gin.Context) {
 		if task.Assignee != nil {
 			assignee = *task.Assignee
 		}
-		
+
 		respTask := Task{
 			Id:          task.ID.Hex(),
 			Title:       task.Title,
@@ -225,7 +226,7 @@ func getTasks(c *gin.Context) {
 			CreatedAt:   task.CreatedAt.Format(time.RFC3339),
 			UpdatedAt:   task.UpdatedAt.Format(time.RFC3339),
 		}
-		
+
 		// 处理可选的Deadline和ScheduledDate字段
 		if task.Deadline != nil {
 			formattedDeadline := task.Deadline.Format(time.RFC3339)
@@ -235,7 +236,7 @@ func getTasks(c *gin.Context) {
 			formattedScheduledDate := task.ScheduledDate.Format(time.RFC3339)
 			respTask.ScheduledDate = &formattedScheduledDate
 		}
-		
+
 		// 转换评论
 		for _, comment := range task.Comments {
 			respComment := Comment{
@@ -246,7 +247,7 @@ func getTasks(c *gin.Context) {
 			}
 			respTask.Comments = append(respTask.Comments, respComment)
 		}
-		
+
 		respTasks = append(respTasks, respTask)
 	}
 
@@ -353,7 +354,7 @@ func getTask(c *gin.Context) {
 	if task.Assignee != nil {
 		assignee = *task.Assignee
 	}
-	
+
 	respTask := Task{
 		Id:          task.ID.Hex(),
 		Title:       task.Title,
@@ -365,7 +366,7 @@ func getTask(c *gin.Context) {
 		CreatedAt:   task.CreatedAt.Format(time.RFC3339),
 		UpdatedAt:   task.UpdatedAt.Format(time.RFC3339),
 	}
-	
+
 	// 处理可选的Deadline和ScheduledDate字段
 	if task.Deadline != nil {
 		formattedDeadline := task.Deadline.Format(time.RFC3339)
@@ -375,7 +376,7 @@ func getTask(c *gin.Context) {
 		formattedScheduledDate := task.ScheduledDate.Format(time.RFC3339)
 		respTask.ScheduledDate = &formattedScheduledDate
 	}
-	
+
 	// 转换评论
 	for _, comment := range task.Comments {
 		respComment := Comment{
@@ -427,7 +428,7 @@ func createTask(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"msg": "Invalid user data in token"})
 		return
 	}
-	
+
 	userId, ok := userData["id"].(string)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"msg": "Invalid user ID in token"})
@@ -457,7 +458,7 @@ func createTask(c *gin.Context) {
 	if req.Assignee != nil {
 		task.Assignee = req.Assignee
 	}
-	
+
 	// 处理可选的时间字段
 	if req.Deadline != nil && *req.Deadline != "" {
 		deadlineTime, err := time.Parse(time.RFC3339, *req.Deadline)
@@ -467,7 +468,7 @@ func createTask(c *gin.Context) {
 		}
 		task.Deadline = &deadlineTime
 	}
-	
+
 	if req.ScheduledDate != nil && *req.ScheduledDate != "" {
 		scheduledDateTime, err := time.Parse(time.RFC3339, *req.ScheduledDate)
 		if err != nil {
@@ -501,7 +502,7 @@ func createTask(c *gin.Context) {
 		CreatedAt:   task.CreatedAt.Format(time.RFC3339),
 		UpdatedAt:   task.UpdatedAt.Format(time.RFC3339),
 	}
-	
+
 	// 处理可选的Deadline和ScheduledDate字段
 	if task.Deadline != nil {
 		formattedDeadline := task.Deadline.Format(time.RFC3339)
@@ -661,7 +662,7 @@ func updateTask(c *gin.Context) {
 	if updatedTask.Assignee != nil {
 		assignee = *updatedTask.Assignee
 	}
-	
+
 	respTask := Task{
 		Id:          updatedTask.ID.Hex(),
 		Title:       updatedTask.Title,
@@ -673,7 +674,7 @@ func updateTask(c *gin.Context) {
 		CreatedAt:   updatedTask.CreatedAt.Format(time.RFC3339),
 		UpdatedAt:   updatedTask.UpdatedAt.Format(time.RFC3339),
 	}
-	
+
 	// 处理可选的Deadline和ScheduledDate字段
 	if updatedTask.Deadline != nil {
 		formattedDeadline := updatedTask.Deadline.Format(time.RFC3339)
@@ -683,7 +684,7 @@ func updateTask(c *gin.Context) {
 		formattedScheduledDate := updatedTask.ScheduledDate.Format(time.RFC3339)
 		respTask.ScheduledDate = &formattedScheduledDate
 	}
-	
+
 	// 转换评论
 	for _, comment := range updatedTask.Comments {
 		respComment := Comment{
@@ -807,7 +808,7 @@ func assignTask(c *gin.Context) {
 	if updatedTask.Assignee != nil {
 		assignee = *updatedTask.Assignee
 	}
-	
+
 	respTask := Task{
 		Id:          updatedTask.ID.Hex(),
 		Title:       updatedTask.Title,
@@ -819,7 +820,7 @@ func assignTask(c *gin.Context) {
 		CreatedAt:   updatedTask.CreatedAt.Format(time.RFC3339),
 		UpdatedAt:   updatedTask.UpdatedAt.Format(time.RFC3339),
 	}
-	
+
 	// 处理可选的Deadline和ScheduledDate字段
 	if updatedTask.Deadline != nil {
 		formattedDeadline := updatedTask.Deadline.Format(time.RFC3339)
@@ -829,7 +830,7 @@ func assignTask(c *gin.Context) {
 		formattedScheduledDate := updatedTask.ScheduledDate.Format(time.RFC3339)
 		respTask.ScheduledDate = &formattedScheduledDate
 	}
-	
+
 	// 转换评论
 	for _, comment := range updatedTask.Comments {
 		respComment := Comment{
@@ -896,7 +897,7 @@ func addComment(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"msg": "Invalid user data in token"})
 		return
 	}
-	
+
 	userId, ok := userData["id"].(string)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"msg": "Invalid user ID in token"})
@@ -950,7 +951,7 @@ func addComment(c *gin.Context) {
 	if updatedTask.Assignee != nil {
 		assignee = *updatedTask.Assignee
 	}
-	
+
 	respTask := Task{
 		Id:          updatedTask.ID.Hex(),
 		Title:       updatedTask.Title,
@@ -962,7 +963,7 @@ func addComment(c *gin.Context) {
 		CreatedAt:   updatedTask.CreatedAt.Format(time.RFC3339),
 		UpdatedAt:   updatedTask.UpdatedAt.Format(time.RFC3339),
 	}
-	
+
 	// 处理可选的Deadline和ScheduledDate字段
 	if updatedTask.Deadline != nil {
 		formattedDeadline := updatedTask.Deadline.Format(time.RFC3339)
@@ -972,7 +973,7 @@ func addComment(c *gin.Context) {
 		formattedScheduledDate := updatedTask.ScheduledDate.Format(time.RFC3339)
 		respTask.ScheduledDate = &formattedScheduledDate
 	}
-	
+
 	// 转换评论
 	for _, comment := range updatedTask.Comments {
 		respComment := Comment{
@@ -1003,8 +1004,8 @@ type ImportTasksRequest struct {
 // ImportTasksResponse 导入任务响应
 // swagger:model
 type ImportTasksResponse struct {
-	Message  string `json:"msg"`
-	Imported int    `json:"imported"`
+	Message  string        `json:"msg"`
+	Imported int           `json:"imported"`
 	Errors   []ImportError `json:"errors"`
 }
 
@@ -1050,13 +1051,13 @@ func exportTasks(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"msg": "Invalid user data in token"})
 		return
 	}
-	
+
 	userIdStr, ok := userData["id"].(string)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"msg": "Invalid user ID in token"})
 		return
 	}
-	
+
 	userID, err := primitive.ObjectIDFromHex(userIdStr)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"msg": "Invalid token"})
@@ -1084,7 +1085,7 @@ func exportTasks(c *gin.Context) {
 		if task.Assignee != nil {
 			assignee = *task.Assignee
 		}
-		
+
 		respTask := Task{
 			Id:          task.ID.Hex(),
 			Title:       task.Title,
@@ -1096,7 +1097,7 @@ func exportTasks(c *gin.Context) {
 			CreatedAt:   task.CreatedAt.Format(time.RFC3339),
 			UpdatedAt:   task.UpdatedAt.Format(time.RFC3339),
 		}
-		
+
 		// 处理可选的Deadline和ScheduledDate字段
 		if task.Deadline != nil {
 			formattedDeadline := task.Deadline.Format(time.RFC3339)
@@ -1106,7 +1107,7 @@ func exportTasks(c *gin.Context) {
 			formattedScheduledDate := task.ScheduledDate.Format(time.RFC3339)
 			respTask.ScheduledDate = &formattedScheduledDate
 		}
-		
+
 		// 转换评论
 		for _, comment := range task.Comments {
 			respComment := Comment{
@@ -1117,7 +1118,7 @@ func exportTasks(c *gin.Context) {
 			}
 			respTask.Comments = append(respTask.Comments, respComment)
 		}
-		
+
 		respTasks = append(respTasks, respTask)
 	}
 
@@ -1162,13 +1163,13 @@ func importTasks(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"msg": "Invalid user data in token"})
 		return
 	}
-	
+
 	userIdStr, ok := userData["id"].(string)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"msg": "Invalid user ID in token"})
 		return
 	}
-	
+
 	userID, err := primitive.ObjectIDFromHex(userIdStr)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"msg": "Invalid token"})
@@ -1248,3 +1249,4 @@ func importTasks(c *gin.Context) {
 		"errors":   errors,
 	})
 }
+

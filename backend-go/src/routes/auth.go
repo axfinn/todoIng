@@ -206,7 +206,7 @@ func getCaptcha(c *gin.Context) {
 		captchaText[i] = charset[rand.Intn(len(charset))]
 	}
 	captcha := string(captchaText)
-	
+
 	// 创建图片
 	width := 150
 	height := 50
@@ -227,7 +227,7 @@ func getCaptcha(c *gin.Context) {
 		x2 := rand.Intn(width)
 		y2 := rand.Intn(height)
 		lineColor := color.RGBA{uint8(rand.Intn(200)), uint8(rand.Intn(200)), uint8(rand.Intn(200)), 255}
-		
+
 		// Bresenham直线算法
 		dx := abs(x2 - x1)
 		dy := abs(y2 - y1)
@@ -243,7 +243,7 @@ func getCaptcha(c *gin.Context) {
 			sy = -1
 		}
 		err := dx - dy
-		
+
 		x, y := x1, y1
 		for {
 			if x >= 0 && x < width && y >= 0 && y < height {
@@ -273,7 +273,7 @@ func getCaptcha(c *gin.Context) {
 
 	// 将验证码转换为字符串并绘制
 	captchaStr := captcha
-	
+
 	// 绘制验证码字符
 	// 由于Go标准库不支持字体渲染，我们使用简单的方式绘制
 	// 实际项目中应该使用 github.com/golang/freetype 等库
@@ -281,15 +281,15 @@ func getCaptcha(c *gin.Context) {
 		// 计算字符位置
 		x := 10 + i*22 + rand.Intn(5) - 2
 		y := 25 + rand.Intn(10) - 5
-		
+
 		// 使用随机颜色
 		charColor := color.RGBA{
-			uint8(rand.Intn(100)), 
-			uint8(rand.Intn(100)), 
-			uint8(rand.Intn(100)), 
+			uint8(rand.Intn(100)),
+			uint8(rand.Intn(100)),
+			uint8(rand.Intn(100)),
 			255,
 		}
-		
+
 		// 简单地绘制字符占位符（实际应使用字体库）
 		drawCharPlaceholder(img, x, y, charColor, rune(char))
 	}
@@ -315,15 +315,15 @@ func getCaptcha(c *gin.Context) {
 		CreatedAt: time.Now(),
 		ExpiresAt: time.Now().Add(5 * time.Minute),
 	}
-	
+
 	// 定期清理过期验证码（10%概率触发）
 	if rand.Float32() < 0.1 {
 		go cleanupExpiredCaptchas()
 	}
 
 	c.JSON(http.StatusOK, &GenerateCaptchaResponse{
-		Image:   "data:image/png;base64," + base64.StdEncoding.EncodeToString(buf.Bytes()),
-		Id:      captchaID,
+		Image: "data:image/png;base64," + base64.StdEncoding.EncodeToString(buf.Bytes()),
+		Id:    captchaID,
 	})
 }
 
@@ -369,7 +369,7 @@ func drawSimpleDigit(img *image.RGBA, digit rune, x, y int) {
 		'8': {true, true, true, true, true, true, true},
 		'9': {true, true, true, true, false, true, true},
 	}
-	
+
 	// 定义7段的位置
 	segments := [7][4]int{
 		// a段 (顶部)
@@ -387,11 +387,11 @@ func drawSimpleDigit(img *image.RGBA, digit rune, x, y int) {
 		// g段 (中间)
 		{x + 5, y + 16, x + 20, y + 16},
 	}
-	
+
 	// 绘制每个激活的段
 	color := color.RGBA{0, 0, 0, 255} // 黑色
 	pattern := patterns[digit]
-	
+
 	for i, active := range pattern {
 		if active {
 			drawSegment(img, segments[i], color)
@@ -402,7 +402,7 @@ func drawSimpleDigit(img *image.RGBA, digit rune, x, y int) {
 // drawSegment 绘制一个段
 func drawSegment(img *image.RGBA, segment [4]int, color color.RGBA) {
 	x1, y1, x2, y2 := segment[0], segment[1], segment[2], segment[3]
-	
+
 	// 如果是水平线
 	if y1 == y2 {
 		for x := x1; x <= x2; x++ {
@@ -462,36 +462,36 @@ func verifyCaptcha(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, &ErrorResponse{Msg: "Captcha is required"})
 		return
 	}
-	
+
 	// 检查是否提供了验证码ID
 	if req.CaptchaId == "" {
 		c.JSON(http.StatusBadRequest, &ErrorResponse{Msg: "Captcha ID is required"})
 		return
 	}
-	
+
 	// 验证验证码是否正确
 	storedCaptcha, exists := captchaStore[req.CaptchaId]
 	if !exists {
 		c.JSON(http.StatusBadRequest, &ErrorResponse{Msg: "Invalid or expired captcha"})
 		return
 	}
-	
+
 	// 检查验证码是否过期
 	if time.Now().After(storedCaptcha.ExpiresAt) {
 		delete(captchaStore, req.CaptchaId)
 		c.JSON(http.StatusBadRequest, &ErrorResponse{Msg: "Captcha has expired"})
 		return
 	}
-	
+
 	// 比较验证码（不区分大小写）
 	if storedCaptcha.Text != strings.ToUpper(req.Captcha) {
 		c.JSON(http.StatusBadRequest, &ErrorResponse{Msg: "Invalid captcha"})
 		return
 	}
-	
+
 	// 验证成功后删除验证码，防止重复使用
 	delete(captchaStore, req.CaptchaId)
-	
+
 	c.JSON(http.StatusOK, &VerifyCaptchaResponse{
 		Msg: "Captcha verified successfully",
 	})
@@ -832,37 +832,36 @@ func login(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, &ErrorResponse{Msg: "Captcha is required"})
 			return
 		}
-		
+
 		// 检查是否提供了验证码ID
 		if req.CaptchaId == "" {
 			c.JSON(http.StatusBadRequest, &ErrorResponse{Msg: "Captcha ID is required"})
 			return
 		}
-		
+
 		// 验证验证码是否正确
 		storedCaptcha, exists := captchaStore[req.CaptchaId]
 		if !exists {
 			c.JSON(http.StatusBadRequest, &ErrorResponse{Msg: "Invalid or expired captcha"})
 			return
 		}
-		
+
 		// 检查验证码是否过期
 		if time.Now().After(storedCaptcha.ExpiresAt) {
 			delete(captchaStore, req.CaptchaId)
 			c.JSON(http.StatusBadRequest, &ErrorResponse{Msg: "Captcha has expired"})
 			return
 		}
-		
+
 		// 比较验证码（不区分大小写）
 		if storedCaptcha.Text != strings.ToUpper(req.Captcha) {
 			c.JSON(http.StatusBadRequest, &ErrorResponse{Msg: "Invalid captcha"})
 			return
 		}
-		
+
 		// 验证成功后删除验证码，防止重复使用
 		delete(captchaStore, req.CaptchaId)
 	}
-
 
 	// 从用户文档中获取用户ID
 	userID := userDoc["_id"].(primitive.ObjectID).Hex()
@@ -961,3 +960,4 @@ func getUser(c *gin.Context) {
 	// backend 直接返回用户对象，不包装在响应对象中
 	c.JSON(http.StatusOK, user)
 }
+
