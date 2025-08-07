@@ -1242,9 +1242,9 @@ func importTasks(c *gin.Context) {
 		}
 	}
 
-	c.JSON(http.StatusOK, ImportTasksResponse{
-		Message:  fmt.Sprintf("Imported %d tasks successfully", importedCount),
-		Imported: importedCount,
-		Errors:   errors,
+	c.JSON(http.StatusOK, gin.H{
+		"msg":      fmt.Sprintf("Imported %d tasks successfully", importedCount),
+		"imported": importedCount,
+		"errors":   errors,
 	})
 }
