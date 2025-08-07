@@ -16,23 +16,13 @@ import (
 	"todoing-backend/src/models"
 )
 
-// GetTasksResponse 获取任务列表响应
+// GetTasksResponse 获取任务列表响应 - 直接返回任务数组
 // swagger:model
-type GetTasksResponse struct {
-	// 任务列表
-	Tasks []Task `json:"tasks"`
-	// 消息
-	Message string `json:"message"`
-}
+type GetTasksResponse []Task
 
-// GetTaskResponse 获取任务响应
+// GetTaskResponse 获取任务响应 - 直接返回任务对象
 // swagger:model
-type GetTaskResponse struct {
-	// 任务信息
-	Task Task `json:"task"`
-	// 消息
-	Message string `json:"message"`
-}
+type GetTaskResponse Task
 
 // CreateTaskRequest 创建任务请求
 // swagger:model
@@ -55,14 +45,9 @@ type CreateTaskRequest struct {
 	Token string `json:"token"`
 }
 
-// CreateTaskResponse 创建任务响应
+// CreateTaskResponse 创建任务响应 - 直接返回任务对象
 // swagger:model
-type CreateTaskResponse struct {
-	// 任务信息
-	Task Task `json:"task"`
-	// 消息
-	Message string `json:"message"`
-}
+type CreateTaskResponse Task
 
 // UpdateTaskRequest 更新任务请求
 // swagger:model
@@ -87,20 +72,15 @@ type UpdateTaskRequest struct {
 	Token string `json:"token"`
 }
 
-// UpdateTaskResponse 更新任务响应
+// UpdateTaskResponse 更新任务响应 - 直接返回任务对象
 // swagger:model
-type UpdateTaskResponse struct {
-	// 任务信息
-	Task Task `json:"task"`
-	// 消息
-	Message string `json:"message"`
-}
+type UpdateTaskResponse Task
 
 // DeleteTaskResponse 删除任务响应
 // swagger:model
 type DeleteTaskResponse struct {
 	// 消息
-	Message string `json:"message"`
+	Msg string `json:"msg"`
 }
 
 // AddCommentRequest 添加评论请求
@@ -114,14 +94,9 @@ type AddCommentRequest struct {
 	Token string `json:"token"`
 }
 
-// AddCommentResponse 添加评论响应
+// AddCommentResponse 添加评论响应 - 直接返回更新后的任务对象
 // swagger:model
-type AddCommentResponse struct {
-	// 评论信息
-	Comment Comment `json:"comment"`
-	// 消息
-	Message string `json:"message"`
-}
+type AddCommentResponse Task
 
 // Task 任务信息
 // swagger:model
@@ -275,11 +250,8 @@ func getTasks(c *gin.Context) {
 		respTasks = append(respTasks, respTask)
 	}
 
-	// 返回JSON格式的任务列表
-	c.JSON(http.StatusOK, gin.H{
-		"tasks":   respTasks,
-		"message": "Tasks retrieved successfully",
-	})
+	// 返回JSON格式的任务列表 - 直接返回数组
+	c.JSON(http.StatusOK, respTasks)
 }
 
 // convertTaskStatusToProto 将TaskStatus转换为pb.TaskStatus
@@ -415,10 +387,8 @@ func getTask(c *gin.Context) {
 		respTask.Comments = append(respTask.Comments, respComment)
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"task":    respTask,
-		"message": "Task retrieved successfully",
-	})
+	// 直接返回任务对象
+	c.JSON(http.StatusOK, respTask)
 }
 
 // createTask 创建任务
@@ -542,10 +512,8 @@ func createTask(c *gin.Context) {
 		respTask.ScheduledDate = &formattedScheduledDate
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
-		"task":    respTask,
-		"message": "Task created successfully",
-	})
+	// 直接返回创建的任务对象
+	c.JSON(http.StatusCreated, respTask)
 }
 
 // convertProtoToTaskStatus 将pb.TaskStatus转换为TaskStatus
@@ -727,10 +695,8 @@ func updateTask(c *gin.Context) {
 		respTask.Comments = append(respTask.Comments, respComment)
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"task":    respTask,
-		"message": "Task updated successfully",
-	})
+	// 直接返回更新后的任务对象
+	c.JSON(http.StatusOK, respTask)
 }
 
 // deleteTask 删除任务
@@ -771,9 +737,8 @@ func deleteTask(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Task deleted successfully",
-	})
+	// 返回删除成功消息
+	c.JSON(http.StatusOK, gin.H{"msg": "Task removed"})
 }
 
 // assignTask 分配任务
@@ -876,10 +841,8 @@ func assignTask(c *gin.Context) {
 		respTask.Comments = append(respTask.Comments, respComment)
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"task":    respTask,
-		"message": "Task assigned successfully",
-	})
+	// 直接返回更新后的任务对象
+	c.JSON(http.StatusOK, respTask)
 }
 
 // addComment 添加评论
@@ -1021,10 +984,8 @@ func addComment(c *gin.Context) {
 		respTask.Comments = append(respTask.Comments, respComment)
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"task":    respTask,
-		"message": "Comment added successfully",
-	})
+	// 直接返回更新后的任务对象
+	c.JSON(http.StatusOK, respTask)
 }
 
 // ExportTasksResponse 导出任务响应
