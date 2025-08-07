@@ -1,3 +1,13 @@
+## [1.8.14] - 2025-08-07
+### 新增
+- 在 backend-go 中实现验证码验证端点 `/api/auth/verify-captcha`
+- 在 backend-go 中实现任务导入/导出功能
+  - 添加 `/api/tasks/export/all` 端点用于导出所有任务
+  - 添加 `/api/tasks/import` 端点用于批量导入任务
+- 改进 backend-go 的验证码存储机制，添加过期时间管理
+- 更新 backend-go 登录功能，支持验证码验证
+- 修复 backend-go 注册功能，添加密码加密存储
+
 ## [1.8.13] - 2025-08-07
 ### 文档
 - 创建详细的API路由对比文档，分析backend和backend-go的所有API端点差异

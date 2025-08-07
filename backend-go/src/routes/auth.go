@@ -17,10 +17,8 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"todoing-backend/src/config"
-	pb "todoing-backend/proto/gen/proto"
 )
 
 // GenerateCaptchaResponse 生成验证码响应
@@ -93,8 +91,10 @@ type RegisterResponse struct {
 type LoginRequest struct {
 	// 邮箱地址
 	Email string `json:"email"`
+	// 密码
+	Password string `json:"password"`
 	// 验证码ID
-	CaptchaId string `json:"captcha_id"`
+	CaptchaId string `json:"captchaId"`
 	// 验证码值
 	Captcha string `json:"captcha"`
 }
@@ -134,7 +134,23 @@ type User struct {
 // swagger:model
 type ErrorResponse struct {
 	// 错误信息
-	Error string `json:"error"`
+	Msg string `json:"msg"`
+}
+
+// VerifyCaptchaRequest 验证码验证请求
+// swagger:model
+type VerifyCaptchaRequest struct {
+	// 验证码
+	Captcha string `json:"captcha"`
+	// 验证码ID
+	CaptchaId string `json:"captchaId"`
+}
+
+// VerifyCaptchaResponse 验证码验证响应
+// swagger:model
+type VerifyCaptchaResponse struct {
+	// 消息
+	Message string `json:"message"`
 }
 
 // RegisterAuthRoutes 注册认证相关路由
@@ -145,13 +161,21 @@ func RegisterAuthRoutes(router *gin.Engine) {
 		auth.POST("/login", login)
 		auth.GET("/me", getUser)
 		auth.GET("/captcha", getCaptcha)
+		auth.POST("/verify-captcha", verifyCaptcha)
 		auth.POST("/send-email-code", sendEmailCode)
 		auth.POST("/send-login-email-code", sendLoginEmailCode)
 	}
 }
 
+// 定义验证码存储结构
+type captchaData struct {
+	Text      string
+	CreatedAt time.Time
+	ExpiresAt time.Time
+}
+
 // 定义一个简单的内存存储来保存验证码
-var captchaStore = make(map[string]string)
+var captchaStore = make(map[string]*captchaData)
 
 // GenerateCaptcha 生成验证码
 // @Summary 生成验证码
@@ -258,8 +282,12 @@ func getCaptcha(c *gin.Context) {
 	// 生成验证码ID
 	captchaID := fmt.Sprintf("%d", time.Now().UnixNano())
 
-	// 存储验证码到内存
-	captchaStore[captchaID] = captchaStr
+	// 存储验证码到内存（设置5分钟过期时间）
+	captchaStore[captchaID] = &captchaData{
+		Text:      captchaStr,
+		CreatedAt: time.Now(),
+		ExpiresAt: time.Now().Add(5 * time.Minute),
+	}
 
 	c.JSON(http.StatusOK, &GenerateCaptchaResponse{
 		Image:   "data:image/png;base64," + base64.StdEncoding.EncodeToString(buf.Bytes()),
@@ -355,6 +383,70 @@ func drawSegment(img *image.RGBA, segment [4]int, color color.RGBA) {
 	}
 }
 
+// VerifyCaptcha 验证码验证
+// @Summary 验证码验证
+// @Description 验证图形验证码是否正确
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body VerifyCaptchaRequest true "验证码验证请求"
+// @Success 200 {object} VerifyCaptchaResponse
+// @Failure 400 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /auth/verify-captcha [post]
+func verifyCaptcha(c *gin.Context) {
+	var req VerifyCaptchaRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, &ErrorResponse{Msg: "Invalid request"})
+		return
+	}
+
+	// 检查是否启用了验证码功能
+	if os.Getenv("ENABLE_CAPTCHA") != "true" {
+		c.JSON(http.StatusBadRequest, &ErrorResponse{Msg: "Captcha is not enabled"})
+		return
+	}
+
+	// 验证验证码逻辑
+	if req.Captcha == "" {
+		c.JSON(http.StatusBadRequest, &ErrorResponse{Msg: "Captcha is required"})
+		return
+	}
+	
+	// 检查是否提供了验证码ID
+	if req.CaptchaId == "" {
+		c.JSON(http.StatusBadRequest, &ErrorResponse{Msg: "Captcha ID is required"})
+		return
+	}
+	
+	// 验证验证码是否正确
+	storedCaptcha, exists := captchaStore[req.CaptchaId]
+	if !exists {
+		c.JSON(http.StatusBadRequest, &ErrorResponse{Msg: "Invalid or expired captcha"})
+		return
+	}
+	
+	// 检查验证码是否过期
+	if time.Now().After(storedCaptcha.ExpiresAt) {
+		delete(captchaStore, req.CaptchaId)
+		c.JSON(http.StatusBadRequest, &ErrorResponse{Msg: "Captcha has expired"})
+		return
+	}
+	
+	// 比较验证码（不区分大小写）
+	if storedCaptcha.Text != req.Captcha {
+		c.JSON(http.StatusBadRequest, &ErrorResponse{Msg: "Invalid captcha"})
+		return
+	}
+	
+	// 验证成功后删除验证码，防止重复使用
+	delete(captchaStore, req.CaptchaId)
+	
+	c.JSON(http.StatusOK, &VerifyCaptchaResponse{
+		Message: "Captcha verified successfully",
+	})
+}
+
 // SendEmailCode 发送注册邮箱验证码
 // @Summary 发送注册邮箱验证码
 // @Description 发送邮箱验证码用于用户注册验证
@@ -367,24 +459,28 @@ func drawSegment(img *image.RGBA, segment [4]int, color color.RGBA) {
 // @Failure 500 {object} ErrorResponse
 // @Router /auth/send-email-code [post]
 func sendEmailCode(c *gin.Context) {
-	var req pb.SendEmailCodeRequest
+	var req SendEmailCodeRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, &pb.ErrorResponse{Error: err.Error()})
+		c.JSON(http.StatusBadRequest, &ErrorResponse{Msg: err.Error()})
 		return
 	}
 
 	// 检查用户是否已存在
-	var existingUser pb.User
+	var existingUser bson.M
 	err := config.DB.Collection("users").FindOne(c, bson.M{"email": req.Email}).Decode(&existingUser)
 
 	if err == nil {
-		c.JSON(http.StatusBadRequest, &pb.ErrorResponse{Error: "User already exists"})
+		c.JSON(http.StatusBadRequest, &ErrorResponse{Msg: "User already exists"})
 		return
 	}
 
-	// 实际项目中应该发送邮件验证码，这里仅作演示
-	c.JSON(http.StatusOK, &pb.SendEmailCodeResponse{
+	// TODO: 实现真实的邮件发送功能
+	// 生成验证码ID (模拟)
+	codeId := fmt.Sprintf("email_%d", time.Now().UnixNano())
+	
+	c.JSON(http.StatusOK, &SendEmailCodeResponse{
 		Message: "Registration email code sent successfully",
+		Id: codeId,
 	})
 }
 
@@ -400,24 +496,28 @@ func sendEmailCode(c *gin.Context) {
 // @Failure 500 {object} ErrorResponse
 // @Router /auth/send-login-email-code [post]
 func sendLoginEmailCode(c *gin.Context) {
-	var req pb.SendLoginEmailCodeRequest
+	var req SendLoginEmailCodeRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, &pb.ErrorResponse{Error: err.Error()})
+		c.JSON(http.StatusBadRequest, &ErrorResponse{Msg: err.Error()})
 		return
 	}
 
 	// 检查用户是否存在
-	var existingUser pb.User
+	var existingUser bson.M
 	err := config.DB.Collection("users").FindOne(c, bson.M{"email": req.Email}).Decode(&existingUser)
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, &pb.ErrorResponse{Error: "User not found"})
+		c.JSON(http.StatusBadRequest, &ErrorResponse{Msg: "User not found"})
 		return
 	}
 
-	// 实际项目中应该发送邮件验证码，这里仅作演示
-	c.JSON(http.StatusOK, &pb.SendLoginEmailCodeResponse{
+	// TODO: 实现真实的邮件发送功能
+	// 生成验证码ID (模拟)
+	codeId := fmt.Sprintf("login_email_%d", time.Now().UnixNano())
+	
+	c.JSON(http.StatusOK, &SendLoginEmailCodeResponse{
 		Message: "Login email code sent successfully",
+		Id: codeId,
 	})
 }
 
@@ -433,62 +533,77 @@ func sendLoginEmailCode(c *gin.Context) {
 // @Failure 500 {object} ErrorResponse
 // @Router /auth/register [post]
 func register(c *gin.Context) {
-	var req pb.RegisterRequest
+	var req RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, &pb.ErrorResponse{Error: err.Error()})
+		c.JSON(http.StatusBadRequest, &ErrorResponse{Msg: err.Error()})
+		return
+	}
+
+	// 检查是否禁用注册功能
+	if os.Getenv("DISABLE_REGISTRATION") == "true" {
+		c.JSON(http.StatusForbidden, &ErrorResponse{Msg: "Registration is disabled"})
 		return
 	}
 
 	// Check if user already exists
-	var existingUser pb.User
+	var existingUser bson.M
 
 	// Check username
 	err := config.DB.Collection("users").FindOne(c, bson.M{"username": req.Username}).Decode(&existingUser)
 	if err == nil {
-		c.JSON(http.StatusBadRequest, &pb.ErrorResponse{Error: "Username already exists"})
+		c.JSON(http.StatusBadRequest, &ErrorResponse{Msg: "Username already exists"})
 		return
 	}
 
 	// Check email
 	err = config.DB.Collection("users").FindOne(c, bson.M{"email": req.Email}).Decode(&existingUser)
 	if err == nil {
-		c.JSON(http.StatusBadRequest, &pb.ErrorResponse{Error: "Email already exists"})
+		c.JSON(http.StatusBadRequest, &ErrorResponse{Msg: "Email already exists"})
 		return
 	}
 
-	// Create user
-	user := pb.User{
-		Id:        primitive.NewObjectID().Hex(),
-		Username:  req.Username,
-		Email:     req.Email,
-		CreatedAt: timestamppb.Now(),
+	// Hash password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, &ErrorResponse{Msg: "Server error"})
+		return
 	}
 
-	result, err := config.DB.Collection("users").InsertOne(c, user)
+	// Create user document
+	userID := primitive.NewObjectID()
+	userDoc := bson.M{
+		"_id":        userID,
+		"username":   req.Username,
+		"email":      req.Email,
+		"password":   string(hashedPassword),
+		"created_at": time.Now(),
+	}
+
+	_, err = config.DB.Collection("users").InsertOne(c, userDoc)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, &pb.ErrorResponse{Error: "Server error"})
+		c.JSON(http.StatusInternalServerError, &ErrorResponse{Msg: "Server error"})
 		return
 	}
 
 	// Generate JWT token
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"id":    user.Id,
-		"email": user.Email,
+		"id":    userID.Hex(),
+		"email": req.Email,
 		"exp":   time.Now().Add(time.Hour * 24 * 30).Unix(),
 	})
 
 	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, &pb.ErrorResponse{Error: "Server error"})
+		c.JSON(http.StatusInternalServerError, &ErrorResponse{Msg: "Server error"})
 		return
 	}
 
-	c.JSON(http.StatusCreated, &pb.RegisterResponse{
+	c.JSON(http.StatusCreated, &RegisterResponse{
 		Token: tokenString,
-		User: &pb.User{
-			Id:       result.InsertedID.(primitive.ObjectID).Hex(),
-			Username: user.Username,
-			Email:    user.Email,
+		User: User{
+			Id:       userID.Hex(),
+			Username: req.Username,
+			Email:    req.Email,
 		},
 		Message: "User registered successfully",
 	})
@@ -507,10 +622,48 @@ func register(c *gin.Context) {
 // @Failure 500 {object} ErrorResponse
 // @Router /auth/login [post]
 func login(c *gin.Context) {
-	var req pb.LoginRequest
+	var req LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, &pb.ErrorResponse{Error: err.Error()})
+		c.JSON(http.StatusBadRequest, &ErrorResponse{Msg: err.Error()})
 		return
+	}
+
+	// 检查是否启用了验证码功能
+	if os.Getenv("ENABLE_CAPTCHA") == "true" {
+		// 验证验证码逻辑
+		if req.Captcha == "" {
+			c.JSON(http.StatusBadRequest, &ErrorResponse{Msg: "Captcha is required"})
+			return
+		}
+		
+		// 检查是否提供了验证码ID
+		if req.CaptchaId == "" {
+			c.JSON(http.StatusBadRequest, &ErrorResponse{Msg: "Captcha ID is required"})
+			return
+		}
+		
+		// 验证验证码是否正确
+		storedCaptcha, exists := captchaStore[req.CaptchaId]
+		if !exists {
+			c.JSON(http.StatusBadRequest, &ErrorResponse{Msg: "Invalid or expired captcha"})
+			return
+		}
+		
+		// 检查验证码是否过期
+		if time.Now().After(storedCaptcha.ExpiresAt) {
+			delete(captchaStore, req.CaptchaId)
+			c.JSON(http.StatusBadRequest, &ErrorResponse{Msg: "Captcha has expired"})
+			return
+		}
+		
+		// 比较验证码（不区分大小写）
+		if storedCaptcha.Text != req.Captcha {
+			c.JSON(http.StatusBadRequest, &ErrorResponse{Msg: "Invalid captcha"})
+			return
+		}
+		
+		// 验证成功后删除验证码，防止重复使用
+		delete(captchaStore, req.CaptchaId)
 	}
 
 	// 验证密码
@@ -518,13 +671,13 @@ func login(c *gin.Context) {
 	var userDoc bson.M
 	err := config.DB.Collection("users").FindOne(c, bson.M{"email": req.Email}).Decode(&userDoc)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, &pb.ErrorResponse{Error: "Invalid credentials"})
+		c.JSON(http.StatusUnauthorized, &ErrorResponse{Msg: "Invalid credentials"})
 		return
 	}
 
 	hashedPassword, ok := userDoc["password"].(string)
 	if !ok || bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(req.Password)) != nil {
-		c.JSON(http.StatusUnauthorized, &pb.ErrorResponse{Error: "Invalid credentials"})
+		c.JSON(http.StatusUnauthorized, &ErrorResponse{Msg: "Invalid credentials"})
 		return
 	}
 
@@ -550,13 +703,13 @@ func login(c *gin.Context) {
 
 	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, &pb.ErrorResponse{Error: "Server error"})
+		c.JSON(http.StatusInternalServerError, &ErrorResponse{Msg: "Server error"})
 		return
 	}
 
-	c.JSON(http.StatusOK, &pb.LoginResponse{
+	c.JSON(http.StatusOK, &LoginResponse{
 		Token: tokenString,
-		User: &pb.User{
+		User: User{
 			Id:       userDoc["_id"].(primitive.ObjectID).Hex(),
 			Username: userDoc["username"].(string),
 			Email:    userDoc["email"].(string),
@@ -580,20 +733,20 @@ func getUser(c *gin.Context) {
 	// Get user from context (set by auth middleware)
 	userClaims, exists := c.Get("user")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, &pb.ErrorResponse{Error: "No token, authorization denied"})
+		c.JSON(http.StatusUnauthorized, &ErrorResponse{Msg: "No token, authorization denied"})
 		return
 	}
 
 	claims, ok := userClaims.(jwt.MapClaims)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, &pb.ErrorResponse{Error: "Invalid token claims"})
+		c.JSON(http.StatusUnauthorized, &ErrorResponse{Msg: "Invalid token claims"})
 		return
 	}
 
 	// 从token中提取用户ID
 	userID, err := primitive.ObjectIDFromHex(claims["id"].(string))
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, &pb.ErrorResponse{Error: "Invalid token"})
+		c.JSON(http.StatusUnauthorized, &ErrorResponse{Msg: "Invalid token"})
 		return
 	}
 
@@ -601,19 +754,18 @@ func getUser(c *gin.Context) {
 	var userDoc bson.M
 	err = config.DB.Collection("users").FindOne(c, bson.M{"_id": userID}).Decode(&userDoc)
 	if err != nil {
-		c.JSON(http.StatusNotFound, &pb.ErrorResponse{Error: "User not found"})
+		c.JSON(http.StatusNotFound, &ErrorResponse{Msg: "User not found"})
 		return
 	}
 
 	// 构造返回的用户信息
-	user := &pb.User{
-		Id:        userDoc["_id"].(primitive.ObjectID).Hex(),
-		Username:  userDoc["username"].(string),
-		Email:     userDoc["email"].(string),
-		CreatedAt: timestamppb.New(userDoc["created_at"].(time.Time)),
+	user := User{
+		Id:       userDoc["_id"].(primitive.ObjectID).Hex(),
+		Username: userDoc["username"].(string),
+		Email:    userDoc["email"].(string),
 	}
 
-	c.JSON(http.StatusOK, &pb.GetUserResponse{
+	c.JSON(http.StatusOK, &GetUserResponse{
 		User:    user,
 		Message: "User profile retrieved successfully",
 	})

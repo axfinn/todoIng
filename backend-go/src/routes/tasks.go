@@ -2,6 +2,7 @@ package routes
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -169,6 +170,8 @@ func RegisterTaskRoutes(router gin.IRouter) {
 	tasks := router.Group("/api/tasks")
 	{
 		tasks.GET("", getTasks)
+		tasks.GET("/export/all", exportTasks)
+		tasks.POST("/import", importTasks)
 		tasks.GET("/:id", getTask)
 		tasks.POST("", createTask)
 		tasks.PUT("/:id", updateTask)
@@ -1003,5 +1006,242 @@ func addComment(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"task":    respTask,
 		"message": "Comment added successfully",
+	})
+}
+
+// ExportTasksResponse 导出任务响应
+// swagger:model
+type ExportTasksResponse struct {
+	Tasks []Task `json:"tasks"`
+}
+
+// ImportTasksRequest 导入任务请求
+// swagger:model
+type ImportTasksRequest struct {
+	Tasks []Task `json:"tasks"`
+}
+
+// ImportTasksResponse 导入任务响应
+// swagger:model
+type ImportTasksResponse struct {
+	Message  string `json:"msg"`
+	Imported int    `json:"imported"`
+	Errors   []ImportError `json:"errors"`
+}
+
+// ImportError 导入错误信息
+// swagger:model
+type ImportError struct {
+	Index int    `json:"index"`
+	Error string `json:"error"`
+}
+
+// formatDateForFilename 格式化日期为文件名
+func formatDateForFilename(date time.Time) string {
+	return date.Format("2006-01-02")
+}
+
+// exportTasks 导出所有任务
+// @Summary 导出所有任务
+// @Description 导出当前用户的所有任务
+// @Tags tasks
+// @Accept json
+// @Produce json
+// @Success 200 {object} ExportTasksResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /tasks/export/all [get]
+func exportTasks(c *gin.Context) {
+	// 从上下文获取用户信息
+	userClaims, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "No token, authorization denied"})
+		return
+	}
+
+	claims, ok := userClaims.(jwt.MapClaims)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
+		return
+	}
+
+	// 从token中提取用户ID
+	userID, err := primitive.ObjectIDFromHex(claims["id"].(string))
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		return
+	}
+
+	// 从数据库获取所有任务
+	var tasks []models.Task
+	cursor, err := config.DB.Collection("tasks").Find(context.TODO(), bson.M{"created_by": userID})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve tasks"})
+		return
+	}
+	defer cursor.Close(context.TODO())
+
+	if err = cursor.All(context.TODO(), &tasks); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to decode tasks"})
+		return
+	}
+
+	// 转换为响应格式
+	var respTasks []Task
+	for _, task := range tasks {
+		var assignee string
+		if task.Assignee != nil {
+			assignee = *task.Assignee
+		}
+		
+		respTask := Task{
+			Id:          task.ID.Hex(),
+			Title:       task.Title,
+			Description: task.Description,
+			Status:      convertTaskStatusToString(task.Status),
+			Priority:    convertTaskPriorityToString(task.Priority),
+			Assignee:    assignee,
+			CreatedBy:   task.CreatedBy.Hex(),
+			CreatedAt:   task.CreatedAt.Format(time.RFC3339),
+			UpdatedAt:   task.UpdatedAt.Format(time.RFC3339),
+		}
+		
+		// 处理可选的Deadline和ScheduledDate字段
+		if task.Deadline != nil {
+			formattedDeadline := task.Deadline.Format(time.RFC3339)
+			respTask.Deadline = &formattedDeadline
+		}
+		if task.ScheduledDate != nil {
+			formattedScheduledDate := task.ScheduledDate.Format(time.RFC3339)
+			respTask.ScheduledDate = &formattedScheduledDate
+		}
+		
+		// 转换评论
+		for _, comment := range task.Comments {
+			respComment := Comment{
+				Id:        comment.ID.Hex(),
+				Text:      comment.Text,
+				CreatedBy: comment.CreatedBy.Hex(),
+				CreatedAt: comment.CreatedAt.Format(time.RFC3339),
+			}
+			respTask.Comments = append(respTask.Comments, respComment)
+		}
+		
+		respTasks = append(respTasks, respTask)
+	}
+
+	// 设置响应头
+	filename := fmt.Sprintf("todoing-backup-%s.json", formatDateForFilename(time.Now()))
+	c.Header("Content-Type", "application/json")
+	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", filename))
+
+	// 返回任务数据
+	c.JSON(http.StatusOK, respTasks)
+}
+
+// importTasks 导入任务
+// @Summary 导入任务
+// @Description 批量导入任务
+// @Tags tasks
+// @Accept json
+// @Produce json
+// @Param request body ImportTasksRequest true "导入任务请求"
+// @Success 200 {object} ImportTasksResponse
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /tasks/import [post]
+func importTasks(c *gin.Context) {
+	// 从上下文获取用户信息
+	userClaims, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "No token, authorization denied"})
+		return
+	}
+
+	claims, ok := userClaims.(jwt.MapClaims)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
+		return
+	}
+
+	// 从token中提取用户ID
+	userID, err := primitive.ObjectIDFromHex(claims["id"].(string))
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		return
+	}
+
+	var req ImportTasksRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request format"})
+		return
+	}
+
+	if len(req.Tasks) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No tasks to import"})
+		return
+	}
+
+	// 导入任务
+	importedCount := 0
+	var errors []ImportError
+
+	for i, taskData := range req.Tasks {
+		// 创建新任务
+		task := models.Task{
+			ID:          primitive.NewObjectID(),
+			Title:       taskData.Title,
+			Description: taskData.Description,
+			Status:      models.StringToTaskStatus(taskData.Status),
+			Priority:    models.StringToTaskPriority(taskData.Priority),
+			CreatedBy:   userID,
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
+		}
+
+		// 设置可选字段
+		if taskData.Assignee != "" {
+			task.Assignee = &taskData.Assignee
+		}
+		if taskData.Deadline != nil {
+			deadline, err := time.Parse(time.RFC3339, *taskData.Deadline)
+			if err == nil {
+				task.Deadline = &deadline
+			}
+		}
+		if taskData.ScheduledDate != nil {
+			scheduledDate, err := time.Parse(time.RFC3339, *taskData.ScheduledDate)
+			if err == nil {
+				task.ScheduledDate = &scheduledDate
+			}
+		}
+
+		// 处理评论
+		for _, commentData := range taskData.Comments {
+			comment := models.Comment{
+				ID:        primitive.NewObjectID(),
+				Text:      commentData.Text,
+				CreatedBy: userID,
+				CreatedAt: time.Now(),
+			}
+			task.Comments = append(task.Comments, comment)
+		}
+
+		// 插入到数据库
+		if _, err := config.DB.Collection("tasks").InsertOne(context.TODO(), task); err != nil {
+			errors = append(errors, ImportError{
+				Index: i,
+				Error: err.Error(),
+			})
+		} else {
+			importedCount++
+		}
+	}
+
+	c.JSON(http.StatusOK, ImportTasksResponse{
+		Message:  fmt.Sprintf("Imported %d tasks successfully", importedCount),
+		Imported: importedCount,
+		Errors:   errors,
 	})
 }
