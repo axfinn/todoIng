@@ -10,6 +10,7 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -28,8 +29,6 @@ type GenerateCaptchaResponse struct {
 	Image string `json:"image"`
 	// 验证码ID
 	Id string `json:"id"`
-	// 消息
-	Message string `json:"message"`
 }
 
 // SendEmailCodeRequest 发送邮箱验证码请求
@@ -43,7 +42,7 @@ type SendEmailCodeRequest struct {
 // swagger:model
 type SendEmailCodeResponse struct {
 	// 消息
-	Message string `json:"message"`
+	Msg string `json:"msg"`
 	// ID
 	Id string `json:"id"`
 }
@@ -59,7 +58,7 @@ type SendLoginEmailCodeRequest struct {
 // swagger:model
 type SendLoginEmailCodeResponse struct {
 	// 消息
-	Message string `json:"message"`
+	Msg string `json:"msg"`
 	// ID
 	Id string `json:"id"`
 }
@@ -73,6 +72,10 @@ type RegisterRequest struct {
 	Email string `json:"email"`
 	// 密码
 	Password string `json:"password"`
+	// 邮箱验证码
+	EmailCode string `json:"emailCode"`
+	// 邮箱验证码ID
+	EmailCodeId string `json:"emailCodeId"`
 }
 
 // RegisterResponse 用户注册响应
@@ -80,10 +83,6 @@ type RegisterRequest struct {
 type RegisterResponse struct {
 	// JWT token
 	Token string `json:"token"`
-	// 用户信息
-	User User `json:"user"`
-	// 消息
-	Message string `json:"message"`
 }
 
 // LoginRequest 用户登录请求
@@ -97,6 +96,10 @@ type LoginRequest struct {
 	CaptchaId string `json:"captchaId"`
 	// 验证码值
 	Captcha string `json:"captcha"`
+	// 邮箱验证码
+	EmailCode string `json:"emailCode"`
+	// 邮箱验证码ID
+	EmailCodeId string `json:"emailCodeId"`
 }
 
 // LoginResponse 用户登录响应
@@ -104,26 +107,17 @@ type LoginRequest struct {
 type LoginResponse struct {
 	// JWT token
 	Token string `json:"token"`
-	// 用户信息
-	User User `json:"user"`
-	// 消息
-	Message string `json:"message"`
 }
 
-// GetUserResponse 获取用户信息响应
-// swagger:model
-type GetUserResponse struct {
-	// 用户信息
-	User User `json:"user"`
-	// 消息
-	Message string `json:"message"`
-}
+// GetUserResponse 获取用户信息响应 - 直接返回用户对象
+// 注意：backend 直接返回用户对象，不包装在响应中
+type GetUserResponse = User
 
 // User 用户信息
 // swagger:model
 type User struct {
 	// 用户ID
-	Id string `json:"id"`
+	Id string `json:"_id"`
 	// 用户名
 	Username string `json:"username"`
 	// 邮箱地址
@@ -150,7 +144,7 @@ type VerifyCaptchaRequest struct {
 // swagger:model
 type VerifyCaptchaResponse struct {
 	// 消息
-	Message string `json:"message"`
+	Msg string `json:"msg"`
 }
 
 // RegisterAuthRoutes 注册认证相关路由
@@ -177,6 +171,16 @@ type captchaData struct {
 // 定义一个简单的内存存储来保存验证码
 var captchaStore = make(map[string]*captchaData)
 
+// cleanupExpiredCaptchas 清理过期的验证码
+func cleanupExpiredCaptchas() {
+	now := time.Now()
+	for id, captcha := range captchaStore {
+		if now.After(captcha.ExpiresAt) {
+			delete(captchaStore, id)
+		}
+	}
+}
+
 // GenerateCaptcha 生成验证码
 // @Summary 生成验证码
 // @Description 生成图形验证码用于注册/登录验证
@@ -187,10 +191,21 @@ var captchaStore = make(map[string]*captchaData)
 // @Failure 500 {object} ErrorResponse
 // @Router /auth/captcha [get]
 func getCaptcha(c *gin.Context) {
+	// 检查是否启用了验证码功能
+	if os.Getenv("ENABLE_CAPTCHA") != "true" {
+		c.JSON(http.StatusBadRequest, gin.H{"msg": "Captcha is not enabled"})
+		return
+	}
+
 	rand.Seed(time.Now().UnixNano())
 
-	// 生成4位数字验证码
-	captcha := rand.Intn(9000) + 1000
+	// 生成6位字母数字混合验证码（排除易混淆字符）
+	const charset = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789"
+	captchaText := make([]byte, 6)
+	for i := range captchaText {
+		captchaText[i] = charset[rand.Intn(len(charset))]
+	}
+	captcha := string(captchaText)
 	
 	// 创建图片
 	width := 150
@@ -257,42 +272,58 @@ func getCaptcha(c *gin.Context) {
 	}
 
 	// 将验证码转换为字符串并绘制
-	captchaStr := fmt.Sprintf("%04d", captcha)
+	captchaStr := captcha
 	
-	// 绘制数字，每个数字用不同的字体大小和位置
-	for i, digit := range captchaStr {
-		// 计算数字位置
-		x := 20 + i*30 + rand.Intn(5) - 2
+	// 绘制验证码字符
+	// 由于Go标准库不支持字体渲染，我们使用简单的方式绘制
+	// 实际项目中应该使用 github.com/golang/freetype 等库
+	for i, char := range captchaStr {
+		// 计算字符位置
+		x := 10 + i*22 + rand.Intn(5) - 2
 		y := 25 + rand.Intn(10) - 5
 		
-		// 绘制数字（简单但清晰的方式）
-		drawSimpleDigit(img, digit, x, y)
+		// 使用随机颜色
+		charColor := color.RGBA{
+			uint8(rand.Intn(100)), 
+			uint8(rand.Intn(100)), 
+			uint8(rand.Intn(100)), 
+			255,
+		}
+		
+		// 简单地绘制字符占位符（实际应使用字体库）
+		drawCharPlaceholder(img, x, y, charColor, rune(char))
 	}
 
 	// 将图片编码为base64
 	var buf bytes.Buffer
 	err := png.Encode(&buf, img)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, &GenerateCaptchaResponse{
-			Message: "Failed to generate captcha image",
+		c.JSON(http.StatusInternalServerError, &ErrorResponse{
+			Msg: "Failed to generate captcha image",
 		})
 		return
 	}
 
-	// 生成验证码ID
-	captchaID := fmt.Sprintf("%d", time.Now().UnixNano())
+	// 生成验证码ID（使用更安全的随机字符串）
+	b := make([]byte, 16)
+	rand.Read(b)
+	captchaID := fmt.Sprintf("%x", b)
 
-	// 存储验证码到内存（设置5分钟过期时间）
+	// 存储验证码到内存（转换为大写，设置5分钟过期时间）
 	captchaStore[captchaID] = &captchaData{
-		Text:      captchaStr,
+		Text:      strings.ToUpper(captchaStr),
 		CreatedAt: time.Now(),
 		ExpiresAt: time.Now().Add(5 * time.Minute),
+	}
+	
+	// 定期清理过期验证码（10%概率触发）
+	if rand.Float32() < 0.1 {
+		go cleanupExpiredCaptchas()
 	}
 
 	c.JSON(http.StatusOK, &GenerateCaptchaResponse{
 		Image:   "data:image/png;base64," + base64.StdEncoding.EncodeToString(buf.Bytes()),
 		Id:      captchaID,
-		Message: "Captcha generated successfully",
 	})
 }
 
@@ -302,6 +333,25 @@ func abs(x int) int {
 		return -x
 	}
 	return x
+}
+
+// drawCharPlaceholder 简单地绘制字符占位符
+func drawCharPlaceholder(img *image.RGBA, x, y int, color color.RGBA, char rune) {
+	// 绘制一个简单的矩形表示字符
+	// 实际项目中应该使用真正的字体渲染
+	for dy := -10; dy < 10; dy++ {
+		for dx := -8; dx < 8; dx++ {
+			px := x + dx
+			py := y + dy
+			if px >= 0 && px < img.Bounds().Max.X && py >= 0 && py < img.Bounds().Max.Y {
+				// 简单的字符形状
+				if (dy > -10 && dy < -8) || (dy > 8 && dy < 10) ||
+					(dx > -8 && dx < -6) || (dx > 6 && dx < 8) {
+					img.Set(px, py, color)
+				}
+			}
+		}
+	}
 }
 
 // drawSimpleDigit 简单但清晰地绘制数字
@@ -434,7 +484,7 @@ func verifyCaptcha(c *gin.Context) {
 	}
 	
 	// 比较验证码（不区分大小写）
-	if storedCaptcha.Text != req.Captcha {
+	if storedCaptcha.Text != strings.ToUpper(req.Captcha) {
 		c.JSON(http.StatusBadRequest, &ErrorResponse{Msg: "Invalid captcha"})
 		return
 	}
@@ -443,7 +493,7 @@ func verifyCaptcha(c *gin.Context) {
 	delete(captchaStore, req.CaptchaId)
 	
 	c.JSON(http.StatusOK, &VerifyCaptchaResponse{
-		Message: "Captcha verified successfully",
+		Msg: "Captcha verified successfully",
 	})
 }
 
@@ -474,13 +524,34 @@ func sendEmailCode(c *gin.Context) {
 		return
 	}
 
-	// TODO: 实现真实的邮件发送功能
-	// 生成验证码ID (模拟)
-	codeId := fmt.Sprintf("email_%d", time.Now().UnixNano())
-	
+	// 生成邮箱验证码
+	emailCode := config.GenerateEmailCode()
+	emailCodeId := config.GenerateEmailCodeId()
+
+	// 存储验证码并设置过期时间
+	config.EmailCodeStore.Set(emailCodeId, &config.EmailCodeData{
+		Email:     req.Email,
+		Code:      emailCode,
+		CreatedAt: time.Now().UnixMilli(),
+		ExpiresAt: time.Now().UnixMilli() + config.EMAIL_CODE_CONFIG.Lifetime,
+		Attempts:  0,
+	})
+
+	// 发送验证码邮件
+	err = config.SendVerificationEmail(req.Email, emailCode)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, &ErrorResponse{Msg: "Failed to send email"})
+		return
+	}
+
+	// 定期清理过期验证码
+	if rand.Float32() < 0.1 { // 10%的概率触发清理
+		go config.CleanupExpiredEmailCodes()
+	}
+
 	c.JSON(http.StatusOK, &SendEmailCodeResponse{
-		Message: "Registration email code sent successfully",
-		Id: codeId,
+		Msg: "Verification code sent successfully",
+		Id:  emailCodeId,
 	})
 }
 
@@ -507,17 +578,38 @@ func sendLoginEmailCode(c *gin.Context) {
 	err := config.DB.Collection("users").FindOne(c, bson.M{"email": req.Email}).Decode(&existingUser)
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, &ErrorResponse{Msg: "User not found"})
+		c.JSON(http.StatusBadRequest, &ErrorResponse{Msg: "User does not exist"})
 		return
 	}
 
-	// TODO: 实现真实的邮件发送功能
-	// 生成验证码ID (模拟)
-	codeId := fmt.Sprintf("login_email_%d", time.Now().UnixNano())
-	
+	// 生成邮箱验证码
+	emailCode := config.GenerateEmailCode()
+	emailCodeId := config.GenerateEmailCodeId()
+
+	// 存储验证码并设置过期时间
+	config.EmailCodeStore.Set(emailCodeId, &config.EmailCodeData{
+		Email:     req.Email,
+		Code:      emailCode,
+		CreatedAt: time.Now().UnixMilli(),
+		ExpiresAt: time.Now().UnixMilli() + config.EMAIL_CODE_CONFIG.Lifetime,
+		Attempts:  0,
+	})
+
+	// 发送验证码邮件
+	err = config.SendVerificationEmail(req.Email, emailCode)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, &ErrorResponse{Msg: "Failed to send email"})
+		return
+	}
+
+	// 定期清理过期验证码
+	if rand.Float32() < 0.1 { // 10%的概率触发清理
+		go config.CleanupExpiredEmailCodes()
+	}
+
 	c.JSON(http.StatusOK, &SendLoginEmailCodeResponse{
-		Message: "Login email code sent successfully",
-		Id: codeId,
+		Msg: "Login verification code sent successfully",
+		Id:  emailCodeId,
 	})
 }
 
@@ -543,6 +635,54 @@ func register(c *gin.Context) {
 	if os.Getenv("DISABLE_REGISTRATION") == "true" {
 		c.JSON(http.StatusForbidden, &ErrorResponse{Msg: "Registration is disabled"})
 		return
+	}
+
+	// 检查是否启用了邮箱验证码功能
+	if os.Getenv("ENABLE_EMAIL_VERIFICATION") == "true" {
+		// 验证邮箱验证码逻辑
+		if req.EmailCode == "" {
+			c.JSON(http.StatusBadRequest, &ErrorResponse{Msg: "Email verification code is required"})
+			return
+		}
+
+		// 检查是否提供了邮箱验证码ID
+		if req.EmailCodeId == "" {
+			c.JSON(http.StatusBadRequest, &ErrorResponse{Msg: "Email verification code ID is required"})
+			return
+		}
+
+		// 验证验证码是否正确
+		storedEmailCode := config.EmailCodeStore.Get(req.EmailCodeId)
+		if storedEmailCode == nil {
+			c.JSON(http.StatusBadRequest, &ErrorResponse{Msg: "Invalid or expired email verification code"})
+			return
+		}
+
+		// 检查邮箱是否匹配
+		if storedEmailCode.Email != req.Email {
+			c.JSON(http.StatusBadRequest, &ErrorResponse{Msg: "Email does not match the verification code"})
+			return
+		}
+
+		// 检查尝试次数
+		if storedEmailCode.Attempts >= config.EMAIL_CODE_CONFIG.MaxAttempts {
+			config.EmailCodeStore.Delete(req.EmailCodeId)
+			c.JSON(http.StatusBadRequest, &ErrorResponse{Msg: "Too many attempts. Please request a new verification code."})
+			return
+		}
+
+		// 增加尝试次数
+		storedEmailCode.Attempts++
+		config.EmailCodeStore.Set(req.EmailCodeId, storedEmailCode)
+
+		// 验证验证码是否正确
+		if storedEmailCode.Code != strings.ToUpper(req.EmailCode) {
+			c.JSON(http.StatusBadRequest, &ErrorResponse{Msg: "Invalid email verification code"})
+			return
+		}
+
+		// 验证成功后删除验证码，防止重复使用
+		config.EmailCodeStore.Delete(req.EmailCodeId)
 	}
 
 	// Check if user already exists
@@ -586,11 +726,13 @@ func register(c *gin.Context) {
 	}
 
 	// Generate JWT token
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"id":    userID.Hex(),
-		"email": req.Email,
-		"exp":   time.Now().Add(time.Hour * 24 * 30).Unix(),
-	})
+	payload := jwt.MapClaims{
+		"user": map[string]interface{}{
+			"id": userID.Hex(),
+		},
+		"exp": time.Now().Add(time.Hour * 1).Unix(), // 1 hour
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, payload)
 
 	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
 	if err != nil {
@@ -598,14 +740,8 @@ func register(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, &RegisterResponse{
+	c.JSON(http.StatusOK, &RegisterResponse{
 		Token: tokenString,
-		User: User{
-			Id:       userID.Hex(),
-			Username: req.Username,
-			Email:    req.Email,
-		},
-		Message: "User registered successfully",
 	})
 }
 
@@ -628,8 +764,69 @@ func login(c *gin.Context) {
 		return
 	}
 
+	// 检查用户是否存在
+	var userDoc bson.M
+	err := config.DB.Collection("users").FindOne(c, bson.M{"email": req.Email}).Decode(&userDoc)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, &ErrorResponse{Msg: "Invalid Credentials"})
+		return
+	}
+
+	// 检查是否启用了邮箱验证码登录
+	isEmailCodeLogin := os.Getenv("ENABLE_EMAIL_VERIFICATION") == "true" && req.EmailCode != "" && req.EmailCodeId != ""
+
+	// 如果提供了邮箱验证码，则验证邮箱验证码登录
+	if isEmailCodeLogin {
+		// 验证邮箱验证码逻辑
+		storedEmailCode := config.EmailCodeStore.Get(req.EmailCodeId)
+		if storedEmailCode == nil {
+			c.JSON(http.StatusBadRequest, &ErrorResponse{Msg: "Invalid or expired email verification code"})
+			return
+		}
+
+		// 检查邮箱是否匹配
+		if storedEmailCode.Email != req.Email {
+			c.JSON(http.StatusBadRequest, &ErrorResponse{Msg: "Email does not match the verification code"})
+			return
+		}
+
+		// 检查尝试次数
+		if storedEmailCode.Attempts >= config.EMAIL_CODE_CONFIG.MaxAttempts {
+			config.EmailCodeStore.Delete(req.EmailCodeId)
+			c.JSON(http.StatusBadRequest, &ErrorResponse{Msg: "Too many attempts. Please request a new verification code."})
+			return
+		}
+
+		// 增加尝试次数
+		storedEmailCode.Attempts++
+		config.EmailCodeStore.Set(req.EmailCodeId, storedEmailCode)
+
+		// 验证验证码是否正确
+		if storedEmailCode.Code != strings.ToUpper(req.EmailCode) {
+			c.JSON(http.StatusBadRequest, &ErrorResponse{Msg: "Invalid email verification code"})
+			return
+		}
+
+		// 验证成功后删除验证码，防止重复使用
+		config.EmailCodeStore.Delete(req.EmailCodeId)
+	} else {
+		// 否则验证密码登录
+		// 检查是否提供了密码
+		if req.Password == "" {
+			c.JSON(http.StatusBadRequest, &ErrorResponse{Msg: "Password is required"})
+			return
+		}
+
+		hashedPassword, ok := userDoc["password"].(string)
+		if !ok || bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(req.Password)) != nil {
+			c.JSON(http.StatusBadRequest, &ErrorResponse{Msg: "Invalid Credentials"})
+			return
+		}
+	}
+
 	// 检查是否启用了验证码功能
-	if os.Getenv("ENABLE_CAPTCHA") == "true" {
+	// 但邮箱验证码登录时不需要图片验证码
+	if os.Getenv("ENABLE_CAPTCHA") == "true" && !isEmailCodeLogin {
 		// 验证验证码逻辑
 		if req.Captcha == "" {
 			c.JSON(http.StatusBadRequest, &ErrorResponse{Msg: "Captcha is required"})
@@ -657,7 +854,7 @@ func login(c *gin.Context) {
 		}
 		
 		// 比较验证码（不区分大小写）
-		if storedCaptcha.Text != req.Captcha {
+		if storedCaptcha.Text != strings.ToUpper(req.Captcha) {
 			c.JSON(http.StatusBadRequest, &ErrorResponse{Msg: "Invalid captcha"})
 			return
 		}
@@ -666,20 +863,6 @@ func login(c *gin.Context) {
 		delete(captchaStore, req.CaptchaId)
 	}
 
-	// 验证密码
-	// 注意：由于User对象中不包含密码字段，我们需要从数据库中获取完整信息
-	var userDoc bson.M
-	err := config.DB.Collection("users").FindOne(c, bson.M{"email": req.Email}).Decode(&userDoc)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, &ErrorResponse{Msg: "Invalid credentials"})
-		return
-	}
-
-	hashedPassword, ok := userDoc["password"].(string)
-	if !ok || bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(req.Password)) != nil {
-		c.JSON(http.StatusUnauthorized, &ErrorResponse{Msg: "Invalid credentials"})
-		return
-	}
 
 	// 从用户文档中获取用户ID
 	userID := userDoc["_id"].(primitive.ObjectID).Hex()
@@ -696,10 +879,13 @@ func login(c *gin.Context) {
 	}
 
 	// Generate JWT token
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"id":  userID,
-		"exp": time.Now().Add(time.Hour * 24 * 7).Unix(), // 1 week
-	})
+	payload := jwt.MapClaims{
+		"user": map[string]interface{}{
+			"id": userID,
+		},
+		"exp": time.Now().Add(time.Hour * 1).Unix(), // 1 hour
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, payload)
 
 	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
 	if err != nil {
@@ -709,12 +895,6 @@ func login(c *gin.Context) {
 
 	c.JSON(http.StatusOK, &LoginResponse{
 		Token: tokenString,
-		User: User{
-			Id:       userDoc["_id"].(primitive.ObjectID).Hex(),
-			Username: userDoc["username"].(string),
-			Email:    userDoc["email"].(string),
-		},
-		Message: "User logged in successfully",
 	})
 }
 
@@ -744,7 +924,20 @@ func getUser(c *gin.Context) {
 	}
 
 	// 从token中提取用户ID
-	userID, err := primitive.ObjectIDFromHex(claims["id"].(string))
+	// JWT payload 格式: { "user": { "id": "xxx" } }
+	userData, ok := claims["user"].(map[string]interface{})
+	if !ok {
+		c.JSON(http.StatusUnauthorized, &ErrorResponse{Msg: "Invalid token structure"})
+		return
+	}
+
+	userIDStr, ok := userData["id"].(string)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, &ErrorResponse{Msg: "Invalid user ID in token"})
+		return
+	}
+
+	userID, err := primitive.ObjectIDFromHex(userIDStr)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, &ErrorResponse{Msg: "Invalid token"})
 		return
@@ -758,15 +951,13 @@ func getUser(c *gin.Context) {
 		return
 	}
 
-	// 构造返回的用户信息
+	// 构造返回的用户信息 - 直接返回用户对象
 	user := User{
 		Id:       userDoc["_id"].(primitive.ObjectID).Hex(),
 		Username: userDoc["username"].(string),
 		Email:    userDoc["email"].(string),
 	}
 
-	c.JSON(http.StatusOK, &GetUserResponse{
-		User:    user,
-		Message: "User profile retrieved successfully",
-	})
+	// backend 直接返回用户对象，不包装在响应对象中
+	c.JSON(http.StatusOK, user)
 }

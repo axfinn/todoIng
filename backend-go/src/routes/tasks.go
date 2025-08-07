@@ -195,33 +195,33 @@ func getTasks(c *gin.Context) {
 	// 从JWT token中提取用户信息
 	userClaims, exists := c.Get("user")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "No token, authorization denied"})
+		c.JSON(http.StatusUnauthorized, gin.H{"msg": "No token, authorization denied"})
 		return
 	}
 
 	claims, ok := userClaims.(jwt.MapClaims)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
+		c.JSON(http.StatusUnauthorized, gin.H{"msg": "Invalid token claims"})
 		return
 	}
 
 	userId, ok := claims["id"].(string)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid user ID in token"})
+		c.JSON(http.StatusUnauthorized, gin.H{"msg": "Invalid user ID in token"})
 		return
 	}
 	
 	// 将用户ID字符串转换为ObjectID
 	userObjId, err := primitive.ObjectIDFromHex(userId)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format"})
+		c.JSON(http.StatusBadRequest, gin.H{"msg": "Invalid user ID format"})
 		return
 	}
 
 	// 从数据库获取任务列表
 	tasks, err := models.GetTasksByUserID(userObjId)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve tasks"})
+		c.JSON(http.StatusInternalServerError, gin.H{"msg": "Failed to retrieve tasks"})
 		return
 	}
 
@@ -347,14 +347,14 @@ func convertTaskPriorityToString(priority models.TaskPriority) string {
 func getTask(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "id is required"})
+		c.JSON(http.StatusBadRequest, gin.H{"msg": "id is required"})
 		return
 	}
 
 	// 将ID字符串转换为ObjectID
 	objId, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
+		c.JSON(http.StatusBadRequest, gin.H{"msg": "Invalid ID format"})
 		return
 	}
 
@@ -363,10 +363,10 @@ func getTask(c *gin.Context) {
 	err = config.DB.Collection("tasks").FindOne(context.TODO(), bson.M{"_id": objId}).Decode(&task)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Task not found"})
+			c.JSON(http.StatusNotFound, gin.H{"msg": "Task not found"})
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve task"})
+		c.JSON(http.StatusInternalServerError, gin.H{"msg": "Failed to retrieve task"})
 		return
 	}
 
@@ -429,33 +429,33 @@ func getTask(c *gin.Context) {
 func createTask(c *gin.Context) {
 	var req CreateTaskRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"msg": err.Error()})
 		return
 	}
 
 	// 从JWT token中提取用户信息
 	userClaims, exists := c.Get("user")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "No token, authorization denied"})
+		c.JSON(http.StatusUnauthorized, gin.H{"msg": "No token, authorization denied"})
 		return
 	}
 
 	claims, ok := userClaims.(jwt.MapClaims)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
+		c.JSON(http.StatusUnauthorized, gin.H{"msg": "Invalid token claims"})
 		return
 	}
 
 	userId, ok := claims["id"].(string)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid user ID in token"})
+		c.JSON(http.StatusUnauthorized, gin.H{"msg": "Invalid user ID in token"})
 		return
 	}
 
 	// 将用户ID字符串转换为ObjectID
 	userObjId, err := primitive.ObjectIDFromHex(userId)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format"})
+		c.JSON(http.StatusBadRequest, gin.H{"msg": "Invalid user ID format"})
 		return
 	}
 
@@ -480,7 +480,7 @@ func createTask(c *gin.Context) {
 	if req.Deadline != nil && *req.Deadline != "" {
 		deadlineTime, err := time.Parse(time.RFC3339, *req.Deadline)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid deadline format, must be RFC3339"})
+			c.JSON(http.StatusBadRequest, gin.H{"msg": "Invalid deadline format, must be RFC3339"})
 			return
 		}
 		task.Deadline = &deadlineTime
@@ -489,7 +489,7 @@ func createTask(c *gin.Context) {
 	if req.ScheduledDate != nil && *req.ScheduledDate != "" {
 		scheduledDateTime, err := time.Parse(time.RFC3339, *req.ScheduledDate)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid scheduled date format, must be RFC3339"})
+			c.JSON(http.StatusBadRequest, gin.H{"msg": "Invalid scheduled date format, must be RFC3339"})
 			return
 		}
 		task.ScheduledDate = &scheduledDateTime
@@ -497,7 +497,7 @@ func createTask(c *gin.Context) {
 
 	// 保存到数据库
 	if err := models.CreateTask(task); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create task"})
+		c.JSON(http.StatusInternalServerError, gin.H{"msg": "Failed to create task"})
 		return
 	}
 
@@ -608,20 +608,20 @@ func convertStringToTaskPriority(priority string) models.TaskPriority {
 func updateTask(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "id is required"})
+		c.JSON(http.StatusBadRequest, gin.H{"msg": "id is required"})
 		return
 	}
 
 	// 将ID字符串转换为ObjectID
 	objId, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
+		c.JSON(http.StatusBadRequest, gin.H{"msg": "Invalid ID format"})
 		return
 	}
 
 	var req UpdateTaskRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"msg": err.Error()})
 		return
 	}
 
@@ -641,7 +641,7 @@ func updateTask(c *gin.Context) {
 	if req.Deadline != nil && *req.Deadline != "" {
 		deadlineTime, err := time.Parse(time.RFC3339, *req.Deadline)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid deadline format, must be RFC3339"})
+			c.JSON(http.StatusBadRequest, gin.H{"msg": "Invalid deadline format, must be RFC3339"})
 			return
 		}
 		update["$set"].(bson.M)["deadline"] = deadlineTime
@@ -650,7 +650,7 @@ func updateTask(c *gin.Context) {
 	if req.ScheduledDate != nil && *req.ScheduledDate != "" {
 		scheduledDateTime, err := time.Parse(time.RFC3339, *req.ScheduledDate)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid scheduled date format, must be RFC3339"})
+			c.JSON(http.StatusBadRequest, gin.H{"msg": "Invalid scheduled date format, must be RFC3339"})
 			return
 		}
 		update["$set"].(bson.M)["scheduled_date"] = scheduledDateTime
@@ -659,12 +659,12 @@ func updateTask(c *gin.Context) {
 	// 更新数据库中的任务
 	result, err := config.DB.Collection("tasks").UpdateOne(context.TODO(), bson.M{"_id": objId}, update)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update task"})
+		c.JSON(http.StatusInternalServerError, gin.H{"msg": "Failed to update task"})
 		return
 	}
 
 	if result.MatchedCount == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Task not found"})
+		c.JSON(http.StatusNotFound, gin.H{"msg": "Task not found"})
 		return
 	}
 
@@ -672,7 +672,7 @@ func updateTask(c *gin.Context) {
 	var updatedTask models.Task
 	err = config.DB.Collection("tasks").FindOne(context.TODO(), bson.M{"_id": objId}).Decode(&updatedTask)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve updated task"})
+		c.JSON(http.StatusInternalServerError, gin.H{"msg": "Failed to retrieve updated task"})
 		return
 	}
 
@@ -736,26 +736,26 @@ func updateTask(c *gin.Context) {
 func deleteTask(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "id is required"})
+		c.JSON(http.StatusBadRequest, gin.H{"msg": "id is required"})
 		return
 	}
 
 	// 将ID字符串转换为ObjectID
 	objId, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
+		c.JSON(http.StatusBadRequest, gin.H{"msg": "Invalid ID format"})
 		return
 	}
 
 	// 从数据库删除任务
 	result, err := config.DB.Collection("tasks").DeleteOne(context.TODO(), bson.M{"_id": objId})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete task"})
+		c.JSON(http.StatusInternalServerError, gin.H{"msg": "Failed to delete task"})
 		return
 	}
 
 	if result.DeletedCount == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Task not found"})
+		c.JSON(http.StatusNotFound, gin.H{"msg": "Task not found"})
 		return
 	}
 
@@ -780,20 +780,20 @@ func deleteTask(c *gin.Context) {
 func assignTask(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "id is required"})
+		c.JSON(http.StatusBadRequest, gin.H{"msg": "id is required"})
 		return
 	}
 
 	// 将ID字符串转换为ObjectID
 	objId, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
+		c.JSON(http.StatusBadRequest, gin.H{"msg": "Invalid ID format"})
 		return
 	}
 
 	var req UpdateTaskRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"msg": err.Error()})
 		return
 	}
 
@@ -808,12 +808,12 @@ func assignTask(c *gin.Context) {
 	// 更新数据库中的任务分配信息
 	result, err := config.DB.Collection("tasks").UpdateOne(context.TODO(), bson.M{"_id": objId}, update)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to assign task"})
+		c.JSON(http.StatusInternalServerError, gin.H{"msg": "Failed to assign task"})
 		return
 	}
 
 	if result.MatchedCount == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Task not found"})
+		c.JSON(http.StatusNotFound, gin.H{"msg": "Task not found"})
 		return
 	}
 
@@ -821,7 +821,7 @@ func assignTask(c *gin.Context) {
 	var updatedTask models.Task
 	err = config.DB.Collection("tasks").FindOne(context.TODO(), bson.M{"_id": objId}).Decode(&updatedTask)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve updated task"})
+		c.JSON(http.StatusInternalServerError, gin.H{"msg": "Failed to retrieve updated task"})
 		return
 	}
 
@@ -886,46 +886,46 @@ func assignTask(c *gin.Context) {
 func addComment(c *gin.Context) {
 	taskId := c.Param("id")
 	if taskId == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "task id is required"})
+		c.JSON(http.StatusBadRequest, gin.H{"msg": "task id is required"})
 		return
 	}
 
 	// 将任务ID字符串转换为ObjectID
 	taskObjId, err := primitive.ObjectIDFromHex(taskId)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid task ID format"})
+		c.JSON(http.StatusBadRequest, gin.H{"msg": "Invalid task ID format"})
 		return
 	}
 
 	var req AddCommentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"msg": err.Error()})
 		return
 	}
 
 	// 从JWT token中提取用户信息
 	userClaims, exists := c.Get("user")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "No token, authorization denied"})
+		c.JSON(http.StatusUnauthorized, gin.H{"msg": "No token, authorization denied"})
 		return
 	}
 
 	claims, ok := userClaims.(jwt.MapClaims)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
+		c.JSON(http.StatusUnauthorized, gin.H{"msg": "Invalid token claims"})
 		return
 	}
 
 	userId, ok := claims["id"].(string)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid user ID in token"})
+		c.JSON(http.StatusUnauthorized, gin.H{"msg": "Invalid user ID in token"})
 		return
 	}
 
 	// 将用户ID字符串转换为ObjectID
 	userObjId, err := primitive.ObjectIDFromHex(userId)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format"})
+		c.JSON(http.StatusBadRequest, gin.H{"msg": "Invalid user ID format"})
 		return
 	}
 
@@ -947,12 +947,12 @@ func addComment(c *gin.Context) {
 
 	result, err := config.DB.Collection("tasks").UpdateOne(context.TODO(), filter, update)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add comment"})
+		c.JSON(http.StatusInternalServerError, gin.H{"msg": "Failed to add comment"})
 		return
 	}
 
 	if result.MatchedCount == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Task not found"})
+		c.JSON(http.StatusNotFound, gin.H{"msg": "Task not found"})
 		return
 	}
 
@@ -960,7 +960,7 @@ func addComment(c *gin.Context) {
 	var updatedTask models.Task
 	err = config.DB.Collection("tasks").FindOne(context.TODO(), bson.M{"_id": taskObjId}).Decode(&updatedTask)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve updated task"})
+		c.JSON(http.StatusInternalServerError, gin.H{"msg": "Failed to retrieve updated task"})
 		return
 	}
 
@@ -1055,20 +1055,20 @@ func exportTasks(c *gin.Context) {
 	// 从上下文获取用户信息
 	userClaims, exists := c.Get("user")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "No token, authorization denied"})
+		c.JSON(http.StatusUnauthorized, gin.H{"msg": "No token, authorization denied"})
 		return
 	}
 
 	claims, ok := userClaims.(jwt.MapClaims)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
+		c.JSON(http.StatusUnauthorized, gin.H{"msg": "Invalid token claims"})
 		return
 	}
 
 	// 从token中提取用户ID
 	userID, err := primitive.ObjectIDFromHex(claims["id"].(string))
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		c.JSON(http.StatusUnauthorized, gin.H{"msg": "Invalid token"})
 		return
 	}
 
@@ -1076,13 +1076,13 @@ func exportTasks(c *gin.Context) {
 	var tasks []models.Task
 	cursor, err := config.DB.Collection("tasks").Find(context.TODO(), bson.M{"created_by": userID})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve tasks"})
+		c.JSON(http.StatusInternalServerError, gin.H{"msg": "Failed to retrieve tasks"})
 		return
 	}
 	defer cursor.Close(context.TODO())
 
 	if err = cursor.All(context.TODO(), &tasks); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to decode tasks"})
+		c.JSON(http.StatusInternalServerError, gin.H{"msg": "Failed to decode tasks"})
 		return
 	}
 
@@ -1155,31 +1155,31 @@ func importTasks(c *gin.Context) {
 	// 从上下文获取用户信息
 	userClaims, exists := c.Get("user")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "No token, authorization denied"})
+		c.JSON(http.StatusUnauthorized, gin.H{"msg": "No token, authorization denied"})
 		return
 	}
 
 	claims, ok := userClaims.(jwt.MapClaims)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
+		c.JSON(http.StatusUnauthorized, gin.H{"msg": "Invalid token claims"})
 		return
 	}
 
 	// 从token中提取用户ID
 	userID, err := primitive.ObjectIDFromHex(claims["id"].(string))
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		c.JSON(http.StatusUnauthorized, gin.H{"msg": "Invalid token"})
 		return
 	}
 
 	var req ImportTasksRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request format"})
+		c.JSON(http.StatusBadRequest, gin.H{"msg": "Invalid request format"})
 		return
 	}
 
 	if len(req.Tasks) == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "No tasks to import"})
+		c.JSON(http.StatusBadRequest, gin.H{"msg": "No tasks to import"})
 		return
 	}
 
