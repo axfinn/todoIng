@@ -180,4 +180,3 @@ func (s *UserServiceServer) VerifyCaptcha(ctx context.Context, req *pb.CaptchaRe
 		Message: "Captcha verified successfully",
 	}, nil
 }
-

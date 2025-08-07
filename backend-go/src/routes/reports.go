@@ -751,4 +751,3 @@ func formatReportAsText(report models.Report, content string) string {
 	text += fmt.Sprintf("报告生成时间: %s", time.Now().Format("2006-01-02 15:04:05"))
 	return text
 }
-

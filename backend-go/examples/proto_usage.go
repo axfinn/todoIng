@@ -205,4 +205,3 @@ func (s *ReportService) GenerateReport(req *proto.GenerateReportRequest) (*proto
 		Message: "Report generated successfully",
 	}, nil
 }
-

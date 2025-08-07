@@ -960,4 +960,3 @@ func getUser(c *gin.Context) {
 	// backend 直接返回用户对象，不包装在响应对象中
 	c.JSON(http.StatusOK, user)
 }
-

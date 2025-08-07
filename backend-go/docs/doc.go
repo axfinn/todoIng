@@ -404,4 +404,3 @@ type ReportStatistics struct {
 	// 完成率
 	CompletionRate int32 `json:"completion_rate"`
 }
-

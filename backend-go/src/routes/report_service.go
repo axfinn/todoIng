@@ -143,4 +143,3 @@ func (s *ReportServiceServer) DeleteReport(ctx context.Context, req *pb.DeleteRe
 		Message: "Report deleted successfully",
 	}, nil
 }
-

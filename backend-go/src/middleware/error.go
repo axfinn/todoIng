@@ -19,4 +19,3 @@ func ErrorHandler() gin.HandlerFunc {
 		}
 	}
 }
-

@@ -124,4 +124,3 @@ func CreateTask(task *Task) error {
 	_, err := config.DB.Collection("tasks").InsertOne(context.TODO(), task)
 	return err
 }
-

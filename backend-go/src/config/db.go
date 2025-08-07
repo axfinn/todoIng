@@ -44,4 +44,3 @@ func ConnectDB() {
 	DB = client.Database("todoing")
 	log.Println("Connected to MongoDB!")
 }
-
