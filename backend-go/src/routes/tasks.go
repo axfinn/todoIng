@@ -205,7 +205,13 @@ func getTasks(c *gin.Context) {
 		return
 	}
 
-	userId, ok := claims["id"].(string)
+	userData, ok := claims["user"].(map[string]interface{})
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"msg": "Invalid user data in token"})
+		return
+	}
+	
+	userId, ok := userData["id"].(string)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"msg": "Invalid user ID in token"})
 		return
@@ -446,7 +452,13 @@ func createTask(c *gin.Context) {
 		return
 	}
 
-	userId, ok := claims["id"].(string)
+	userData, ok := claims["user"].(map[string]interface{})
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"msg": "Invalid user data in token"})
+		return
+	}
+	
+	userId, ok := userData["id"].(string)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"msg": "Invalid user ID in token"})
 		return
@@ -916,7 +928,13 @@ func addComment(c *gin.Context) {
 		return
 	}
 
-	userId, ok := claims["id"].(string)
+	userData, ok := claims["user"].(map[string]interface{})
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"msg": "Invalid user data in token"})
+		return
+	}
+	
+	userId, ok := userData["id"].(string)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"msg": "Invalid user ID in token"})
 		return
@@ -1066,7 +1084,19 @@ func exportTasks(c *gin.Context) {
 	}
 
 	// 从token中提取用户ID
-	userID, err := primitive.ObjectIDFromHex(claims["id"].(string))
+	userData, ok := claims["user"].(map[string]interface{})
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"msg": "Invalid user data in token"})
+		return
+	}
+	
+	userIdStr, ok := userData["id"].(string)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"msg": "Invalid user ID in token"})
+		return
+	}
+	
+	userID, err := primitive.ObjectIDFromHex(userIdStr)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"msg": "Invalid token"})
 		return
@@ -1166,7 +1196,19 @@ func importTasks(c *gin.Context) {
 	}
 
 	// 从token中提取用户ID
-	userID, err := primitive.ObjectIDFromHex(claims["id"].(string))
+	userData, ok := claims["user"].(map[string]interface{})
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"msg": "Invalid user data in token"})
+		return
+	}
+	
+	userIdStr, ok := userData["id"].(string)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"msg": "Invalid user ID in token"})
+		return
+	}
+	
+	userID, err := primitive.ObjectIDFromHex(userIdStr)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"msg": "Invalid token"})
 		return

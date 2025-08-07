@@ -1,3 +1,10 @@
+## [1.8.17] - 2025-08-07
+### 修复
+- 修复 backend-go 中从 JWT token 提取用户 ID 的逻辑
+  - 将所有 `claims["id"]` 的访问方式改为 `claims["user"].(map[string]interface{})["id"]`
+  - 修复了 getTasks、createTask、addComment、exportTasks 和 importTasks 函数中的用户 ID 提取逻辑
+  - 确保与 JWT token 的实际数据结构保持一致
+
 ## [1.8.16] - 2025-08-07
 ### 修复
 - 统一 backend-go 中所有错误响应格式
