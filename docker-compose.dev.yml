@@ -15,30 +15,18 @@ services:
 
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile.dev
+      context: ./backend-go
+      dockerfile: Dockerfile
     container_name: todoing_backend_dev
     restart: always
     environment:
-      - NODE_ENV=development
-      - MONGO_URI=mongodb://mongodb:27017/todoing
-      - JWT_SECRET=your_jwt_secret_here
-      - PORT=5001
-      # 是否禁用注册功能
-      - DISABLE_REGISTRATION=false
-      # 是否启用登录验证码 (默认开启)
-      - ENABLE_CAPTCHA=true
-      # 验证码服务密钥
-      - CAPTCHA_SECRET=your_captcha_secret_here
-      # 默认用户配置（示例）
-      # - DEFAULT_USERNAME=admin
-      # - DEFAULT_EMAIL=admin@example.com
-      # - DEFAULT_PASSWORD=securepassword
+      - GIN_MODE=debug
     ports:
       - "5001:5001"
+      - "5002:5002"
     volumes:
-      - ./backend:/app
-      - /app/node_modules
+      - ./backend-go:/app
+      - ./backend-go/.env:/root/.env
     depends_on:
       - mongodb
     networks:
@@ -53,13 +41,7 @@ services:
     ports:
       - "81:81"
     environment:
-      - VITE_API_BASE_URL=http://localhost:5001/api
-      # 是否禁用注册功能
-      - VITE_DISABLE_REGISTRATION=false
-      # 是否启用登录验证码 (默认开启)
-      - VITE_ENABLE_CAPTCHA=true
-      # 验证码服务密钥（前端也需要知晓）
-      - VITE_CAPTCHA_SECRET=your_captcha_secret_here
+      - VITE_API_BASE_URL=
     volumes:
       - ./frontend:/app
       - /app/node_modules

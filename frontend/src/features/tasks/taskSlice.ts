@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/tool
 import api from '../../config/api';
 
 export interface TaskComment {
+  _id?: string;
   text: string;
   createdBy?: string;
   createdAt: string;
@@ -39,7 +40,8 @@ export const fetchTasks = createAsyncThunk<Task[], void, { rejectValue: string }
   async (_, { rejectWithValue }) => {
     try {
       const res = await api.get('/tasks');
-      return res.data as Task[];
+      // 后端返回的是 { tasks: Task[], message: string } 格式，需要提取tasks字段
+      return res.data.tasks as Task[];
     } catch (err: any) {
       if (err.response && err.response.data) {
         return rejectWithValue(err.response.data.msg || 'Failed to fetch tasks');
@@ -54,7 +56,7 @@ export const createTask = createAsyncThunk<Task, Omit<Task, '_id' | 'createdAt' 
   async (taskData: Omit<Task, '_id' | 'createdAt' | 'updatedAt' | 'comments'>, { rejectWithValue }) => {
     try {
       const res = await api.post('/tasks', taskData);
-      return res.data as Task;
+      return res.data.task as Task;
     } catch (err: any) {
       if (err.response && err.response.data) {
         return rejectWithValue(err.response.data.msg || 'Failed to create task');
@@ -80,7 +82,7 @@ export const updateTask = createAsyncThunk<Task, { _id: string } & UpdateTaskFie
     try {
       const { _id, ...taskUpdate } = taskData;
       const res = await api.put(`/tasks/${_id}`, taskUpdate);
-      return res.data as Task;
+      return res.data.task as Task;
     } catch (err: any) {
       if (err.response && err.response.data) {
         return rejectWithValue(err.response.data.msg || 'Failed to update task');
@@ -101,6 +103,28 @@ export const deleteTask = createAsyncThunk<string, string, { rejectValue: string
         return rejectWithValue(err.response.data.msg || 'Failed to delete task');
       }
       return rejectWithValue('Failed to delete task');
+    }
+  }
+);
+
+// 添加评论的异步操作
+interface AddCommentData {
+  taskId: string;
+  text: string;
+}
+
+export const addComment = createAsyncThunk<Task, AddCommentData, { rejectValue: string }>(
+  'tasks/addComment',
+  async ({ taskId, text }, { rejectWithValue }) => {
+    try {
+      const res = await api.post(`/tasks/${taskId}/comments`, { text });
+      // 返回完整的任务对象，因为后端返回的是更新后的任务
+      return res.data.task as Task;
+    } catch (err: any) {
+      if (err.response && err.response.data) {
+        return rejectWithValue(err.response.data.msg || 'Failed to add comment');
+      }
+      return rejectWithValue('Failed to add comment');
     }
   }
 );
@@ -208,6 +232,13 @@ const taskSlice = createSlice({
       })
       .addCase(deleteTask.fulfilled, (state, action: PayloadAction<string>) => {
         state.tasks = state.tasks.filter((task) => task._id !== action.payload);
+      })
+      .addCase(addComment.fulfilled, (state, action: PayloadAction<Task>) => {
+        // 更新任务列表中的任务，替换为包含新评论的完整任务对象
+        const index = state.tasks.findIndex((task) => task._id === action.payload._id);
+        if (index !== -1) {
+          state.tasks[index] = action.payload;
+        }
       });
   },
 });

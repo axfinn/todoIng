@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package todoing;
+option go_package = "./proto";
+
+// 错误响应
+message ErrorResponse {
+  string error = 1;
+}
+
+// 空请求消息
+message Empty {}

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
-import { fetchTasks, deleteTask, createTask, updateTask, exportTasks, importTasks } from '../features/tasks/taskSlice';
+import { fetchTasks, deleteTask, createTask, updateTask, addComment, exportTasks, importTasks } from '../features/tasks/taskSlice';
 import { generateCalendarICS, downloadICSFile } from '../utils/calendarUtils';
 import type { RootState, AppDispatch } from '../app/store';
 import type { Task } from '../features/tasks/taskSlice';
@@ -174,22 +174,11 @@ const DashboardPage: React.FC = () => {
   const handleAddComment = (taskId: string) => {
     const text = commentText[taskId];
     if (text && text.trim()) {
-      const task = tasks.find(t => t._id === taskId);
-      if (task) {
-        const newComment = {
-          text: text.trim(),
-          createdAt: new Date().toISOString()
-        };
-        const updatedTask = {
-          ...task,
-          comments: [...(task.comments || []), newComment]
-        };
-        dispatch(updateTask(updatedTask));
-        setCommentText({
-          ...commentText,
-          [taskId]: ''
-        });
-      }
+      dispatch(addComment({ taskId, text: text.trim() }));
+      setCommentText({
+        ...commentText,
+        [taskId]: ''
+      });
     }
   };
 
@@ -518,13 +507,13 @@ const DashboardPage: React.FC = () => {
                               <p className="mb-1">
                                 <small className="text-muted">
                                   <i className="bi bi-calendar me-1"></i>
-                                  {t('dashboard.created')}: {new Date(task.createdAt).toLocaleString(i18n.language)}
+                                  {t('dashboard.created')}: {new Date(task.createdAt).toLocaleDateString(i18n.language)} {new Date(task.createdAt).toLocaleTimeString(i18n.language, { hour: '2-digit', minute: '2-digit' })}
                                 </small>
                               </p>
                               <p className="mb-1">
                                 <small className="text-muted">
                                   <i className="bi bi-arrow-repeat me-1"></i>
-                                  {t('dashboard.updated')}: {new Date(task.updatedAt).toLocaleString(i18n.language)}
+                                  {t('dashboard.updated')}: {new Date(task.updatedAt).toLocaleDateString(i18n.language)} {new Date(task.updatedAt).toLocaleTimeString(i18n.language, { hour: '2-digit', minute: '2-digit' })}
                                 </small>
                               </p>
                             </div>

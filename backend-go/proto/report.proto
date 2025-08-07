@@ -1,0 +1,133 @@
+syntax = "proto3";
+
+package todoing;
+option go_package = "./proto";
+
+import "google/protobuf/timestamp.proto";
+
+// 报告类型枚举
+enum ReportType {
+  DAILY = 0;
+  WEEKLY = 1;
+  MONTHLY = 2;
+}
+
+// 报告统计信息
+message ReportStatistics {
+  int32 total_tasks = 1;
+  int32 completed_tasks = 2;
+  int32 in_progress_tasks = 3;
+  int32 overdue_tasks = 4;
+  int32 completion_rate = 5;
+}
+
+// 报告信息
+message Report {
+  string id = 1;
+  string user_id = 2;
+  ReportType type = 3;
+  string period = 4;
+  string title = 5;
+  string content = 6;
+  string polished_content = 7;
+  repeated string tasks = 8;
+  ReportStatistics statistics = 9;
+  google.protobuf.Timestamp created_at = 10;
+  google.protobuf.Timestamp updated_at = 11;
+}
+
+// 获取报告列表请求
+message GetReportsRequest {
+  string token = 1;
+}
+
+// 获取报告列表响应
+message GetReportsResponse {
+  repeated Report reports = 1;
+  string message = 2;
+}
+
+// 获取报告请求
+message GetReportRequest {
+  string id = 1;
+  string token = 2;
+}
+
+// 获取报告响应
+message GetReportResponse {
+  Report report = 1;
+  string message = 2;
+}
+
+// 生成报告请求
+message GenerateReportRequest {
+  ReportType type = 1;
+  string period = 2;
+  string start_date = 3;
+  string end_date = 4;
+  string token = 5;
+}
+
+// 生成报告响应
+message GenerateReportResponse {
+  Report report = 1;
+  string message = 2;
+}
+
+// 润色报告请求
+message PolishReportRequest {
+  string report_id = 1;
+  string api_key = 2;
+  string model = 3;
+  string api_url = 4;
+  string provider = 5;
+  string token = 6;
+}
+
+// 润色报告响应
+message PolishReportResponse {
+  Report report = 1;
+  string message = 2;
+}
+
+// 导出报告请求
+message ExportReportRequest {
+  string id = 1;
+  string format = 2;
+  string token = 3;
+}
+
+// 导出报告响应
+message ExportReportResponse {
+  string content = 1;
+  string filename = 2;
+  string message = 3;
+}
+
+// 删除报告请求
+message DeleteReportRequest {
+  string id = 1;
+  string token = 2;
+}
+
+// 删除报告响应
+message DeleteReportResponse {
+  string message = 1;
+}
+
+
+// 报告服务
+service ReportService {
+  // 获取报告列表
+  rpc GetReports (GetReportsRequest) returns (GetReportsResponse);
+  // 获取报告
+  rpc GetReport (GetReportRequest) returns (GetReportResponse);
+  // 生成报告
+  rpc GenerateReport (GenerateReportRequest) returns (GenerateReportResponse);
+  // 润色报告
+  rpc PolishReport (PolishReportRequest) returns (PolishReportResponse);
+  // 导出报告
+  rpc ExportReport (ExportReportRequest) returns (ExportReportResponse);
+  // 删除报告
+  rpc DeleteReport (DeleteReportRequest) returns (DeleteReportResponse);
+}

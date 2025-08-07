@@ -1,0 +1,193 @@
+syntax = "proto3";
+
+package todoing;
+option go_package = "./proto";
+
+import "common.proto";
+
+// 任务状态枚举
+enum TaskStatus {
+  TO_DO = 0;
+  IN_PROGRESS = 1;
+  DONE = 2;
+}
+
+// 任务优先级枚举
+enum TaskPriority {
+  LOW = 0;
+  MEDIUM = 1;
+  HIGH = 2;
+}
+
+// 评论信息
+message Comment {
+  string id = 1;
+  string text = 2;
+  string created_by = 3;
+  string created_at = 4;
+}
+
+// 任务信息
+message Task {
+  string id = 1;
+  string title = 2;
+  string description = 3;
+  TaskStatus status = 4;
+  TaskPriority priority = 5;
+  string assignee = 6;
+  string created_by = 7;
+  string created_at = 8;
+  string updated_at = 9;
+  string deadline = 10;
+  string scheduled_date = 11;
+  repeated Comment comments = 12;
+}
+
+// 创建任务请求
+message CreateTaskRequest {
+  string title = 1;
+  string description = 2;
+  TaskStatus status = 3;
+  TaskPriority priority = 4;
+  string assignee = 5;
+  string deadline = 6;
+  string scheduled_date = 7;
+  string token = 8;
+}
+
+// 创建任务响应
+message CreateTaskResponse {
+  Task task = 1;
+  string message = 2;
+}
+
+// 获取任务列表请求
+message GetTasksRequest {
+  string token = 1;
+}
+
+// 获取任务列表响应
+message GetTasksResponse {
+  repeated Task tasks = 1;
+  string message = 2;
+}
+
+// 获取任务请求
+message GetTaskRequest {
+  string id = 1;
+  string token = 2;
+}
+
+// 获取任务响应
+message GetTaskResponse {
+  Task task = 1;
+  string message = 2;
+}
+
+// 更新任务请求
+message UpdateTaskRequest {
+  string id = 1;
+  string title = 2;
+  string description = 3;
+  TaskStatus status = 4;
+  TaskPriority priority = 5;
+  string assignee = 6;
+  string deadline = 7;
+  string scheduled_date = 8;
+  string token = 9;
+}
+
+// 更新任务响应
+message UpdateTaskResponse {
+  Task task = 1;
+  string message = 2;
+}
+
+// 删除任务请求
+message DeleteTaskRequest {
+  string id = 1;
+  string token = 2;
+}
+
+// 删除任务响应
+message DeleteTaskResponse {
+  string message = 1;
+}
+
+// 添加评论请求
+message AddCommentRequest {
+  string task_id = 1;
+  string text = 2;
+  string token = 3;
+}
+
+// 添加评论响应
+message AddCommentResponse {
+  Comment comment = 1;
+  string message = 2;
+}
+
+// 分配任务请求
+message AssignTaskRequest {
+  string id = 1;
+  string assignee = 2;
+  string token = 3;
+}
+
+// 分配任务响应
+message AssignTaskResponse {
+  Task task = 1;
+  string message = 2;
+}
+
+// 导入任务请求
+message ImportTasksRequest {
+  repeated Task tasks = 1;
+  string token = 2;
+}
+
+// 导入任务响应
+message ImportTasksResponse {
+  string msg = 1;
+  int32 imported = 2;
+  repeated ImportError errors = 3;
+}
+
+// 导入错误信息
+message ImportError {
+  int32 index = 1;
+  string error = 2;
+}
+
+// 导出任务请求
+message ExportTasksRequest {
+  string token = 1;
+}
+
+// 导出任务响应
+message ExportTasksResponse {
+  repeated Task tasks = 1;
+  string message = 2;
+}
+
+// 任务服务
+service TaskService {
+  // 创建任务
+  rpc CreateTask (CreateTaskRequest) returns (CreateTaskResponse);
+  // 获取任务列表
+  rpc GetTasks (GetTasksRequest) returns (GetTasksResponse);
+  // 获取任务
+  rpc GetTask (GetTaskRequest) returns (GetTaskResponse);
+  // 更新任务
+  rpc UpdateTask (UpdateTaskRequest) returns (UpdateTaskResponse);
+  // 删除任务
+  rpc DeleteTask (DeleteTaskRequest) returns (DeleteTaskResponse);
+  // 添加评论
+  rpc AddComment (AddCommentRequest) returns (AddCommentResponse);
+  // 分配任务
+  rpc AssignTask (AssignTaskRequest) returns (AssignTaskResponse);
+  // 导入任务
+  rpc ImportTasks (ImportTasksRequest) returns (ImportTasksResponse);
+  // 导出任务
+  rpc ExportTasks (ExportTasksRequest) returns (ExportTasksResponse);
+}

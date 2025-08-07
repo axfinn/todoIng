@@ -1,0 +1,520 @@
+func (s *taskServiceServer) AddComment(ctx context.Context, req *pb.AddCommentRequest) (*pb.AddCommentResponse, error) {
+	// 实际实现中，这里会处理添加评论逻辑
+	log.Printf("gRPC: Adding comment to task: %s", req.TaskId)
+	
+	// 创建评论对象
+	comment := &pb.Comment{
+		Id:        "comment-id",
+		Text:      req.Text,
+		CreatedBy: "user-id",
+		CreatedAt: timestamppb.Now(),
+	}
+	
+	// 返回响应
+	return &pb.AddCommentResponse{
+		Comment: comment,
+		Message: "Comment added successfully",
+	}, nil
+}
+package main
+
+import (
+	"context"
+	"log"
+	"net"
+	"net/http"
+	"os"
+	"os/signal"
+	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
+	"google.golang.org/grpc"
+	"google.golang.org/protobuf/types/known/timestamppb"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+	_ "todoing-backend/docs" // This is required for Swagger docs
+	pb "todoing-backend/proto/gen/proto"
+	"todoing-backend/src/config"
+	"todoing-backend/src/routes"
+)
+
+// @title TodoIng API
+// @version 1.0
+// @description TodoIng task management system API
+// @host localhost:5001
+// @BasePath /api
+func main() {
+	// Load environment variables
+	if err := godotenv.Load(); err != nil {
+		log.Println("No .env file found")
+	}
+
+	// Connect to database
+	config.ConnectDB()
+
+	// Set up Gin router
+	router := gin.Default()
+
+	// Enable CORS
+	router.Use(func(c *gin.Context) {
+		c.Header("Access-Control-Allow-Origin", "*")
+		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
+		
+		c.Next()
+	})
+
+	// Serve Swagger UI
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+	// Register routes
+	routes.RegisterAuthRoutes(router)
+	routes.RegisterTaskRoutes(router)
+	routes.RegisterReportRoutes(router)
+
+	// Get port from environment or use default
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "5001"
+	}
+
+	// Start server
+	server := &http.Server{
+		Addr:    "0.0.0.0:" + port,
+		Handler: router,
+	}
+
+	// Run server in a goroutine
+	go func() {
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Server failed to start: %v", err)
+		}
+	}()
+
+	log.Printf("Server running on 0.0.0.0:%s", port)
+	log.Printf("Swagger UI available at http://0.0.0.0:%s/swagger/index.html", port)
+	log.Printf("gRPC server running on 0.0.0.0:5002")
+
+	// 启动gRPC服务器
+	go func() {
+		lis, err := net.Listen("tcp", "0.0.0.0:5002")
+		if err != nil {
+			log.Fatalf("Failed to listen: %v", err)
+		}
+		
+		grpcServer := grpc.NewServer()
+		// 注册gRPC服务
+		pb.RegisterUserServiceServer(grpcServer, &userServiceServer{})
+		pb.RegisterTaskServiceServer(grpcServer, &taskServiceServer{})
+		pb.RegisterReportServiceServer(grpcServer, &reportServiceServer{})
+		
+		log.Println("gRPC server listening on 0.0.0.0:5002")
+		if err := grpcServer.Serve(lis); err != nil {
+			log.Fatalf("Failed to serve gRPC: %v", err)
+		}
+	}()
+
+	// Wait for interrupt signal to gracefully shutdown the server
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt)
+	<-quit
+
+	log.Println("Shutting down server...")
+
+	// Shutdown server gracefully
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := server.Shutdown(ctx); err != nil {
+		log.Fatal("Server forced to shutdown:", err)
+	}
+
+	log.Println("Server exiting")
+}
+
+// gRPC服务实现示例
+type userServiceServer struct {
+	pb.UnimplementedUserServiceServer
+}
+
+func (s *userServiceServer) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.RegisterResponse, error) {
+	// 实际实现中，这里会处理用户注册逻辑
+	log.Printf("gRPC: Registering user: %s (%s)", req.Username, req.Email)
+	
+	// 创建用户对象
+	user := &pb.User{
+		Id:       "generated-user-id",
+		Username: req.Username,
+		Email:    req.Email,
+		CreatedAt: timestamppb.Now(),
+	}
+	
+	// 返回响应
+	return &pb.RegisterResponse{
+		Token:   "generated-jwt-token",
+		User:    user,
+		Message: "User registered successfully",
+	}, nil
+}
+
+func (s *userServiceServer) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
+	// 实际实现中，这里会处理用户登录逻辑
+	log.Printf("gRPC: Logging in user: %s", req.Email)
+	
+	// 创建用户对象
+	user := &pb.User{
+		Id:       "found-user-id",
+		Username: "sample-user",
+		Email:    req.Email,
+		CreatedAt: timestamppb.Now(),
+	}
+	
+	// 返回响应
+	return &pb.LoginResponse{
+		Token:   "found-user-jwt-token",
+		User:    user,
+		Message: "User logged in successfully",
+	}, nil
+}
+
+func (s *userServiceServer) GetUser(ctx context.Context, req *pb.GetUserRequest) (*pb.GetUserResponse, error) {
+	// 实际实现中，这里会处理获取用户信息逻辑
+	// 注意：根据proto定义，GetUserRequest只有token字段，没有Id字段
+	log.Printf("gRPC: Getting user with token")
+	
+	// 创建用户对象
+	user := &pb.User{
+		Id:       "user-id",
+		Username: "sample-user",
+		Email:    "user@example.com",
+		CreatedAt: timestamppb.Now(),
+	}
+	
+	// 返回响应
+	return &pb.GetUserResponse{
+		User:    user,
+		Message: "User retrieved successfully",
+	}, nil
+}
+
+func (s *userServiceServer) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest) (*pb.UpdateUserResponse, error) {
+	// 实际实现中，这里会处理更新用户信息逻辑
+	log.Printf("gRPC: Updating user: %s", req.Id)
+	
+	// 创建用户对象
+	user := &pb.User{
+		Id:       req.Id,
+		Username: req.Username,
+		Email:    req.Email,
+		CreatedAt: timestamppb.Now(),
+		UpdatedAt: timestamppb.Now(),
+	}
+	
+	// 返回响应
+	return &pb.UpdateUserResponse{
+		User:    user,
+		Message: "User updated successfully",
+	}, nil
+}
+
+func (s *userServiceServer) ChangePassword(ctx context.Context, req *pb.ChangePasswordRequest) (*pb.ChangePasswordResponse, error) {
+	// 实际实现中，这里会处理修改密码逻辑
+	log.Printf("gRPC: Changing password for user: %s", req.UserId)
+	
+	// 返回响应
+	return &pb.ChangePasswordResponse{
+		Message: "Password changed successfully",
+	}, nil
+}
+
+type taskServiceServer struct {
+	pb.UnimplementedTaskServiceServer
+}
+
+func (s *taskServiceServer) CreateTask(ctx context.Context, req *pb.CreateTaskRequest) (*pb.CreateTaskResponse, error) {
+	// 实际实现中，这里会处理创建任务逻辑
+	log.Printf("gRPC: Creating task: %s", req.Title)
+	
+	// 创建任务对象
+	task := &pb.Task{
+		Id:          "generated-task-id",
+		Title:       req.Title,
+		Description: req.Description,
+		Status:      pb.TaskStatus_TO_DO,
+		Priority:    req.Priority,
+		CreatedAt:   timestamppb.Now(),
+		UpdatedAt:   timestamppb.Now(),
+	}
+	
+	// 返回响应
+	return &pb.CreateTaskResponse{
+		Task:    task,
+		Message: "Task created successfully",
+	}, nil
+}
+
+func (s *taskServiceServer) GetTasks(ctx context.Context, req *pb.GetTasksRequest) (*pb.GetTasksResponse, error) {
+	// 实际实现中，这里会处理获取任务列表逻辑
+	log.Printf("gRPC: Getting tasks")
+	
+	// 创建任务列表
+	tasks := []*pb.Task{
+		{
+			Id:          "task-1",
+			Title:       "Sample Task 1",
+			Description: "This is a sample task",
+			Status:      pb.TaskStatus_TO_DO,
+			Priority:    pb.TaskPriority_MEDIUM,
+			CreatedAt:   timestamppb.Now(),
+			UpdatedAt:   timestamppb.Now(),
+		},
+		{
+			Id:          "task-2",
+			Title:       "Sample Task 2",
+			Description: "This is another sample task",
+			Status:      pb.TaskStatus_IN_PROGRESS,
+			Priority:    pb.TaskPriority_HIGH,
+			CreatedAt:   timestamppb.Now(),
+			UpdatedAt:   timestamppb.Now(),
+		},
+	}
+	
+	// 返回响应
+	return &pb.GetTasksResponse{
+		Tasks:   tasks,
+		Message: "Tasks retrieved successfully",
+	}, nil
+}
+
+func (s *taskServiceServer) GetTask(ctx context.Context, req *pb.GetTaskRequest) (*pb.GetTaskResponse, error) {
+	// 实际实现中，这里会处理获取单个任务逻辑
+	log.Printf("gRPC: Getting task: %s", req.Id)
+	
+	// 创建任务对象
+	task := &pb.Task{
+		Id:          req.Id,
+		UserId:      "user-id",
+		Title:       "Sample Task",
+		Description: "This is a sample task",
+		Status:      pb.TaskStatus_TODO,
+		Priority:    pb.TaskPriority_MEDIUM,
+		CreatedAt:   timestamppb.Now(),
+		UpdatedAt:   timestamppb.Now(),
+	}
+	
+	// 返回响应
+	return &pb.GetTaskResponse{
+		Task:    task,
+		Message: "Task retrieved successfully",
+	}, nil
+}
+
+func (s *taskServiceServer) UpdateTask(ctx context.Context, req *pb.UpdateTaskRequest) (*pb.UpdateTaskResponse, error) {
+	// 实际实现中，这里会处理更新任务逻辑
+	log.Printf("gRPC: Updating task: %s", req.Id)
+	
+	// 创建任务对象
+	task := &pb.Task{
+		Id:          req.Id,
+		UserId:      "user-id",
+		Title:       req.Title,
+		Description: req.Description,
+		Status:      req.Status,
+		Priority:    req.Priority,
+		CreatedAt:   timestamppb.Now(),
+		UpdatedAt:   timestamppb.Now(),
+	}
+	
+	// 返回响应
+	return &pb.UpdateTaskResponse{
+		Task:    task,
+		Message: "Task updated successfully",
+	}, nil
+}
+
+func (s *taskServiceServer) DeleteTask(ctx context.Context, req *pb.DeleteTaskRequest) (*pb.DeleteTaskResponse, error) {
+	// 实际实现中，这里会处理删除任务逻辑
+	log.Printf("gRPC: Deleting task: %s", req.Id)
+	
+	// 返回响应
+	return &pb.DeleteTaskResponse{
+		Message: "Task deleted successfully",
+	}, nil
+}
+
+func (s *taskServiceServer) AssignTask(ctx context.Context, req *pb.AssignTaskRequest) (*pb.AssignTaskResponse, error) {
+	// 实际实现中，这里会处理分配任务逻辑
+	log.Printf("gRPC: Assigning task: %s to user: %s", req.TaskId, req.AssigneeId)
+	
+	// 创建任务对象
+	task := &pb.Task{
+		Id:          req.TaskId,
+		UserId:      req.AssigneeId,
+		Title:       "Assigned Task",
+		Description: "This task has been assigned",
+		Status:      pb.TaskStatus_TODO,
+		Priority:    pb.TaskPriority_MEDIUM,
+		CreatedAt:   timestamppb.Now(),
+		UpdatedAt:   timestamppb.Now(),
+	}
+	
+	// 返回响应
+	return &pb.AssignTaskResponse{
+		Task:    task,
+		Message: "Task assigned successfully",
+	}, nil
+}
+
+type reportServiceServer struct {
+	pb.UnimplementedReportServiceServer
+}
+
+func (s *reportServiceServer) GetReports(ctx context.Context, req *pb.GetReportsRequest) (*pb.GetReportsResponse, error) {
+	// 实际实现中，这里会处理获取报告列表逻辑
+	log.Printf("gRPC: Getting reports")
+	
+	// 创建报告列表
+	reports := []*pb.Report{
+		{
+			Id:      "report-1",
+			UserId:  "user-id",
+			Type:    pb.ReportType_DAILY,
+			Period:  "2023-01-01",
+			Title:   "Sample Report 1",
+			Content: "Sample report content",
+			Statistics: &pb.ReportStatistics{
+				TotalTasks:       10,
+				CompletedTasks:   5,
+				InProgressTasks:  3,
+				OverdueTasks:     2,
+				CompletionRate:   50, // 修改为整数百分比
+			},
+			CreatedAt: timestamppb.Now(),
+			UpdatedAt: timestamppb.Now(),
+		},
+	}
+	
+	// 返回响应
+	return &pb.GetReportsResponse{
+		Reports: reports,
+		Message: "Reports retrieved successfully",
+	}, nil
+}
+
+func (s *reportServiceServer) GetReport(ctx context.Context, req *pb.GetReportRequest) (*pb.GetReportResponse, error) {
+	// 实际实现中，这里会处理获取单个报告逻辑
+	log.Printf("gRPC: Getting report: %s", req.Id)
+	
+	// 创建报告对象
+	report := &pb.Report{
+		Id:      req.Id,
+		UserId:  "user-id",
+		Type:    pb.ReportType_DAILY,
+		Period:  "2023-01-01",
+		Title:   "Sample Report",
+		Content: "Sample report content",
+		Statistics: &pb.ReportStatistics{
+			TotalTasks:       0,
+			CompletedTasks:   0,
+			InProgressTasks:  0,
+			OverdueTasks:     0,
+			CompletionRate:   0,
+		},
+		CreatedAt: timestamppb.Now(),
+		UpdatedAt: timestamppb.Now(),
+	}
+	
+	// 返回响应
+	return &pb.GetReportResponse{
+		Report:  report,
+		Message: "Report retrieved successfully",
+	}, nil
+}
+
+func (s *reportServiceServer) GenerateReport(ctx context.Context, req *pb.GenerateReportRequest) (*pb.GenerateReportResponse, error) {
+	// 实际实现中，这里会处理生成报告逻辑
+	log.Printf("gRPC: Generating %s report for period: %s", req.Type, req.Period)
+	
+	// 创建报告对象
+	report := &pb.Report{
+		Id:      "generated-report-id",
+		UserId:  "user-id",
+		Type:    req.Type,
+		Period:  req.Period,
+		Title:   "Generated Report",
+		Content: "Generated report content",
+		Statistics: &pb.ReportStatistics{
+			TotalTasks:       0,
+			CompletedTasks:   0,
+			InProgressTasks:  0,
+			OverdueTasks:     0,
+			CompletionRate:   0,
+		},
+		CreatedAt: timestamppb.Now(),
+		UpdatedAt: timestamppb.Now(),
+	}
+	
+	// 返回响应
+	return &pb.GenerateReportResponse{
+		Report:  report,
+		Message: "Report generated successfully",
+	}, nil
+}
+
+func (s *reportServiceServer) PolishReport(ctx context.Context, req *pb.PolishReportRequest) (*pb.PolishReportResponse, error) {
+	// 实际实现中，这里会处理润色报告逻辑
+	log.Printf("gRPC: Polishing report: %s", req.ReportId)
+	
+	// 创建报告对象
+	report := &pb.Report{
+		Id:      req.ReportId,
+		UserId:  "user-id",
+		Type:    pb.ReportType_DAILY,
+		Period:  "2023-01-01",
+		Title:   "Polished Report",
+		Content: "Original report content",
+		PolishedContent: "Polished report content",
+		Statistics: &pb.ReportStatistics{
+			TotalTasks:       0,
+			CompletedTasks:   0,
+			InProgressTasks:  0,
+			OverdueTasks:     0,
+			CompletionRate:   0,
+		},
+		CreatedAt: timestamppb.Now(),
+		UpdatedAt: timestamppb.Now(),
+	}
+	
+	// 返回响应
+	return &pb.PolishReportResponse{
+		Report:  report,
+		Message: "Report polished successfully",
+	}, nil
+}
+
+func (s *reportServiceServer) ExportReport(ctx context.Context, req *pb.ExportReportRequest) (*pb.ExportReportResponse, error) {
+	// 实际实现中，这里会处理导出报告逻辑
+	log.Printf("gRPC: Exporting report: %s in format: %s", req.Id, req.Format)
+	
+	// 返回响应
+	return &pb.ExportReportResponse{
+		Content:  "Report content",
+		Filename: "report.txt",
+		Message:  "Report exported successfully",
+	}, nil
+}
+
+func (s *reportServiceServer) DeleteReport(ctx context.Context, req *pb.DeleteReportRequest) (*pb.DeleteReportResponse, error) {
+	// 实际实现中，这里会处理删除报告逻辑
+	log.Printf("gRPC: Deleting report: %s", req.Id)
+	
+	// 返回响应
+	return &pb.DeleteReportResponse{
+		Message: "Report deleted successfully",
+	}, nil
+}

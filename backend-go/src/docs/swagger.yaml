@@ -1,0 +1,1038 @@
+basePath: /api
+definitions:
+  routes.AddCommentRequest:
+    properties:
+      task_id:
+        description: 任务ID
+        type: string
+      text:
+        description: 评论内容
+        type: string
+      token:
+        description: Token
+        type: string
+    type: object
+  routes.AddCommentResponse:
+    properties:
+      comment:
+        allOf:
+        - $ref: '#/definitions/routes.Comment'
+        description: 评论信息
+      message:
+        description: 消息
+        type: string
+    type: object
+  routes.Comment:
+    properties:
+      created_by:
+        description: 创建者
+        type: string
+      id:
+        description: 评论ID
+        type: string
+      text:
+        description: 评论内容
+        type: string
+    type: object
+  routes.CreateTaskRequest:
+    properties:
+      assignee:
+        description: 分配给
+        type: string
+      description:
+        description: 任务描述
+        type: string
+      priority:
+        description: 任务优先级
+        type: integer
+      status:
+        description: 任务状态
+        type: integer
+      title:
+        description: 任务标题
+        type: string
+      token:
+        description: Token
+        type: string
+    type: object
+  routes.CreateTaskResponse:
+    properties:
+      message:
+        description: 消息
+        type: string
+      task:
+        allOf:
+        - $ref: '#/definitions/routes.Task'
+        description: 任务信息
+    type: object
+  routes.DeleteReportResponse:
+    properties:
+      message:
+        description: 消息
+        type: string
+    type: object
+  routes.DeleteTaskResponse:
+    properties:
+      message:
+        description: 消息
+        type: string
+    type: object
+  routes.ErrorResponse:
+    properties:
+      error:
+        description: 错误信息
+        type: string
+    type: object
+  routes.ExportReportRequest:
+    properties:
+      format:
+        description: 格式
+        type: string
+      id:
+        description: 报告ID
+        type: string
+      token:
+        description: Token
+        type: string
+    type: object
+  routes.ExportReportResponse:
+    properties:
+      content:
+        description: 内容
+        type: string
+      filename:
+        description: 文件名
+        type: string
+      message:
+        description: 消息
+        type: string
+    type: object
+  routes.GenerateCaptchaResponse:
+    properties:
+      captcha:
+        description: 验证码
+        type: integer
+      message:
+        description: 消息
+        type: string
+    type: object
+  routes.GenerateReportRequest:
+    properties:
+      end_date:
+        description: 结束日期
+        type: string
+      period:
+        description: 周期
+        type: string
+      start_date:
+        description: 开始日期
+        type: string
+      token:
+        description: Token
+        type: string
+      type:
+        description: 报告类型
+        type: integer
+    type: object
+  routes.GenerateReportResponse:
+    properties:
+      message:
+        description: 消息
+        type: string
+      report:
+        allOf:
+        - $ref: '#/definitions/routes.Report'
+        description: 报告信息
+    type: object
+  routes.GetReportResponse:
+    properties:
+      message:
+        description: 消息
+        type: string
+      report:
+        allOf:
+        - $ref: '#/definitions/routes.Report'
+        description: 报告信息
+    type: object
+  routes.GetReportsResponse:
+    properties:
+      message:
+        description: 消息
+        type: string
+      reports:
+        description: 报告列表
+        items:
+          $ref: '#/definitions/routes.Report'
+        type: array
+    type: object
+  routes.GetTaskResponse:
+    properties:
+      message:
+        description: 消息
+        type: string
+      task:
+        allOf:
+        - $ref: '#/definitions/routes.Task'
+        description: 任务信息
+    type: object
+  routes.GetTasksResponse:
+    properties:
+      message:
+        description: 消息
+        type: string
+      tasks:
+        description: 任务列表
+        items:
+          $ref: '#/definitions/routes.Task'
+        type: array
+    type: object
+  routes.GetUserResponse:
+    properties:
+      message:
+        description: 消息
+        type: string
+      user:
+        allOf:
+        - $ref: '#/definitions/routes.User'
+        description: 用户信息
+    type: object
+  routes.LoginRequest:
+    properties:
+      email:
+        description: 邮箱地址
+        type: string
+      password:
+        description: 密码
+        type: string
+    type: object
+  routes.LoginResponse:
+    properties:
+      message:
+        description: 消息
+        type: string
+      token:
+        description: JWT token
+        type: string
+      user:
+        allOf:
+        - $ref: '#/definitions/routes.User'
+        description: 用户信息
+    type: object
+  routes.PolishReportRequest:
+    properties:
+      api_key:
+        description: API密钥
+        type: string
+      api_url:
+        description: API URL
+        type: string
+      model:
+        description: 模型
+        type: string
+      provider:
+        description: 提供商
+        type: string
+      report_id:
+        description: 报告ID
+        type: string
+      token:
+        description: Token
+        type: string
+    type: object
+  routes.PolishReportResponse:
+    properties:
+      message:
+        description: 消息
+        type: string
+      report:
+        allOf:
+        - $ref: '#/definitions/routes.Report'
+        description: 报告信息
+    type: object
+  routes.RegisterRequest:
+    properties:
+      email:
+        description: 邮箱地址
+        type: string
+      password:
+        description: 密码
+        type: string
+      username:
+        description: 用户名
+        type: string
+    type: object
+  routes.RegisterResponse:
+    properties:
+      message:
+        description: 消息
+        type: string
+      token:
+        description: JWT token
+        type: string
+      user:
+        allOf:
+        - $ref: '#/definitions/routes.User'
+        description: 用户信息
+    type: object
+  routes.Report:
+    properties:
+      content:
+        description: 内容
+        type: string
+      id:
+        description: 报告ID
+        type: string
+      period:
+        description: 周期
+        type: string
+      polished_content:
+        description: 润色后的内容
+        type: string
+      statistics:
+        allOf:
+        - $ref: '#/definitions/routes.ReportStatistics'
+        description: 统计信息
+      tasks:
+        description: 任务列表
+        items:
+          type: string
+        type: array
+      title:
+        description: 标题
+        type: string
+      type:
+        description: 报告类型
+        type: integer
+      user_id:
+        description: 用户ID
+        type: string
+    type: object
+  routes.ReportStatistics:
+    properties:
+      completed_tasks:
+        description: 完成任务数
+        type: integer
+      completion_rate:
+        description: 完成率
+        type: integer
+      in_progress_tasks:
+        description: 进行中任务数
+        type: integer
+      overdue_tasks:
+        description: 逾期任务数
+        type: integer
+      total_tasks:
+        description: 总任务数
+        type: integer
+    type: object
+  routes.SendEmailCodeRequest:
+    properties:
+      email:
+        description: 邮箱地址
+        type: string
+    type: object
+  routes.SendEmailCodeResponse:
+    properties:
+      id:
+        description: ID
+        type: string
+      message:
+        description: 消息
+        type: string
+    type: object
+  routes.SendLoginEmailCodeRequest:
+    properties:
+      email:
+        description: 邮箱地址
+        type: string
+    type: object
+  routes.SendLoginEmailCodeResponse:
+    properties:
+      id:
+        description: ID
+        type: string
+      message:
+        description: 消息
+        type: string
+    type: object
+  routes.Task:
+    properties:
+      assignee:
+        description: 分配给
+        type: string
+      created_by:
+        description: 创建者
+        type: string
+      description:
+        description: 任务描述
+        type: string
+      id:
+        description: 任务ID
+        type: string
+      priority:
+        description: 任务优先级
+        type: integer
+      status:
+        description: 任务状态
+        type: integer
+      title:
+        description: 任务标题
+        type: string
+    type: object
+  routes.UpdateTaskRequest:
+    properties:
+      assignee:
+        description: 分配给
+        type: string
+      description:
+        description: 任务描述
+        type: string
+      id:
+        description: 任务ID
+        type: string
+      priority:
+        description: 任务优先级
+        type: integer
+      status:
+        description: 任务状态
+        type: integer
+      title:
+        description: 任务标题
+        type: string
+      token:
+        description: Token
+        type: string
+    type: object
+  routes.UpdateTaskResponse:
+    properties:
+      message:
+        description: 消息
+        type: string
+      task:
+        allOf:
+        - $ref: '#/definitions/routes.Task'
+        description: 任务信息
+    type: object
+  routes.User:
+    properties:
+      email:
+        description: 邮箱地址
+        type: string
+      id:
+        description: 用户ID
+        type: string
+      username:
+        description: 用户名
+        type: string
+    type: object
+host: localhost:5001
+info:
+  contact: {}
+  description: TodoIng task management system API
+  title: TodoIng API
+  version: "1.0"
+paths:
+  /auth/captcha:
+    get:
+      consumes:
+      - application/json
+      description: 生成图形验证码用于注册/登录验证
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/routes.GenerateCaptchaResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+      summary: 生成验证码
+      tags:
+      - auth
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: 用户登录获取访问令牌
+      parameters:
+      - description: 用户登录请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/routes.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/routes.LoginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+      summary: 用户登录
+      tags:
+      - auth
+  /auth/me:
+    get:
+      consumes:
+      - application/json
+      description: 获取当前认证用户的信息
+      parameters:
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/routes.GetUserResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+      summary: 获取当前用户信息
+      tags:
+      - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: 注册新用户
+      parameters:
+      - description: 用户注册请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/routes.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/routes.RegisterResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+      summary: 用户注册
+      tags:
+      - auth
+  /auth/send-email-code:
+    post:
+      consumes:
+      - application/json
+      description: 发送邮箱验证码用于用户注册验证
+      parameters:
+      - description: 发送邮箱验证码请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/routes.SendEmailCodeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/routes.SendEmailCodeResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+      summary: 发送注册邮箱验证码
+      tags:
+      - auth
+  /auth/send-login-email-code:
+    post:
+      consumes:
+      - application/json
+      description: 发送邮箱验证码用于用户登录验证
+      parameters:
+      - description: 发送登录邮箱验证码请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/routes.SendLoginEmailCodeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/routes.SendLoginEmailCodeResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+      summary: 发送登录邮箱验证码
+      tags:
+      - auth
+  /reports:
+    get:
+      consumes:
+      - application/json
+      description: 获取用户的所有报告
+      parameters:
+      - description: 用户ID
+        in: query
+        name: userId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/routes.GetReportsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+      summary: 获取报告列表
+      tags:
+      - reports
+  /reports/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 根据ID删除报告
+      parameters:
+      - description: 报告ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/routes.DeleteReportResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+      summary: 删除报告
+      tags:
+      - reports
+    get:
+      consumes:
+      - application/json
+      description: 根据ID获取报告详情
+      parameters:
+      - description: 报告ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/routes.GetReportResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+      summary: 获取单个报告
+      tags:
+      - reports
+  /reports/export:
+    post:
+      consumes:
+      - application/json
+      description: 导出报告为指定格式
+      parameters:
+      - description: 导出报告请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/routes.ExportReportRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/routes.ExportReportResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+      summary: 导出报告
+      tags:
+      - reports
+  /reports/generate:
+    post:
+      consumes:
+      - application/json
+      description: 根据类型和周期生成报告
+      parameters:
+      - description: 生成报告请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/routes.GenerateReportRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/routes.GenerateReportResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+      summary: 生成报告
+      tags:
+      - reports
+  /reports/polish:
+    post:
+      consumes:
+      - application/json
+      description: 使用AI润色报告内容
+      parameters:
+      - description: 润色报告请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/routes.PolishReportRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/routes.PolishReportResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+      summary: 润色报告
+      tags:
+      - reports
+  /tasks:
+    get:
+      consumes:
+      - application/json
+      description: 获取用户的所有任务
+      parameters:
+      - description: 用户ID
+        in: query
+        name: userId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/routes.GetTasksResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+      summary: 获取任务列表
+      tags:
+      - tasks
+    post:
+      consumes:
+      - application/json
+      description: 创建一个新的任务
+      parameters:
+      - description: 创建任务请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/routes.CreateTaskRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/routes.CreateTaskResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+      summary: 创建任务
+      tags:
+      - tasks
+  /tasks/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 根据ID删除任务
+      parameters:
+      - description: 任务ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/routes.DeleteTaskResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+      summary: 删除任务
+      tags:
+      - tasks
+    get:
+      consumes:
+      - application/json
+      description: 根据ID获取任务详情
+      parameters:
+      - description: 任务ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/routes.GetTaskResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+      summary: 获取单个任务
+      tags:
+      - tasks
+    put:
+      consumes:
+      - application/json
+      description: 更新任务信息
+      parameters:
+      - description: 任务ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 更新任务请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/routes.UpdateTaskRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/routes.UpdateTaskResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+      summary: 更新任务
+      tags:
+      - tasks
+  /tasks/{id}/assign:
+    post:
+      consumes:
+      - application/json
+      description: 将任务分配给用户
+      parameters:
+      - description: 任务ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 分配任务请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/routes.UpdateTaskRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/routes.UpdateTaskResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+      summary: 分配任务
+      tags:
+      - tasks
+  /tasks/{id}/comments:
+    post:
+      consumes:
+      - application/json
+      description: 为任务添加评论
+      parameters:
+      - description: 任务ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 添加评论请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/routes.AddCommentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/routes.AddCommentResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+      summary: 添加评论
+      tags:
+      - tasks
+schemes:
+- http
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

@@ -1,0 +1,115 @@
+syntax = "proto3";
+
+package todoing;
+option go_package = "./proto";
+
+import "google/protobuf/timestamp.proto";
+import "common.proto";
+
+// 用户信息
+message User {
+  string id = 1;
+  string username = 2;
+  string email = 3;
+  google.protobuf.Timestamp created_at = 4;
+}
+
+// 注册请求
+message RegisterRequest {
+  string username = 1;
+  string email = 2;
+  string password = 3;
+}
+
+// 注册响应
+message RegisterResponse {
+  string token = 1;
+  User user = 2;
+  string message = 3;
+}
+
+// 登录请求
+message LoginRequest {
+  string email = 1;
+  string password = 2;
+  string captcha = 3;
+  string captcha_id = 4;
+  string email_code = 5;
+  string email_code_id = 6;
+}
+
+// 登录响应
+message LoginResponse {
+  string token = 1;
+  User user = 2;
+  string message = 3;
+}
+
+// 获取用户信息响应
+message GetUserResponse {
+  User user = 1;
+  string message = 2;
+}
+
+// 获取用户信息请求
+message GetUserRequest {
+  string token = 1;
+}
+
+// 发送邮箱验证码请求
+message SendEmailCodeRequest {
+  string email = 1;
+}
+
+// 发送邮箱验证码响应
+message SendEmailCodeResponse {
+  string message = 1;
+  string id = 2;
+}
+
+// 发送登录邮箱验证码请求
+message SendLoginEmailCodeRequest {
+  string email = 1;
+}
+
+// 发送登录邮箱验证码响应
+message SendLoginEmailCodeResponse {
+  string message = 1;
+  string id = 2;
+}
+
+// 验证码请求
+message CaptchaRequest {
+  string captcha = 1;
+  string captcha_id = 2;
+}
+
+// 验证码响应
+message CaptchaResponse {
+  string message = 1;
+}
+
+// 生成验证码响应
+message GenerateCaptchaResponse {
+  int32 captcha = 1;
+  string message = 2;
+}
+
+// 用户服务
+service UserService {
+  // 注册
+  rpc Register (RegisterRequest) returns (RegisterResponse);
+  // 登录
+  rpc Login (LoginRequest) returns (LoginResponse);
+  // 获取用户信息
+  rpc GetUser (GetUserRequest) returns (GetUserResponse);
+  // 发送注册邮箱验证码
+  rpc SendEmailCode (SendEmailCodeRequest) returns (SendEmailCodeResponse);
+  // 发送登录邮箱验证码
+  rpc SendLoginEmailCode (SendLoginEmailCodeRequest) returns (SendLoginEmailCodeResponse);
+  // 生成验证码
+  rpc GenerateCaptcha (Empty) returns (GenerateCaptchaResponse);
+  // 验证验证码
+  rpc VerifyCaptcha (CaptchaRequest) returns (CaptchaResponse);
+}
+
