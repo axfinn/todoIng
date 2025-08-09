@@ -48,6 +48,14 @@ bin/
 logs/
 log/
 
+# ========================================
+# 生成的文档文件
+# ========================================
+# API 文档生成文件
+docs/api_complete.json
+docs/combined_swagger.json
+docs/grpc_swagger.json
+
 # 具体的日志文件
 server.log
 app.log
