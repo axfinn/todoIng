@@ -108,38 +108,116 @@
 └── 📧 email_codes    # 邮箱验证码
 ```
 
+## 🐳 Docker 部署方案
+
+我们提供了**5种不同的 Docker 部署方案**，满足从开发到生产的各种需求：
+
+| 🎯 场景 | 📁 配置文件 | 🚀 快速启动 | 📝 说明 |
+|---------|------------|-------------|---------|
+| 🔵 **Golang 生产** | `docker/docker-compose.golang.yml` | `./docker/deploy.sh golang up` | **推荐生产方案**，性能优秀，包含 gRPC + 监控 |
+| 🟢 **Node.js 生产** | `docker/docker-compose.nodejs.yml` | `./docker/deploy.sh nodejs up` | 传统部署，快速上手 |
+| 🛠️ **开发环境** | `docker/docker-compose.dev-full.yml` | `./docker/deploy.sh dev up` | 完整开发工具，热重载 + 调试 |
+| 🚀 **企业生产** | `docker/docker-compose.prod.yml` | `./docker/deploy.sh prod up` | 企业级高可用，SSL + 监控 + 备份 |
+| 🏗️ **微服务架构** | `docker/docker-compose.microservices.yml` | `./docker/deploy.sh micro up` | 大型项目，API网关 + 服务发现 |
+
+### 🎯 一键部署体验
+
+```bash
+# 🔥 60秒极速体验 - 推荐 Golang 方案
+git clone https://github.com/axfinn/todoIng.git
+cd todoIng/docker
+cp .env.example .env
+./deploy.sh golang up
+
+# 🎉 部署完成！访问：
+# 📱 应用地址: http://localhost  
+# 🔗 API 接口: http://localhost:5004/api
+# 📚 API 文档: http://localhost:5004/swagger/
+```
+
+### 🛠️ 开发调试环境
+
+```bash
+# 启动完整开发环境 (包含数据库管理工具、邮件测试等)
+./docker/deploy.sh dev up --profile golang
+
+# 🎯 开发工具访问地址：
+# 🌐 前端开发: http://localhost:3000 (热重载)
+# 🗄️ 数据库管理: http://localhost:8081 (Mongo Express)
+# 📮 邮件测试: http://localhost:8025 (MailHog)
+# 📊 Redis 管理: http://localhost:8082
+```
+
+### 🚀 生产部署
+
+```bash
+# 企业级生产环境 (SSL + 负载均衡 + 监控)
+./docker/deploy.sh prod up --profile replica
+
+# 🎯 监控访问地址：
+# 📊 监控面板: http://localhost:3001 (Grafana)
+# 🎯 应用地址: https://your-domain.com
+```
+
+**💡 详细的 Docker 部署文档请查看：[docker/README.md](./docker/README.md)**
+
+---
+
 ## 🚀 快速开始
 
 ### 📋 环境要求
-- **Node.js** 18+
-- **Go** 1.23+
-- **MongoDB** 5.0+
-- **Docker** 20+ (可选)
-- **Docker Compose** 2.0+ (可选)
+
+- **Docker** 20+ 和 **Docker Compose** 2.0+ (推荐方式)
+- 或者 **Node.js** 18+ / **Go** 1.23+ + **MongoDB** 5.0+ (本地开发)
 
 ### 🐳 Docker 部署 (推荐)
 
-**一键启动所有服务：**
+**最简单的启动方式 - 适合体验和生产使用：**
+
 ```bash
 # 1. 克隆项目
 git clone https://github.com/axfinn/todoIng.git
 cd todoIng
 
-# 2. 配置环境变量
+# 2. 进入 Docker 目录
+cd docker
+
+# 3. 配置环境变量
 cp .env.example .env
-# 编辑 .env 文件配置必要参数
+# 💡 推荐：编辑 .env 文件，至少设置 JWT_SECRET 和邮箱配置
 
-# 3. 启动所有服务
-docker-compose up -d
+# 4. 一键启动 (推荐 Golang 方案)
+./deploy.sh golang up
 
-# 4. 访问应用
-echo "🎉 部署完成！"
-echo "📱 前端访问: http://localhost:81"
-echo "🔗 API 接口: http://localhost:5001/api"
-echo "📚 API 文档: http://localhost:5001/api-docs"
+# 🎉 部署完成！访问地址：
+# 📱 前端应用: http://localhost
+# 🔗 API 接口: http://localhost:5004/api  
+# 📚 API 文档: http://localhost:5004/swagger/
 ```
 
-### 💻 开发环境部署
+**更多部署方案：**
+
+```bash
+# 🟢 Node.js 方案
+./deploy.sh nodejs up
+
+# 🛠️ 开发环境 (包含调试工具)
+./deploy.sh dev up --profile golang
+
+# 🚀 生产环境 (包含监控和备份)
+./deploy.sh prod up
+
+# 🏗️ 微服务架构 (适合大型项目)
+./deploy.sh micro up
+```
+
+**💡 详细配置和说明请查看：[docker/README.md](./docker/README.md)**
+
+---
+
+### 💻 本地开发部署
+
+如果您需要进行代码开发或不使用 Docker，可以按以下方式本地部署：
 
 #### 后端部署 (Go 版本)
 ```bash
@@ -198,7 +276,8 @@ mongod --dbpath ./data/db
 
 ### ⚙️ 运维文档
 - [⚙️ 配置管理](./docs/configuration.md)
-- [🐳 Docker 部署](./backend-go/DOCKER.md)
+- [🐳 Docker 部署总览](./docker/README.md) - 完整的 Docker 部署方案
+- [🐳 Golang 镜像使用](./backend-go/DOCKER.md) - Golang 后端镜像详细指南
 - [📊 监控运维](./docs/observability.md)
 
 ### 🔧 API 文档

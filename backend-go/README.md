@@ -133,23 +133,44 @@ open http://localhost:5004/swagger/
 
 ### 🐳 Docker 部署
 
-#### 构建镜像
+> 📖 **详细的 Docker 使用指南**: 查看 [DOCKER.md](./DOCKER.md) 获取完整的镜像使用文档
+
+#### 快速启动 (使用官方镜像)
+
+```bash
+# 方式1: 直接运行官方镜像
+docker run -d \
+  --name todoing-go-backend \
+  -p 5004:5004 \
+  -e MONGO_URI="mongodb://admin:password@localhost:27017/todoing?authSource=admin" \
+  -e JWT_SECRET="your_super_secret_jwt_key" \
+  axiu/todoing-go:latest
+
+# 方式2: 使用完整的 Docker Compose (推荐)
+cd ../docker
+./deploy.sh golang up
+```
+
+#### 本地构建镜像
+
 ```bash
 # 构建镜像
-docker build -t todoing-backend:latest .
+docker build -t todoing-backend:local .
 
 # 或使用 Makefile
 make docker-build
+
+# 或使用 Docker Compose 本地构建
+cd ../docker
+./deploy.sh golang up --build
 ```
 
-#### 使用 Docker Compose
-```bash
-# 启动完整环境
-cd .. && docker-compose -f docker-compose.dev.yml up backend mongodb -d
+#### 镜像信息
 
-# 查看日志
-docker-compose -f docker-compose.dev.yml logs -f backend
-```
+- **官方镜像**: `axiu/todoing-go:latest`
+- **支持架构**: `linux/amd64`, `linux/arm64`
+- **Docker Hub**: [axiu/todoing-go](https://hub.docker.com/r/axiu/todoing-go)
+- **自动更新**: 每次发布都会自动构建新镜像
 
 ## 🔧 开发工具
 

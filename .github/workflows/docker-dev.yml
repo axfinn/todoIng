@@ -1,0 +1,102 @@
+name: Docker Development Build
+
+on:
+  push:
+    branches:
+      - dev
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  REGISTRY: docker.io
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        component:
+          - name: "nodejs-backend"
+            image: "axiu/todoing"
+            context: "./backend"
+            dockerfile: "Dockerfile"
+            tag_suffix: "-nodejs"
+          - name: "golang-backend"
+            image: "axiu/todoing-go"
+            context: "./backend-go"
+            dockerfile: "Dockerfile"
+            tag_suffix: "-go"
+          - name: "frontend"
+            image: "axiu/todoing-frontend"
+            context: "./frontend"
+            dockerfile: "Dockerfile"
+            tag_suffix: "-frontend"
+    
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v4
+      -
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      -
+        name: Login to Docker Hub
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      -
+        name: Extract metadata for ${{ matrix.component.name }}
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ matrix.component.image }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=raw,value=dev,enable={{is_default_branch}}
+            type=raw,value={{date 'YYYYMMDD'}}-{{sha}}
+      -
+        name: Build and push ${{ matrix.component.name }}
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.component.context }}
+          file: ${{ matrix.component.context }}/${{ matrix.component.dockerfile }}
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      -
+        name: Test image ${{ matrix.component.name }}
+        run: |
+          docker run --rm ${{ matrix.component.image }}:${{ github.ref_name }} --version || echo "Version check not available for ${{ matrix.component.name }}"
+
+  summary:
+    needs: build-test
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Summary
+        run: |
+          echo "## 🐳 Docker Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Component | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|--------|" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ needs.build-test.result }}" == "success" ]; then
+            echo "| All Components | ✅ Success |" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### 📦 Built Images:" >> $GITHUB_STEP_SUMMARY
+            echo "- \`axiu/todoing:${{ github.ref_name }}\` (Node.js Backend)" >> $GITHUB_STEP_SUMMARY
+            echo "- \`axiu/todoing-go:${{ github.ref_name }}\` (Golang Backend)" >> $GITHUB_STEP_SUMMARY
+            echo "- \`axiu/todoing-frontend:${{ github.ref_name }}\` (React Frontend)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| Build | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
+          fi

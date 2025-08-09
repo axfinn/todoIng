@@ -44,8 +44,13 @@ help:
 	@echo "  vet             Run Go vet"
 	@echo ""
 	@echo "Docker:"
-	@echo "  docker-build    Build Docker image"
-	@echo "  docker-run      Run Docker container"
+	@echo "  docker-build         Build local Docker image"
+	@echo "  docker-build-official Build official Docker image"
+	@echo "  docker-run           Run local Docker container"
+	@echo "  docker-run-official  Run official Docker container"
+	@echo "  docker-pull          Pull official Docker image"
+	@echo "  docker-stop          Stop and remove Docker containers"
+	@echo "  docker-dev           Start Docker development environment"
 	@echo ""
 	@echo "Documentation:"
 	@echo "  docs            Generate complete API documentation"
@@ -159,13 +164,59 @@ vet:
 .PHONY: docker-build
 docker-build:
 	@echo "Building Docker image..."
-	docker compose -f docker-compose.dev.yml build backend
+	docker build -t $(DOCKER_IMAGE):latest .
+	@echo "Docker image built: $(DOCKER_IMAGE):latest"
+
+# Build Docker image with official tag
+.PHONY: docker-build-official
+docker-build-official:
+	@echo "Building official Docker image..."
+	docker build -t axiu/todoing-go:latest -t axiu/todoing-go:dev .
+	@echo "Official Docker image built: axiu/todoing-go:latest"
 
 # Run Docker container
 .PHONY: docker-run
-docker-run: docker-build
+docker-run:
 	@echo "Running Docker container..."
-	docker compose -f docker-compose.dev.yml up backend
+	docker run -d --name todoing-go-backend \
+		-p 5004:5004 \
+		-e MONGO_URI="mongodb://localhost:27017/todoing" \
+		-e JWT_SECRET="development_jwt_secret_key" \
+		$(DOCKER_IMAGE):latest
+	@echo "Docker container started: todoing-go-backend"
+
+# Run official Docker image
+.PHONY: docker-run-official
+docker-run-official:
+	@echo "Running official Docker image..."
+	docker run -d --name todoing-go-official \
+		-p 5004:5004 \
+		-e MONGO_URI="mongodb://localhost:27017/todoing" \
+		-e JWT_SECRET="development_jwt_secret_key" \
+		axiu/todoing-go:latest
+	@echo "Official Docker container started: todoing-go-official"
+
+# Pull official Docker image
+.PHONY: docker-pull
+docker-pull:
+	@echo "Pulling official Docker image..."
+	docker pull axiu/todoing-go:latest
+	@echo "Official Docker image pulled: axiu/todoing-go:latest"
+
+# Stop and remove Docker containers
+.PHONY: docker-stop
+docker-stop:
+	@echo "Stopping Docker containers..."
+	-docker stop todoing-go-backend todoing-go-official 2>/dev/null || true
+	-docker rm todoing-go-backend todoing-go-official 2>/dev/null || true
+	@echo "Docker containers stopped and removed"
+
+# Docker development environment
+.PHONY: docker-dev
+docker-dev:
+	@echo "Starting Docker development environment..."
+	cd .. && ./docker/deploy.sh golang up --build
+	@echo "Docker development environment started"
 
 # Clean build artifacts
 .PHONY: clean

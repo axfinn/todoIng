@@ -1,0 +1,362 @@
+# TodoIng - 生产环境部署方案
+# 包含负载均衡、SSL、监控、备份等生产级功能
+# 使用: docker-compose -f docker-compose.prod.yml up -d
+
+version: '3.8'
+
+services:
+  # MongoDB 主数据库 (生产环境)
+  mongodb-primary:
+    image: mongo:7-jammy
+    container_name: todoing_mongodb_primary
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: todoing
+    volumes:
+      - mongodb_data_primary:/data/db
+      - mongodb_config:/data/configdb
+      - ./scripts/mongo-init-prod.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+      - ./backup:/backup
+    networks:
+      - todoing_backend_network
+    command: --replSet rs0 --bind_ip_all --auth
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # MongoDB 从数据库 (只读副本)
+  mongodb-secondary:
+    image: mongo:7-jammy
+    container_name: todoing_mongodb_secondary
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+    volumes:
+      - mongodb_data_secondary:/data/db
+    networks:
+      - todoing_backend_network
+    command: --replSet rs0 --bind_ip_all --auth
+    depends_on:
+      - mongodb-primary
+    profiles:
+      - replica
+
+  # Redis 主节点
+  redis-master:
+    image: redis:7-alpine
+    container_name: todoing_redis_master
+    restart: always
+    ports:
+      - "6379:6379"
+    command: redis-server /etc/redis/redis.conf
+    volumes:
+      - redis_data_master:/data
+      - ./redis/redis-master.conf:/etc/redis/redis.conf:ro
+    networks:
+      - todoing_backend_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis 从节点
+  redis-slave:
+    image: redis:7-alpine
+    container_name: todoing_redis_slave
+    restart: always
+    command: redis-server /etc/redis/redis.conf
+    volumes:
+      - redis_data_slave:/data
+      - ./redis/redis-slave.conf:/etc/redis/redis.conf:ro
+    networks:
+      - todoing_backend_network
+    depends_on:
+      - redis-master
+    profiles:
+      - replica
+
+  # 后端服务 - 实例1
+  backend-1:
+    build:
+      context: ./backend-go
+      dockerfile: Dockerfile
+      target: production
+    container_name: todoing_backend_1
+    restart: always
+    environment:
+      PORT: 5004
+      GIN_MODE: release
+      MONGO_URI: mongodb://${MONGO_ROOT_USER:-admin}:${MONGO_ROOT_PASSWORD}@mongodb-primary:27017/todoing?authSource=admin&replicaSet=rs0
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis-master:6379
+      JWT_SECRET: ${JWT_SECRET}
+      DISABLE_REGISTRATION: ${DISABLE_REGISTRATION:-true}
+      ENABLE_CAPTCHA: ${ENABLE_CAPTCHA:-true}
+      ENABLE_EMAIL_VERIFICATION: ${ENABLE_EMAIL_VERIFICATION:-true}
+      DEFAULT_USERNAME: ${DEFAULT_USERNAME:-admin}
+      DEFAULT_EMAIL: ${DEFAULT_EMAIL}
+      DEFAULT_PASSWORD: ${DEFAULT_PASSWORD}
+      EMAIL_HOST: ${EMAIL_HOST}
+      EMAIL_PORT: ${EMAIL_PORT:-587}
+      EMAIL_SECURE: ${EMAIL_SECURE:-true}
+      EMAIL_USER: ${EMAIL_USER}
+      EMAIL_PASS: ${EMAIL_PASS}
+      EMAIL_FROM: ${EMAIL_FROM}
+      LOG_LEVEL: ${LOG_LEVEL:-warn}
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      RATE_LIMIT: ${RATE_LIMIT:-1000}
+      INSTANCE_ID: backend-1
+    env_file:
+      - .env.prod
+    depends_on:
+      mongodb-primary:
+        condition: service_healthy
+      redis-master:
+        condition: service_healthy
+    volumes:
+      - ./logs/backend-1:/app/logs
+    networks:
+      - todoing_backend_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # 后端服务 - 实例2
+  backend-2:
+    build:
+      context: ./backend-go
+      dockerfile: Dockerfile
+      target: production
+    container_name: todoing_backend_2
+    restart: always
+    environment:
+      PORT: 5004
+      GIN_MODE: release
+      MONGO_URI: mongodb://${MONGO_ROOT_USER:-admin}:${MONGO_ROOT_PASSWORD}@mongodb-primary:27017/todoing?authSource=admin&replicaSet=rs0
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis-master:6379
+      JWT_SECRET: ${JWT_SECRET}
+      DISABLE_REGISTRATION: ${DISABLE_REGISTRATION:-true}
+      ENABLE_CAPTCHA: ${ENABLE_CAPTCHA:-true}
+      ENABLE_EMAIL_VERIFICATION: ${ENABLE_EMAIL_VERIFICATION:-true}
+      DEFAULT_USERNAME: ${DEFAULT_USERNAME:-admin}
+      DEFAULT_EMAIL: ${DEFAULT_EMAIL}
+      DEFAULT_PASSWORD: ${DEFAULT_PASSWORD}
+      EMAIL_HOST: ${EMAIL_HOST}
+      EMAIL_PORT: ${EMAIL_PORT:-587}
+      EMAIL_SECURE: ${EMAIL_SECURE:-true}
+      EMAIL_USER: ${EMAIL_USER}
+      EMAIL_PASS: ${EMAIL_PASS}
+      EMAIL_FROM: ${EMAIL_FROM}
+      LOG_LEVEL: ${LOG_LEVEL:-warn}
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      RATE_LIMIT: ${RATE_LIMIT:-1000}
+      INSTANCE_ID: backend-2
+    env_file:
+      - .env.prod
+    depends_on:
+      mongodb-primary:
+        condition: service_healthy
+      redis-master:
+        condition: service_healthy
+    volumes:
+      - ./logs/backend-2:/app/logs
+    networks:
+      - todoing_backend_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # 前端服务
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: production
+    container_name: todoing_frontend
+    restart: always
+    environment:
+      VITE_API_BASE_URL: /api
+      VITE_DISABLE_REGISTRATION: ${DISABLE_REGISTRATION:-true}
+      VITE_ENABLE_CAPTCHA: ${ENABLE_CAPTCHA:-true}
+      VITE_APP_NAME: ${APP_NAME:-TodoIng}
+      VITE_APP_VERSION: ${APP_VERSION:-1.0.0}
+    volumes:
+      - ./frontend/nginx-prod.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - todoing_frontend_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Nginx 负载均衡器
+  nginx:
+    image: nginx:alpine
+    container_name: todoing_nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/prod.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/ssl/certs:ro
+      - ./logs/nginx:/var/log/nginx
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    depends_on:
+      - frontend
+      - backend-1
+      - backend-2
+    networks:
+      - todoing_frontend_network
+      - todoing_backend_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # 监控 - Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: todoing_prometheus
+    restart: always
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus-prod.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+    networks:
+      - todoing_monitoring_network
+      - todoing_backend_network
+
+  # 监控 - Grafana
+  grafana:
+    image: grafana/grafana:latest
+    container_name: todoing_grafana
+    restart: always
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP: false
+      GF_INSTALL_PLUGINS: grafana-clock-panel,grafana-simple-json-datasource
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    depends_on:
+      - prometheus
+    networks:
+      - todoing_monitoring_network
+
+  # 日志收集 - Elasticsearch
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: todoing_elasticsearch
+    restart: always
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - xpack.security.enabled=false
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - todoing_logging_network
+    profiles:
+      - logging
+
+  # 日志收集 - Logstash
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.11.0
+    container_name: todoing_logstash
+    restart: always
+    volumes:
+      - ./elk/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+      - ./logs:/logs:ro
+    depends_on:
+      - elasticsearch
+    networks:
+      - todoing_logging_network
+    profiles:
+      - logging
+
+  # 日志查看 - Kibana
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.0
+    container_name: todoing_kibana
+    restart: always
+    ports:
+      - "5601:5601"
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+    depends_on:
+      - elasticsearch
+    networks:
+      - todoing_logging_network
+    profiles:
+      - logging
+
+  # 备份服务
+  backup:
+    image: alpine:latest
+    container_name: todoing_backup
+    restart: "no"
+    volumes:
+      - ./backup:/backup
+      - ./scripts/backup.sh:/backup.sh:ro
+      - mongodb_data_primary:/data/mongodb:ro
+    networks:
+      - todoing_backend_network
+    command: /backup.sh
+    profiles:
+      - backup
+
+networks:
+  todoing_frontend_network:
+    driver: bridge
+  todoing_backend_network:
+    driver: bridge
+  todoing_monitoring_network:
+    driver: bridge
+  todoing_logging_network:
+    driver: bridge
+
+volumes:
+  mongodb_data_primary:
+    driver: local
+  mongodb_data_secondary:
+    driver: local
+  mongodb_config:
+    driver: local
+  redis_data_master:
+    driver: local
+  redis_data_slave:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+  elasticsearch_data:
+    driver: local

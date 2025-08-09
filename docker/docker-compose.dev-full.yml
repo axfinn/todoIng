@@ -1,0 +1,249 @@
+# TodoIng - 全栈开发环境
+# 包含前端热重载、后端调试、数据库管理等开发工具
+# 使用: docker-compose -f docker-compose.dev-full.yml up -d
+
+version: '3.8'
+
+services:
+  # MongoDB 数据库 (开发环境)
+  mongodb-dev:
+    image: mongo:7-jammy
+    container_name: todoing_mongodb_dev
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin123
+      MONGO_INITDB_DATABASE: todoing
+    volumes:
+      - mongodb_data_dev:/data/db
+      - ./scripts/mongo-init-dev.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+      - ./data/sample:/docker-entrypoint-initdb.d/sample:ro
+    networks:
+      - todoing_dev_network
+
+  # Redis 缓存 (开发环境)
+  redis-dev:
+    image: redis:7-alpine
+    container_name: todoing_redis_dev
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data_dev:/data
+    networks:
+      - todoing_dev_network
+
+  # Node.js 后端 (开发模式)
+  backend-nodejs-dev:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+      target: development
+    container_name: todoing_backend_nodejs_dev
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+      - "9229:9229"  # Node.js Debug port
+    environment:
+      NODE_ENV: development
+      PORT: 5001
+      MONGO_URI: mongodb://admin:admin123@mongodb-dev:27017/todoing?authSource=admin
+      REDIS_URL: redis://redis-dev:6379
+      JWT_SECRET: dev_jwt_secret_change_me
+      DISABLE_REGISTRATION: false
+      ENABLE_CAPTCHA: false  # 开发时关闭验证码
+      ENABLE_EMAIL_VERIFICATION: false
+      DEFAULT_USERNAME: admin
+      DEFAULT_EMAIL: admin@dev.com
+      DEFAULT_PASSWORD: admin123
+      LOG_LEVEL: debug
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - ./logs/nodejs-dev:/app/logs
+    depends_on:
+      - mongodb-dev
+      - redis-dev
+    networks:
+      - todoing_dev_network
+    command: npm run dev
+    profiles:
+      - nodejs
+
+  # Golang 后端 (开发模式)
+  backend-golang-dev:
+    build:
+      context: ./backend-go
+      dockerfile: Dockerfile.dev
+      target: development
+    container_name: todoing_backend_golang_dev
+    restart: unless-stopped
+    ports:
+      - "5004:5004"
+      - "2345:2345"  # Delve Debug port
+    environment:
+      PORT: 5004
+      GIN_MODE: debug
+      MONGO_URI: mongodb://admin:admin123@mongodb-dev:27017/todoing?authSource=admin
+      REDIS_URL: redis://redis-dev:6379
+      JWT_SECRET: dev_jwt_secret_change_me
+      DISABLE_REGISTRATION: false
+      ENABLE_CAPTCHA: false
+      ENABLE_EMAIL_VERIFICATION: false
+      DEFAULT_USERNAME: admin
+      DEFAULT_EMAIL: admin@dev.com
+      DEFAULT_PASSWORD: admin123
+      LOG_LEVEL: debug
+      CGO_ENABLED: 1
+    volumes:
+      - ./backend-go:/app
+      - go_modules_cache:/go/pkg/mod
+      - ./logs/golang-dev:/app/logs
+    depends_on:
+      - mongodb-dev
+      - redis-dev
+    networks:
+      - todoing_dev_network
+    command: air -c .air.toml
+    profiles:
+      - golang
+
+  # 前端开发服务 (Vite热重载)
+  frontend-dev:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+      target: development
+    container_name: todoing_frontend_dev
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+      - "24678:24678"  # Vite HMR
+    environment:
+      VITE_API_BASE_URL: http://localhost:5004/api  # 默认使用Go后端
+      VITE_NODEJS_API_URL: http://localhost:5001/api
+      VITE_GOLANG_API_URL: http://localhost:5004/api
+      VITE_DISABLE_REGISTRATION: false
+      VITE_ENABLE_CAPTCHA: false
+      VITE_APP_NAME: TodoIng Dev
+      VITE_APP_VERSION: dev
+      NODE_ENV: development
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/dist
+    networks:
+      - todoing_dev_network
+    command: npm run dev
+
+  # MongoDB 管理界面
+  mongo-express:
+    image: mongo-express:latest
+    container_name: todoing_mongo_express
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: admin123
+      ME_CONFIG_MONGODB_URL: mongodb://admin:admin123@mongodb-dev:27017/
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: admin123
+    depends_on:
+      - mongodb-dev
+    networks:
+      - todoing_dev_network
+
+  # Redis 管理界面
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: todoing_redis_commander
+    restart: unless-stopped
+    ports:
+      - "8082:8081"
+    environment:
+      REDIS_HOSTS: local:redis-dev:6379
+      HTTP_USER: admin
+      HTTP_PASSWORD: admin123
+    depends_on:
+      - redis-dev
+    networks:
+      - todoing_dev_network
+
+  # 邮件测试服务 (MailHog)
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: todoing_mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # Web UI
+    networks:
+      - todoing_dev_network
+
+  # 文档服务 (API文档)
+  docs:
+    build:
+      context: ./docs
+      dockerfile: Dockerfile
+    container_name: todoing_docs
+    restart: unless-stopped
+    ports:
+      - "4000:80"
+    volumes:
+      - ./docs:/usr/share/nginx/html:ro
+      - ./backend-go/docs:/usr/share/nginx/html/api:ro
+    networks:
+      - todoing_dev_network
+
+  # 开发代理 (nginx)
+  nginx-dev:
+    image: nginx:alpine
+    container_name: todoing_nginx_dev
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/dev.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - frontend-dev
+    networks:
+      - todoing_dev_network
+
+  # 测试数据库 (用于集成测试)
+  mongodb-test:
+    image: mongo:7-jammy
+    container_name: todoing_mongodb_test
+    restart: unless-stopped
+    ports:
+      - "27018:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin123
+      MONGO_INITDB_DATABASE: todoing_test
+    volumes:
+      - mongodb_test_data:/data/db
+    networks:
+      - todoing_dev_network
+    profiles:
+      - testing
+
+networks:
+  todoing_dev_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.22.0.0/16
+
+volumes:
+  mongodb_data_dev:
+    driver: local
+  mongodb_test_data:
+    driver: local
+  redis_data_dev:
+    driver: local
+  go_modules_cache:
+    driver: local
