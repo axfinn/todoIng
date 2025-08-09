@@ -29,6 +29,8 @@ type GenerateCaptchaResponse struct {
 	Image string `json:"image"`
 	// 验证码ID
 	Id string `json:"id"`
+	// 消息
+	Message string `json:"message"`
 }
 
 // SendEmailCodeRequest 发送邮箱验证码请求
@@ -291,7 +293,12 @@ func getCaptcha(c *gin.Context) {
 		}
 
 		// 简单地绘制字符占位符（实际应使用字体库）
-		drawCharPlaceholder(img, x, y, charColor, rune(char))
+		// 检查字符是否为数字，如果是则使用7段显示方式绘制
+		if char >= '0' && char <= '9' {
+			drawSimpleDigit(img, char, x, y)
+		} else {
+			drawCharPlaceholder(img, x, y, charColor, char)
+		}
 	}
 
 	// 将图片编码为base64
@@ -306,7 +313,13 @@ func getCaptcha(c *gin.Context) {
 
 	// 生成验证码ID（使用更安全的随机字符串）
 	b := make([]byte, 16)
-	rand.Read(b)
+	_, err = rand.Read(b)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, &ErrorResponse{
+			Msg: "Failed to generate captcha ID",
+		})
+		return
+	}
 	captchaID := fmt.Sprintf("%x", b)
 
 	// 存储验证码到内存（转换为大写，设置5分钟过期时间）
@@ -322,8 +335,9 @@ func getCaptcha(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, &GenerateCaptchaResponse{
-		Image: "data:image/png;base64," + base64.StdEncoding.EncodeToString(buf.Bytes()),
-		Id:    captchaID,
+		Image:   "data:image/png;base64," + base64.StdEncoding.EncodeToString(buf.Bytes()),
+		Id:      captchaID,
+		Message: "Captcha generated successfully",
 	})
 }
 
@@ -335,26 +349,47 @@ func abs(x int) int {
 	return x
 }
 
-// drawCharPlaceholder 简单地绘制字符占位符
+// drawCharPlaceholder 改进版字符绘制
 func drawCharPlaceholder(img *image.RGBA, x, y int, color color.RGBA, char rune) {
-	// 绘制一个简单的矩形表示字符
-	// 实际项目中应该使用真正的字体渲染
-	for dy := -10; dy < 10; dy++ {
-		for dx := -8; dx < 8; dx++ {
-			px := x + dx
-			py := y + dy
-			if px >= 0 && px < img.Bounds().Max.X && py >= 0 && py < img.Bounds().Max.Y {
-				// 简单的字符形状
-				if (dy > -10 && dy < -8) || (dy > 8 && dy < 10) ||
-					(dx > -8 && dx < -6) || (dx > 6 && dx < 8) {
-					img.Set(px, py, color)
-				}
-			}
+	// 绘制更清晰的字符框架
+	width := 20
+	height := 30
+	
+	// 绘制字符框架的四个边
+	for i := 0; i < width; i++ {
+		// 顶部边
+		px := x - 10 + i
+		py := y - 15
+		if px >= 0 && px < img.Bounds().Max.X && py >= 0 && py < img.Bounds().Max.Y {
+			img.Set(px, py, color)
+		}
+		
+		// 底部边
+		px = x - 10 + i
+		py = y + 15
+		if px >= 0 && px < img.Bounds().Max.X && py >= 0 && py < img.Bounds().Max.Y {
+			img.Set(px, py, color)
+		}
+	}
+	
+	for i := 0; i < height; i++ {
+		// 左侧边
+		px := x - 10
+		py := y - 15 + i
+		if px >= 0 && px < img.Bounds().Max.X && py >= 0 && py < img.Bounds().Max.Y {
+			img.Set(px, py, color)
+		}
+		
+		// 右侧边
+		px = x + 10
+		py = y - 15 + i
+		if px >= 0 && px < img.Bounds().Max.X && py >= 0 && py < img.Bounds().Max.Y {
+			img.Set(px, py, color)
 		}
 	}
 }
 
-// drawSimpleDigit 简单但清晰地绘制数字
+// drawSimpleDigit 改进版数字绘制
 func drawSimpleDigit(img *image.RGBA, digit rune, x, y int) {
 	// 定义数字的模式（7段显示）
 	patterns := map[rune][7]bool{
@@ -370,31 +405,31 @@ func drawSimpleDigit(img *image.RGBA, digit rune, x, y int) {
 		'9': {true, true, true, true, false, true, true},
 	}
 
-	// 定义7段的位置
+	// 定义7段的位置（调整位置以适应验证码图片大小）
 	segments := [7][4]int{
 		// a段 (顶部)
-		{x + 5, y + 2, x + 20, y + 2},
+		{x + 3, y + 1, x + 12, y + 1},
 		// b段 (右上)
-		{x + 23, y + 5, x + 23, y + 15},
+		{x + 14, y + 3, x + 14, y + 10},
 		// c段 (右下)
-		{x + 23, y + 18, x + 23, y + 28},
+		{x + 14, y + 13, x + 14, y + 20},
 		// d段 (底部)
-		{x + 5, y + 30, x + 20, y + 30},
+		{x + 3, y + 22, x + 12, y + 22},
 		// e段 (左下)
-		{x + 2, y + 18, x + 2, y + 28},
+		{x + 1, y + 13, x + 1, y + 20},
 		// f段 (左上)
-		{x + 2, y + 5, x + 2, y + 15},
+		{x + 1, y + 3, x + 1, y + 10},
 		// g段 (中间)
-		{x + 5, y + 16, x + 20, y + 16},
+		{x + 3, y + 12, x + 12, y + 12},
 	}
 
 	// 绘制每个激活的段
-	color := color.RGBA{0, 0, 0, 255} // 黑色
+	clr := color.RGBA{0, 0, 0, 255} // 黑色
 	pattern := patterns[digit]
 
 	for i, active := range pattern {
 		if active {
-			drawSegment(img, segments[i], color)
+			drawSegment(img, segments[i], clr)
 		}
 	}
 }
