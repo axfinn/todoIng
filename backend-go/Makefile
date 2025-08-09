@@ -47,6 +47,11 @@ help:
 	@echo "  docker-build    Build Docker image"
 	@echo "  docker-run      Run Docker container"
 	@echo ""
+	@echo "Documentation:"
+	@echo "  docs            Generate complete API documentation"
+	@echo "  docs-build      Build documentation generator tool"
+	@echo "  docs-clean      Clean generated documentation"
+	@echo ""
 	@echo "Utilities:"
 	@echo "  clean           Clean build artifacts"
 	@echo "  clean-proto     Clean generated proto files"
@@ -199,3 +204,53 @@ verify:
 	@echo ""
 	@echo "Generated files:"
 	@find $(GENERATED_DIR) -name "*.go" 2>/dev/null | head -5 || echo "No generated files found"
+
+# Documentation generation
+.PHONY: docs-build
+docs-build:
+	@echo "Building documentation generator tool..."
+	go build -o bin/generate-docs ./tools/generate_complete_api.go
+	@echo "Documentation generator built: bin/generate-docs"
+
+.PHONY: docs
+docs: docs-build
+	@echo "🚀 Generating complete API documentation..."
+	./bin/generate-docs
+	@echo "✅ Complete API documentation generated successfully!"
+	@echo "📄 File location: docs/api_complete.json"
+	@echo "📊 Documentation includes:"
+	@echo "   - REST API endpoints with full specifications"
+	@echo "   - gRPC API endpoints (simulated as HTTP)"
+	@echo "   - Complete data model definitions"
+	@echo "   - Request/response schemas with examples"
+	@echo ""
+	@echo "🔗 Access documentation:"
+	@echo "   API Docs: http://localhost:5004/api-docs"
+	@echo "   Swagger UI: http://localhost:5004/swagger/"
+	@echo "   Documentation Center: http://localhost:5004/docs/"
+	@echo ""
+	@echo "💡 Usage:"
+	@echo "   make run          # Start API server"
+	@echo "   make docs         # Regenerate documentation"
+	@echo "   make docs-clean   # Clean generated docs"
+
+.PHONY: docs-clean
+docs-clean:
+	@echo "Cleaning generated documentation..."
+	rm -f docs/api_complete.json
+	rm -f bin/generate-docs
+	@echo "Documentation files cleaned!"
+
+.PHONY: docs-serve
+docs-serve: docs run
+	@echo "📖 API documentation is now available at:"
+	@echo "   Complete API docs: http://localhost:5004/api-docs"
+	@echo "   Swagger UI: http://localhost:5004/swagger/"
+	@echo "   Documentation center: http://localhost:5004/docs/"
+
+# Quick documentation update (for development)
+.PHONY: docs-dev
+docs-dev:
+	@echo "🔄 Quick documentation update for development..."
+	go run ./tools/generate_complete_api.go
+	@echo "✅ Documentation updated! File: docs/api_complete.json"

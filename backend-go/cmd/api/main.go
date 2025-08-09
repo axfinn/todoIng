@@ -193,6 +193,16 @@ func main() {
 	// Swagger 文档路由
 	r.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
 	
+	// 静态文件服务 - API 文档
+	docsHandler := http.StripPrefix("/docs/", http.FileServer(http.Dir("docs/")))
+	r.PathPrefix("/docs/").Handler(docsHandler)
+	
+	// 完整 API 文档路由
+	r.HandleFunc("/api-docs", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		http.ServeFile(w, r, "docs/api_complete.json")
+	}).Methods(http.MethodGet)
+	
 	r.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("ok"))

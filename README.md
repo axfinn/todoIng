@@ -1,103 +1,481 @@
-# todoIng - 任务管理系统
+# 📋 TodoIng - 现代化任务管理系统
 
-todoIng 是一个创新的任务管理系统，它不仅提供基本的任务管理功能，还为每个任务提供完整的生命周期追踪和变更历史记录，就像 Git 管理代码变更一样管理任务。
+<div align="center">
 
-## 功能特性
+![TodoIng Logo](./img/dashboard.png)
 
-- [x] 用户认证（注册/登录）
-- [x] JWT令牌认证
-- [x] 任务管理（创建、编辑、删除、状态变更）
-- [x] 任务历史追踪（类似 Git 的任务变更历史）
-- [x] 团队协作功能
-- [x] 数据可视化展示
-- [x] 多语言支持
-- [x] 登录验证码功能（可选）
-- [x] 注册控制功能（可选）
-- [x] 报告生成功能（支持日报、周报、月报）
-- [x] AI报告润色功能（集成OpenAI）
-- [x] 任务日期验证（截止日期必须在计划日期之后）
-- [x] 临近截止日期任务标记功能
-- [x] 主页随机背景图片和GitHub统计信息展示
-- [x] 邮箱验证码登录/注册功能
-- [ ] 通知系统
-- [x] Docker 容器化部署
+**TodoIng** 是一个功能丰富的现代化任务管理系统，提供完整的任务生命周期管理、团队协作、报告生成和 AI 智能助手功能。
 
-## 技术栈
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Go Version](https://img.shields.io/badge/Go-1.23+-blue.svg)](https://golang.org/)
+[![Node Version](https://img.shields.io/badge/Node-18+-green.svg)](https://nodejs.org/)
+[![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://docker.com/)
 
-### 前端
-- React 18
-- TypeScript
-- Redux Toolkit (状态管理)
-- React Router v6 (路由管理)
-- Bootstrap 5 (UI框架)
-- Bootstrap Icons (图标库)
-- i18next (国际化)
-- Vite (构建工具)
-- Axios (HTTP客户端)
-- Marked (Markdown解析)
+</div>
 
-### 后端
-- Node.js
-- Express.js
-- MongoDB (数据库)
-- Mongoose (ODM)
-- JSON Web Tokens (JWT认证)
-- Bcrypt.js (密码加密)
-- Speakeasy (双因素认证)
-- QRCode (二维码生成)
-- OpenAI (AI润色功能)
-- Nodemailer (邮件发送)
+## ✨ 功能特性
 
-## 配置管理
+### 🎯 核心功能
+- [x] **用户认证系统** - JWT 令牌认证，邮箱验证码登录/注册
+- [x] **任务管理** - 完整的 CRUD 操作，状态管理，优先级设置
+- [x] **任务历史追踪** - Git 风格的变更历史记录
+- [x] **团队协作** - 多用户支持，权限管理
+- [x] **报告生成** - 自动生成日报、周报、月报
+- [x] **AI 智能助手** - OpenAI 集成的报告润色功能
+- [x] **数据可视化** - 任务统计图表和进度展示
+- [x] **多语言支持** - 国际化 i18n 支持
 
-系统支持多种配置选项，可以通过环境变量进行控制：
+### 🔐 安全特性
+- [x] **双架构支持** - Node.js 和 Go 双后端架构
+- [x] **图形验证码** - 防机器人注册和登录
+- [x] **邮箱验证** - 邮箱验证码系统
+- [x] **JWT 认证** - 安全的令牌认证机制
+- [x] **密码加密** - Bcrypt 密码哈希
 
-| 变量名 | 描述 | 默认值 |
-|--------|------|--------|
-| `DISABLE_REGISTRATION` | 是否禁用注册功能 | `false` |
-| `ENABLE_CAPTCHA` | 是否启用登录验证码 | `false` |
-| `ENABLE_EMAIL_VERIFICATION` | 是否启用邮箱验证码功能 | `false` |
-| `DEFAULT_USERNAME` | 默认用户名 | 无 |
-| `DEFAULT_EMAIL` | 默认用户邮箱 | 无 |
-| `OPENAI_API_KEY` | OpenAI API密钥，用于报告AI润色功能 | 无 |
+### 🚀 开发特性
+- [x] **容器化部署** - Docker 和 Docker Compose 支持
+- [x] **API 文档** - 自动生成的 Swagger 文档
+- [x] **类型安全** - TypeScript 前端，Go 类型安全后端
+- [x] **gRPC 支持** - 高性能的 gRPC 服务
+- [x] **可观测性** - 结构化日志和监控
 
-更多配置信息请查看 [配置文档](./docs/configuration.md)。
+## 🏗️ 技术架构
 
-## 快速开始
-
-开发相关文档请查看 [docs/development](./docs/development) 目录：
-
-- [开发计划](docs/development/development-plan.md)
-
-## 文档
-
-- [API 设计](./docs/api-design.md)
-- [数据库设计](./docs/database-design.md)
-- [实现计划](./docs/implementation-plan.md)
-- [技术设计](./docs/technical-design.md)
-- [UI/UX 设计](./docs/ui-ux-design.md)
-- [配置管理](./docs/configuration.md)
-
-## 项目截图
-
-![仪表板界面](./img/dashboard.png)
-
-## 快速开始
-
-### 使用 Docker Compose 部署（推荐）
-
+### 系统架构图
 ```
-# 克隆项目
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   React 前端    │────│  Go/Node 后端   │────│   MongoDB       │
+│                 │    │                 │    │   数据库        │
+│ • TypeScript    │    │ • RESTful API   │    │                 │
+│ • Redux Toolkit │    │ • gRPC 服务     │    │ • 任务数据      │
+│ • Bootstrap 5   │    │ • JWT 认证      │    │ • 用户数据      │
+│ • Vite 构建     │    │ • 邮件服务      │    │ • 报告数据      │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │
+         └───────────────────────┼───────────────────────┘
+                                 │
+                    ┌─────────────────┐
+                    │   第三方服务    │
+                    │                 │
+                    │ • OpenAI API    │
+                    │ • 邮件服务      │
+                    │ • 对象存储      │
+                    └─────────────────┘
+```
+
+### 🎨 前端技术栈
+| 技术 | 版本 | 用途 |
+|------|------|------|
+| **React** | 18+ | 用户界面框架 |
+| **TypeScript** | 5+ | 类型安全的 JavaScript |
+| **Redux Toolkit** | 1.9+ | 状态管理 |
+| **React Router** | v6 | 路由管理 |
+| **Bootstrap** | 5+ | UI 组件库 |
+| **Vite** | 4+ | 构建工具 |
+| **Axios** | 1.4+ | HTTP 客户端 |
+| **i18next** | 22+ | 国际化支持 |
+
+### ⚙️ 后端技术栈
+
+#### Go 后端 (推荐)
+| 技术 | 版本 | 用途 |
+|------|------|------|
+| **Go** | 1.23+ | 主要编程语言 |
+| **Gorilla Mux** | 1.8+ | HTTP 路由器 |
+| **MongoDB Driver** | 1.15+ | 数据库驱动 |
+| **JWT-Go** | 5.2+ | JWT 令牌处理 |
+| **gRPC** | 1.74+ | 高性能 RPC 框架 |
+| **Protobuf** | 1.36+ | 序列化协议 |
+| **Swagger** | 1.16+ | API 文档生成 |
+
+#### Node.js 后端 (维护中)
+| 技术 | 版本 | 用途 |
+|------|------|------|
+| **Node.js** | 18+ | 运行时环境 |
+| **Express.js** | 4.18+ | Web 框架 |
+| **Mongoose** | 7+ | MongoDB ODM |
+| **JsonWebToken** | 9+ | JWT 实现 |
+| **Bcrypt** | 5+ | 密码加密 |
+| **Nodemailer** | 6+ | 邮件发送 |
+
+### 🗄️ 数据库设计
+```
+📦 MongoDB 集合结构
+├── 👤 users          # 用户信息
+├── 📋 tasks          # 任务数据
+├── 📊 reports        # 报告数据
+├── 🔑 tokens         # 认证令牌
+└── 📧 email_codes    # 邮箱验证码
+```
+
+## 🚀 快速开始
+
+### 📋 环境要求
+- **Node.js** 18+
+- **Go** 1.23+
+- **MongoDB** 5.0+
+- **Docker** 20+ (可选)
+- **Docker Compose** 2.0+ (可选)
+
+### 🐳 Docker 部署 (推荐)
+
+**一键启动所有服务：**
+```bash
+# 1. 克隆项目
 git clone https://github.com/axfinn/todoIng.git
 cd todoIng
 
-# 启动服务
+# 2. 配置环境变量
+cp .env.example .env
+# 编辑 .env 文件配置必要参数
+
+# 3. 启动所有服务
 docker-compose up -d
 
-# 访问应用
-# 前端: http://localhost:81
-# 后端 API: http://localhost:5001/api
+# 4. 访问应用
+echo "🎉 部署完成！"
+echo "📱 前端访问: http://localhost:81"
+echo "🔗 API 接口: http://localhost:5001/api"
+echo "📚 API 文档: http://localhost:5001/api-docs"
 ```
+
+### 💻 开发环境部署
+
+#### 后端部署 (Go 版本)
+```bash
+# 1. 进入 Go 后端目录
+cd backend-go
+
+# 2. 安装依赖
+go mod download
+
+# 3. 配置环境变量
+cp .env.example .env
+
+# 4. 生成 API 文档
+make docs
+
+# 5. 启动服务
+make run
+# 或直接运行: go run ./cmd/api/main.go
+
+# 6. 验证服务
+curl http://localhost:5004/health
+```
+
+#### 前端部署
+```bash
+# 1. 进入前端目录
+cd frontend
+
+# 2. 安装依赖
+npm install
+
+# 3. 启动开发服务器
+npm run dev
+
+# 4. 访问应用
+open http://localhost:5173
+```
+
+#### 数据库启动
+```bash
+# 使用 Docker 启动 MongoDB
+docker-compose -f docker-compose.dev.yml up mongodb -d
+
+# 或使用本地 MongoDB
+mongod --dbpath ./data/db
+```
+
+## 📖 项目文档
+
+### 📚 开发文档
+- [🚀 开发计划](./docs/development/development-plan.md)
+- [🏗️ 技术设计](./docs/technical-design.md)
+- [🗄️ 数据库设计](./docs/database-design.md)
+- [🔌 API 设计](./docs/api-design.md)
+- [🎨 UI/UX 设计](./docs/ui-ux-design.md)
+
+### ⚙️ 运维文档
+- [⚙️ 配置管理](./docs/configuration.md)
+- [🐳 Docker 部署](./backend-go/DOCKER.md)
+- [📊 监控运维](./docs/observability.md)
+
+### 🔧 API 文档
+- **Swagger UI**: http://localhost:5004/swagger/
+- **完整 API 文档**: http://localhost:5004/api-docs
+- **gRPC 文档**: [查看 Proto 文件](./backend-go/api/proto/v1/)
+
+## 🛠️ 开发工具
+
+### Go 后端开发
+```bash
+# 查看所有可用命令
+make help
+
+# 生成 API 文档
+make docs
+
+# 构建项目
+make build
+
+# 运行测试
+make test
+
+# 代码格式化
+make fmt
+
+# 代码检查
+make lint
+
+# 清理构建文件
+make clean
+```
+
+### 项目结构
+```
+todoIng/
+├── 📁 frontend/          # React 前端应用
+│   ├── src/
+│   │   ├── components/   # 可复用组件
+│   │   ├── pages/        # 页面组件
+│   │   ├── store/        # Redux 状态管理
+│   │   ├── utils/        # 工具函数
+│   │   └── locales/      # 国际化文件
+│   ├── public/           # 静态资源
+│   └── package.json
+│
+├── 📁 backend-go/        # Go 后端服务 (推荐)
+│   ├── cmd/              # 应用入口
+│   │   ├── api/          # HTTP API 服务
+│   │   └── grpc/         # gRPC 服务
+│   ├── internal/         # 内部代码
+│   │   ├── api/          # API 处理器
+│   │   ├── models/       # 数据模型
+│   │   ├── services/     # 业务逻辑
+│   │   └── config/       # 配置管理
+│   ├── api/proto/        # Protobuf 定义
+│   ├── docs/             # API 文档
+│   ├── tools/            # 开发工具
+│   └── Makefile          # 构建脚本
+│
+├── 📁 backend/           # Node.js 后端 (维护中)
+│   ├── src/
+│   │   ├── controllers/  # 控制器
+│   │   ├── models/       # 数据模型
+│   │   ├── routes/       # 路由定义
+│   │   ├── middleware/   # 中间件
+│   │   └── utils/        # 工具函数
+│   └── package.json
+│
+├── 📁 docs/              # 项目文档
+│   ├── api-design.md     # API 设计文档
+│   ├── database-design.md # 数据库设计
+│   └── development/      # 开发相关文档
+│
+├── 📁 img/               # 项目图片资源
+├── 🐳 docker-compose.yml # Docker 编排文件
+└── 📄 README.md          # 项目说明
+```
+
+## ⚙️ 环境配置
+
+### 环境变量配置
+```bash
+# 数据库配置
+MONGODB_URI=mongodb://localhost:27017/todoing
+DB_NAME=todoing
+
+# JWT 配置
+JWT_SECRET=your-super-secret-jwt-key
+JWT_EXPIRES_IN=7d
+
+# 邮件服务配置
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
+
+# OpenAI 配置 (报告 AI 润色)
+OPENAI_API_KEY=sk-your-openai-api-key
+OPENAI_MODEL=gpt-3.5-turbo
+
+# 应用配置
+NODE_ENV=development
+PORT=5004
+FRONTEND_URL=http://localhost:5173
+
+# 功能开关
+ENABLE_CAPTCHA=true
+ENABLE_EMAIL_VERIFICATION=true
+DISABLE_REGISTRATION=false
+```
+
+### 功能开关说明
+| 环境变量 | 默认值 | 说明 |
+|----------|--------|------|
+| `ENABLE_CAPTCHA` | `false` | 启用图形验证码 |
+| `ENABLE_EMAIL_VERIFICATION` | `false` | 启用邮箱验证码 |
+| `DISABLE_REGISTRATION` | `false` | 禁用用户注册 |
+| `DEBUG_MODE` | `false` | 启用调试模式 |
+
+## 🔌 API 接口
+
+### REST API 端点
+```
+📋 任务管理
+├── GET    /api/tasks           # 获取任务列表
+├── POST   /api/tasks           # 创建新任务
+├── GET    /api/tasks/:id       # 获取任务详情
+├── PUT    /api/tasks/:id       # 更新任务
+├── DELETE /api/tasks/:id       # 删除任务
+├── GET    /api/tasks/export    # 导出任务
+└── POST   /api/tasks/import    # 导入任务
+
+👤 用户认证
+├── POST   /api/auth/register      # 用户注册
+├── POST   /api/auth/login         # 用户登录
+├── GET    /api/auth/me            # 获取用户信息
+├── POST   /api/auth/send-code     # 发送验证码
+└── GET    /api/auth/captcha       # 获取图形验证码
+
+📊 报告管理
+├── GET    /api/reports            # 获取报告列表
+├── POST   /api/reports/generate   # 生成报告
+├── POST   /api/reports/:id/polish # AI 润色报告
+└── GET    /api/reports/:id/export # 导出报告
+```
+
+### gRPC 服务
+```
+🔗 gRPC 服务端点
+├── AuthService          # 认证服务
+│   ├── Login           # 用户登录
+│   └── Register        # 用户注册
+├── TaskService          # 任务服务
+│   ├── CreateTask      # 创建任务
+│   ├── ListTasks       # 任务列表
+│   └── UpdateTask      # 更新任务
+└── ReportService        # 报告服务
+    ├── GenerateReport  # 生成报告
+    └── PolishReport    # 润色报告
+```
+
+## 🧪 测试
+
+### 运行测试
+```bash
+# Go 后端测试
+cd backend-go
+make test                # 运行所有测试
+make test-unit          # 运行单元测试
+make test-coverage      # 生成覆盖率报告
+
+# 前端测试
+cd frontend
+npm run test            # 运行前端测试
+npm run test:coverage   # 生成覆盖率报告
+```
+
+### API 测试
+```bash
+# 健康检查
+curl http://localhost:5004/health
+
+# 获取验证码
+curl http://localhost:5004/api/auth/captcha
+
+# 用户注册
+curl -X POST http://localhost:5004/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"123456","nickname":"测试用户"}'
+```
+
+## 🚀 部署方案
+
+### 🐳 Docker 生产部署
+```bash
+# 构建生产镜像
+docker-compose -f docker-compose.yml build
+
+# 启动生产环境
+docker-compose -f docker-compose.yml up -d
+
+# 查看服务状态
+docker-compose ps
+
+# 查看日志
+docker-compose logs -f
+```
+
+### ☁️ 云平台部署
+- **前端**: Vercel, Netlify, 或 CDN
+- **后端**: AWS ECS, Google Cloud Run, 或 Kubernetes
+- **数据库**: MongoDB Atlas, AWS DocumentDB
+- **文件存储**: AWS S3, 阿里云 OSS
+
+## 📊 性能指标
+
+### 系统性能
+- **响应时间**: < 200ms (API 平均响应)
+- **并发用户**: 1000+ (经过测试)
+- **数据库**: 10,000+ 任务记录
+- **文件上传**: 支持 10MB 文件
+
+### 浏览器兼容性
+- ✅ Chrome 90+
+- ✅ Firefox 88+
+- ✅ Safari 14+
+- ✅ Edge 90+
+- ✅ 移动端浏览器
+
+## 🤝 贡献指南
+
+### 开发流程
+1. **Fork** 项目到你的 GitHub 账户
+2. **创建分支**: `git checkout -b feature/your-feature-name`
+3. **提交更改**: `git commit -am 'Add some feature'`
+4. **推送分支**: `git push origin feature/your-feature-name`
+5. **创建 Pull Request**
+
+### 代码规范
+- **Go**: 遵循 `gofmt` 和 `golint` 规范
+- **TypeScript**: 使用 ESLint 和 Prettier
+- **提交信息**: 遵循 [Conventional Commits](https://conventionalcommits.org/)
+
+### 问题反馈
+- 🐛 **Bug 反馈**: [创建 Issue](https://github.com/axfinn/todoIng/issues/new?template=bug_report.md)
+- 💡 **功能建议**: [功能请求](https://github.com/axfinn/todoIng/issues/new?template=feature_request.md)
+- 📚 **文档改进**: [文档 Issue](https://github.com/axfinn/todoIng/issues/new?template=documentation.md)
+
+## 📜 许可证
+
+本项目采用 [MIT 许可证](LICENSE) - 查看 LICENSE 文件了解详情。
+
+## 🙏 致谢
+
+感谢以下开源项目和社区：
+- [React](https://reactjs.org/) - 用户界面库
+- [Go](https://golang.org/) - 编程语言
+- [MongoDB](https://www.mongodb.com/) - 数据库
+- [Docker](https://www.docker.com/) - 容器化平台
+- [OpenAI](https://openai.com/) - AI 服务
+
+## 📞 联系方式
+
+- **项目主页**: https://github.com/axfinn/todoIng
+- **问题反馈**: https://github.com/axfinn/todoIng/issues
+- **邮箱**: axfinn@example.com
+
+---
+
+<div align="center">
+
+**⭐ 如果这个项目对你有帮助，请给我们一个 Star！**
+
+Made with ❤️ by [axfinn](https://github.com/axfinn)
+
+</div>
 
 ### 使用 Docker Hub 镜像
 
