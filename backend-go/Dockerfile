@@ -1,5 +1,5 @@
 # Multi-stage build
-FROM golang:1.22-alpine AS builder
+FROM golang:1.23-alpine AS builder
 ARG HTTP_PROXY
 ARG HTTPS_PROXY
 ENV HTTP_PROXY=${HTTP_PROXY} \
@@ -12,10 +12,11 @@ RUN apk add --no-cache git
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
+RUN go mod tidy
 RUN --mount=type=cache,target=/root/.cache/go-build \
     CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o server ./cmd/api
 
-FROM alpine:3.19
+FROM alpine:3.18
 WORKDIR /app
 ENV PORT=5001 \
     HTTP_PROXY= \

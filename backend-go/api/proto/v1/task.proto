@@ -1,0 +1,116 @@
+syntax = "proto3";
+
+package todoing.api.v1;
+
+option go_package = "github.com/axfinn/todoIng/backend-go/pkg/api/v1";
+
+import "google/protobuf/timestamp.proto";
+import "common.proto";
+
+// 任务状态枚举
+enum TaskStatus {
+  TASK_STATUS_UNSPECIFIED = 0;
+  TASK_STATUS_TODO = 1;
+  TASK_STATUS_IN_PROGRESS = 2;
+  TASK_STATUS_DONE = 3;
+}
+
+// 任务优先级枚举
+enum TaskPriority {
+  TASK_PRIORITY_UNSPECIFIED = 0;
+  TASK_PRIORITY_LOW = 1;
+  TASK_PRIORITY_MEDIUM = 2;
+  TASK_PRIORITY_HIGH = 3;
+}
+
+// 任务模型
+message Task {
+  string id = 1;
+  string title = 2;
+  string description = 3;
+  TaskStatus status = 4;
+  TaskPriority priority = 5;
+  google.protobuf.Timestamp due_date = 6;
+  string user_id = 7;
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp updated_at = 9;
+}
+
+// 创建任务请求
+message CreateTaskRequest {
+  string title = 1;
+  string description = 2;
+  TaskStatus status = 3;
+  TaskPriority priority = 4;
+  google.protobuf.Timestamp due_date = 5;
+}
+
+// 创建任务响应
+message CreateTaskResponse {
+  Response response = 1;
+  Task task = 2;
+}
+
+// 获取任务列表请求
+message GetTasksRequest {
+  PaginationRequest pagination = 1;
+  TaskStatus status = 2;
+  TaskPriority priority = 3;
+}
+
+// 获取任务列表响应
+message GetTasksResponse {
+  Response response = 1;
+  repeated Task tasks = 2;
+  PaginationResponse pagination = 3;
+}
+
+// 获取任务请求
+message GetTaskRequest {
+  string id = 1;
+}
+
+// 获取任务响应
+message GetTaskResponse {
+  Response response = 1;
+  Task task = 2;
+}
+
+// 更新任务请求
+message UpdateTaskRequest {
+  string id = 1;
+  string title = 2;
+  string description = 3;
+  TaskStatus status = 4;
+  TaskPriority priority = 5;
+  google.protobuf.Timestamp due_date = 6;
+}
+
+// 更新任务响应
+message UpdateTaskResponse {
+  Response response = 1;
+  Task task = 2;
+}
+
+// 删除任务请求
+message DeleteTaskRequest {
+  string id = 1;
+}
+
+// 任务服务
+service TaskService {
+  // 创建任务
+  rpc CreateTask(CreateTaskRequest) returns (CreateTaskResponse);
+  
+  // 获取任务列表
+  rpc GetTasks(GetTasksRequest) returns (GetTasksResponse);
+  
+  // 获取任务详情
+  rpc GetTask(GetTaskRequest) returns (GetTaskResponse);
+  
+  // 更新任务
+  rpc UpdateTask(UpdateTaskRequest) returns (UpdateTaskResponse);
+  
+  // 删除任务
+  rpc DeleteTask(DeleteTaskRequest) returns (Response);
+}

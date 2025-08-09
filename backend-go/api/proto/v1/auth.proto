@@ -1,0 +1,85 @@
+syntax = "proto3";
+
+package todoing.api.v1;
+
+option go_package = "github.com/axfinn/todoIng/backend-go/pkg/api/v1";
+
+import "google/protobuf/timestamp.proto";
+import "common.proto";
+
+// 用户模型
+message User {
+  string id = 1;
+  string username = 2;
+  string email = 3;
+  google.protobuf.Timestamp created_at = 4;
+  google.protobuf.Timestamp updated_at = 5;
+}
+
+// 注册请求
+message RegisterRequest {
+  string username = 1;
+  string email = 2;
+  string password = 3;
+  string captcha_id = 4;
+  string captcha_code = 5;
+}
+
+// 注册响应
+message RegisterResponse {
+  Response response = 1;
+  User user = 2;
+}
+
+// 登录请求
+message LoginRequest {
+  string email = 1;
+  string password = 2;
+}
+
+// 邮箱验证码登录请求
+message EmailCodeLoginRequest {
+  string email = 1;
+  string code = 2;
+}
+
+// 发送登录邮箱验证码请求
+message SendLoginEmailCodeRequest {
+  string email = 1;
+}
+
+// 登录响应
+message LoginResponse {
+  Response response = 1;
+  string token = 2;
+  User user = 3;
+}
+
+// 验证令牌请求
+message VerifyTokenRequest {
+  string token = 1;
+}
+
+// 验证令牌响应
+message VerifyTokenResponse {
+  Response response = 1;
+  User user = 2;
+}
+
+// 认证服务
+service AuthService {
+  // 用户注册
+  rpc Register(RegisterRequest) returns (RegisterResponse);
+  
+  // 用户登录
+  rpc Login(LoginRequest) returns (LoginResponse);
+  
+  // 邮箱验证码登录
+  rpc EmailCodeLogin(EmailCodeLoginRequest) returns (LoginResponse);
+  
+  // 发送登录邮箱验证码
+  rpc SendLoginEmailCode(SendLoginEmailCodeRequest) returns (Response);
+  
+  // 验证令牌
+  rpc VerifyToken(VerifyTokenRequest) returns (VerifyTokenResponse);
+}

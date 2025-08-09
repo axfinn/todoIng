@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package todoing.api.v1;
+
+option go_package = "github.com/axfinn/todoIng/backend-go/pkg/api/v1";
+
+import "common.proto";
+
+// 验证码模型
+message Captcha {
+  string id = 1;
+  string image_data = 2; // base64编码的图片数据
+}
+
+// 获取验证码请求
+message GetCaptchaRequest {
+  // 暂时无需参数
+}
+
+// 获取验证码响应
+message GetCaptchaResponse {
+  Response response = 1;
+  Captcha captcha = 2;
+}
+
+// 验证码服务
+service CaptchaService {
+  // 获取验证码
+  rpc GetCaptcha(GetCaptchaRequest) returns (GetCaptchaResponse);
+}

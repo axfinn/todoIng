@@ -3,11 +3,11 @@ package api
 import (
     "context"
     "encoding/json"
-    "log"
     "net/http"
     "strings"
     "time"
 
+    "github.com/axfinn/todoIng/backend-go/internal/observability"
     "go.mongodb.org/mongo-driver/bson"
     "go.mongodb.org/mongo-driver/bson/primitive"
     "go.mongodb.org/mongo-driver/mongo"
@@ -35,15 +35,26 @@ type taskRequest struct {
 var allowedStatus = map[string]bool{"To Do":true, "In Progress":true, "Done":true}
 var allowedPriority = map[string]bool{"Low":true, "Medium":true, "High":true}
 
-// POST /api/tasks
+// CreateTask 创建新任务
+// @Summary 创建新任务
+// @Description 创建一个新的任务项
+// @Tags 任务管理
+// @Accept json
+// @Produce json
+// @Param task body taskRequest true "任务信息"
+// @Success 200 {object} map[string]interface{} "创建成功"
+// @Failure 400 {object} map[string]string "请求参数错误"
+// @Failure 401 {object} map[string]string "未授权"
+// @Failure 500 {object} map[string]string "服务器内部错误"
+// @Router /api/tasks [post]
 func (d *TaskDeps) CreateTask(w http.ResponseWriter, r *http.Request) {
     uid := GetUserID(r); if uid=="" { JSON(w,401,map[string]string{"msg":"Unauthorized"}); return }
     var req taskRequest
     if err := json.NewDecoder(r.Body).Decode(&req); err != nil { 
-        log.Printf("CreateTask decode error: %v", err)
+        observability.CtxLog(r.Context(), "CreateTask decode error: %v", err)
         JSON(w,400,map[string]string{"msg":"Invalid body"}); return 
     }
-    log.Printf("CreateTask received: title=%q, description=%q, status=%q, priority=%q", req.Title, req.Description, req.Status, req.Priority)
+    observability.CtxLog(r.Context(), "CreateTask received: title=%q, description=%q, status=%q, priority=%q", req.Title, req.Description, req.Status, req.Priority)
     if strings.TrimSpace(req.Title)=="" { JSON(w,400,map[string]string{"msg":"Title is required"}); return }
     if req.Status=="" { req.Status = "To Do" }
     if !allowedStatus[req.Status] { JSON(w,400,map[string]string{"msg":"Invalid status"}); return }
@@ -98,7 +109,16 @@ func parseDate(dateStr *string) *time.Time {
     return nil
 }
 
-// GET /api/tasks
+// ListTasks 获取任务列表
+// @Summary 获取用户的所有任务
+// @Description 获取当前用户创建的所有任务列表，按创建时间倒序排列
+// @Tags 任务管理
+// @Accept json
+// @Produce json
+// @Success 200 {object} []map[string]interface{} "任务列表"
+// @Failure 401 {object} map[string]string "未授权"
+// @Failure 500 {object} map[string]string "服务器内部错误"
+// @Router /api/tasks [get]
 func (d *TaskDeps) ListTasks(w http.ResponseWriter, r *http.Request) {
     uid := GetUserID(r); if uid=="" { JSON(w,401,map[string]string{"msg":"Unauthorized"}); return }
     ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second); defer cancel()
@@ -110,7 +130,18 @@ func (d *TaskDeps) ListTasks(w http.ResponseWriter, r *http.Request) {
     JSON(w,200,tasks)
 }
 
-// GET /api/tasks/{id}
+// GetTask 获取单个任务详情
+// @Summary 获取任务详情
+// @Description 根据任务ID获取任务的详细信息
+// @Tags 任务管理
+// @Accept json
+// @Produce json
+// @Param id path string true "任务ID"
+// @Success 200 {object} map[string]interface{} "任务详情"
+// @Failure 401 {object} map[string]string "未授权"
+// @Failure 404 {object} map[string]string "任务不存在"
+// @Failure 500 {object} map[string]string "服务器内部错误"
+// @Router /api/tasks/{id} [get]
 func (d *TaskDeps) GetTask(w http.ResponseWriter, r *http.Request) {
     uid := GetUserID(r); if uid=="" { JSON(w,401,map[string]string{"msg":"Unauthorized"}); return }
     id := muxVar(r, "id")
@@ -122,7 +153,20 @@ func (d *TaskDeps) GetTask(w http.ResponseWriter, r *http.Request) {
     JSON(w,200,m)
 }
 
-// PUT /api/tasks/{id}
+// UpdateTask 更新任务
+// @Summary 更新任务信息
+// @Description 根据任务ID更新任务的详细信息
+// @Tags 任务管理
+// @Accept json
+// @Produce json
+// @Param id path string true "任务ID"
+// @Param task body taskRequest true "更新的任务信息"
+// @Success 200 {object} map[string]interface{} "更新成功"
+// @Failure 400 {object} map[string]string "请求参数错误"
+// @Failure 401 {object} map[string]string "未授权"
+// @Failure 404 {object} map[string]string "任务不存在"
+// @Failure 500 {object} map[string]string "服务器内部错误"
+// @Router /api/tasks/{id} [put]
 func (d *TaskDeps) UpdateTask(w http.ResponseWriter, r *http.Request) {
     uid := GetUserID(r); if uid=="" { JSON(w,401,map[string]string{"msg":"Unauthorized"}); return }
     id := muxVar(r, "id")
@@ -153,7 +197,18 @@ func (d *TaskDeps) UpdateTask(w http.ResponseWriter, r *http.Request) {
     JSON(w,200,m)
 }
 
-// DELETE /api/tasks/{id}
+// DeleteTask 删除任务
+// @Summary 删除任务
+// @Description 根据任务ID删除指定的任务
+// @Tags 任务管理
+// @Accept json
+// @Produce json
+// @Param id path string true "任务ID"
+// @Success 200 {object} map[string]string "删除成功"
+// @Failure 401 {object} map[string]string "未授权"
+// @Failure 404 {object} map[string]string "任务不存在"
+// @Failure 500 {object} map[string]string "服务器内部错误"
+// @Router /api/tasks/{id} [delete]
 func (d *TaskDeps) DeleteTask(w http.ResponseWriter, r *http.Request) {
     uid := GetUserID(r); if uid=="" { JSON(w,401,map[string]string{"msg":"Unauthorized"}); return }
     id := muxVar(r, "id")

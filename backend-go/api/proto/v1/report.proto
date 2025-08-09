@@ -1,0 +1,114 @@
+syntax = "proto3";
+
+package todoing.api.v1;
+
+option go_package = "github.com/axfinn/todoIng/backend-go/pkg/api/v1";
+
+import "google/protobuf/timestamp.proto";
+import "common.proto";
+import "task.proto";
+
+// 报表类型枚举
+enum ReportType {
+  REPORT_TYPE_UNSPECIFIED = 0;
+  REPORT_TYPE_DAILY = 1;
+  REPORT_TYPE_WEEKLY = 2;
+  REPORT_TYPE_MONTHLY = 3;
+}
+
+// 报表模型
+message Report {
+  string id = 1;
+  string title = 2;
+  ReportType type = 3;
+  google.protobuf.Timestamp start_date = 4;
+  google.protobuf.Timestamp end_date = 5;
+  string user_id = 6;
+  google.protobuf.Timestamp created_at = 7;
+  repeated Task tasks = 8;
+  ReportStats stats = 9;
+}
+
+// 报表统计信息
+message ReportStats {
+  int32 total_tasks = 1;
+  int32 completed_tasks = 2;
+  int32 pending_tasks = 3;
+  int32 in_progress_tasks = 4;
+  double completion_rate = 5;
+}
+
+// 生成报表请求
+message GenerateReportRequest {
+  string title = 1;
+  ReportType type = 2;
+  google.protobuf.Timestamp start_date = 3;
+  google.protobuf.Timestamp end_date = 4;
+}
+
+// 生成报表响应
+message GenerateReportResponse {
+  Response response = 1;
+  Report report = 2;
+}
+
+// 获取报表列表请求
+message GetReportsRequest {
+  PaginationRequest pagination = 1;
+  ReportType type = 2;
+}
+
+// 获取报表列表响应
+message GetReportsResponse {
+  Response response = 1;
+  repeated Report reports = 2;
+  PaginationResponse pagination = 3;
+}
+
+// 获取报表请求
+message GetReportRequest {
+  string id = 1;
+}
+
+// 获取报表响应
+message GetReportResponse {
+  Response response = 1;
+  Report report = 2;
+}
+
+// 删除报表请求
+message DeleteReportRequest {
+  string id = 1;
+}
+
+// 导出报表请求
+message ExportReportRequest {
+  string id = 1;
+  string format = 2; // "csv", "excel", "pdf"
+}
+
+// 导出报表响应
+message ExportReportResponse {
+  Response response = 1;
+  bytes data = 2;
+  string filename = 3;
+  string content_type = 4;
+}
+
+// 报表服务
+service ReportService {
+  // 生成报表
+  rpc GenerateReport(GenerateReportRequest) returns (GenerateReportResponse);
+  
+  // 获取报表列表
+  rpc GetReports(GetReportsRequest) returns (GetReportsResponse);
+  
+  // 获取报表详情
+  rpc GetReport(GetReportRequest) returns (GetReportResponse);
+  
+  // 删除报表
+  rpc DeleteReport(DeleteReportRequest) returns (Response);
+  
+  // 导出报表
+  rpc ExportReport(ExportReportRequest) returns (ExportReportResponse);
+}

@@ -17,7 +17,16 @@ import (
 
 type ReportDeps struct { DB *mongo.Database }
 
-// GET /api/reports
+// ListReports 获取报表列表
+// @Summary 获取用户的所有报表
+// @Description 获取当前用户创建的所有报表列表，按创建时间倒序排列
+// @Tags 报表管理
+// @Accept json
+// @Produce json
+// @Success 200 {object} []map[string]interface{} "报表列表"
+// @Failure 401 {object} map[string]string "未授权"
+// @Failure 500 {object} map[string]string "服务器内部错误"
+// @Router /api/reports [get]
 func (d *ReportDeps) ListReports(w http.ResponseWriter, r *http.Request) {
     uid := GetUserID(r); if uid=="" { JSON(w,401,map[string]string{"msg":"Unauthorized"}); return }
     ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second); defer cancel()
@@ -34,7 +43,18 @@ func (d *ReportDeps) ListReports(w http.ResponseWriter, r *http.Request) {
     JSON(w,200,reports)
 }
 
-// GET /api/reports/{id}
+// GetReport 获取报表详情
+// @Summary 获取单个报表详情
+// @Description 根据报表ID获取报表的详细信息，包含关联的任务数据
+// @Tags 报表管理
+// @Accept json
+// @Produce json
+// @Param id path string true "报表ID"
+// @Success 200 {object} map[string]interface{} "报表详情"
+// @Failure 401 {object} map[string]string "未授权"
+// @Failure 404 {object} map[string]string "报表不存在"
+// @Failure 500 {object} map[string]string "服务器内部错误"
+// @Router /api/reports/{id} [get]
 func (d *ReportDeps) GetReport(w http.ResponseWriter, r *http.Request) {
     uid := GetUserID(r); if uid=="" { JSON(w,401,map[string]string{"msg":"Unauthorized"}); return }
     id := mux.Vars(r)["id"]

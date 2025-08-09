@@ -13,6 +13,15 @@ import (
 
 type CaptchaDeps struct { Store *captcha.Store }
 
+// Generate 生成验证码
+// @Summary 生成验证码图片
+// @Description 生成一个新的验证码图片，返回base64编码的SVG图片和验证码ID
+// @Tags 验证码
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]string "验证码图片和ID"
+// @Failure 500 {object} map[string]string "服务器内部错误"
+// @Router /api/auth/captcha [get]
 func (d *CaptchaDeps) Generate(w http.ResponseWriter, r *http.Request) {
 	if os.Getenv("ENABLE_CAPTCHA") != "true" {
 		// 兼容前端：返回一个透明的 1x1 SVG 占位图片 + msg，前端拿到非错误结构即可继续
@@ -33,6 +42,16 @@ func (d *CaptchaDeps) Generate(w http.ResponseWriter, r *http.Request) {
 	JSON(w,200,map[string]string{"image":"data:image/svg+xml;base64,"+base64.StdEncoding.EncodeToString([]byte(svg)), "id": id})
 }
 
+// Verify 验证验证码
+// @Summary 验证验证码
+// @Description 验证用户输入的验证码是否正确
+// @Tags 验证码
+// @Accept json
+// @Produce json
+// @Param body body object{captcha=string,captchaId=string} true "验证码内容和ID"
+// @Success 200 {object} map[string]string "验证成功"
+// @Failure 400 {object} map[string]string "验证失败或请求参数错误"
+// @Router /api/auth/verify-captcha [post]
 func (d *CaptchaDeps) Verify(w http.ResponseWriter, r *http.Request) {
 	if os.Getenv("ENABLE_CAPTCHA") != "true" { JSON(w,200,map[string]string{"msg":"Captcha bypassed"}); return }
 	var body struct { Captcha string `json:"captcha"`; CaptchaId string `json:"captchaId"` }

@@ -3,12 +3,12 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"log"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/axfinn/todoIng/backend-go/internal/auth"
+	"github.com/axfinn/todoIng/backend-go/internal/observability"
 	"github.com/gorilla/mux"
 )
 
@@ -19,16 +19,32 @@ const userKey contextKey = "userId"
 func Logging(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
-		next.ServeHTTP(w, r)
-		log.Printf("%s %s %s", r.Method, r.URL.Path, time.Since(start))
+		ww := &responseWriter{ResponseWriter: w, status: 200}
+		
+		next.ServeHTTP(ww, r)
+		dur := time.Since(start)
+		
+		observability.CtxLog(r.Context(), "%s %s %d %s", r.Method, r.URL.Path, ww.status, dur)
 	})
+}
+
+type responseWriter struct {
+	http.ResponseWriter
+	status int
+}
+
+func (rw *responseWriter) WriteHeader(code int) {
+	rw.status = code
+	rw.ResponseWriter.WriteHeader(code)
 }
 
 func Recover(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {
-				log.Printf("panic: %v", err)
+				ctx := r.Context()
+				observability.CtxLog(ctx, "panic: %v", err)
+				
 				w.WriteHeader(http.StatusInternalServerError)
 				_ = json.NewEncoder(w).Encode(map[string]string{"error": "server error"})
 			}

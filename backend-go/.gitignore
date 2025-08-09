@@ -1,0 +1,240 @@
+# Backend-Go .gitignore
+# 针对 Go 项目和 Protocol Buffers 的 git 忽略规则
+
+# ========================================
+# Go 编译输出和二进制文件
+# ========================================
+# 编译后的二进制文件（根目录）
+server
+grpc-server
+todoing-http
+todoing-grpc
+
+# bin/ 目录下的所有二进制文件
+bin/
+!bin/.gitkeep
+
+# Go 构建缓存
+.cache/
+
+# Go 测试二进制文件
+*.test
+
+# Go 基准测试输出
+*.bench
+
+# ========================================
+# 环境配置和敏感信息
+# ========================================
+# 环境变量文件（包含敏感信息）
+.env
+.env.local
+.env.development
+.env.staging
+.env.production
+
+# 保留环境变量模板
+!.env.example
+
+# 配置文件备份
+*.conf.bak
+*.json.bak
+
+# ========================================
+# 日志文件
+# ========================================
+# 所有日志文件
+*.log
+logs/
+log/
+
+# 具体的日志文件
+server.log
+app.log
+error.log
+access.log
+
+# ========================================
+# 测试和覆盖率报告
+# ========================================
+# 测试覆盖率文件
+coverage.out
+coverage.html
+coverage.txt
+cover.out
+cover.html
+
+# 测试报告
+test-report.xml
+test-results.xml
+
+# 基准测试结果
+benchmark.txt
+*.pprof
+
+# ========================================
+# 开发工具和编辑器文件
+# ========================================
+# VS Code 设置（项目特定）
+.vscode/settings.json
+.vscode/launch.json
+.vscode/tasks.json
+
+# GoLand/IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Vim 临时文件
+*.swp
+*.swo
+*~
+
+# Emacs 临时文件
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# ========================================
+# 操作系统生成的文件
+# ========================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.directory
+
+# ========================================
+# 依赖管理和缓存
+# ========================================
+# Go vendor 目录（如果使用 go mod，通常不需要）
+vendor/
+
+# Go module cache（全局缓存，不应该在项目中）
+go.sum.lock
+
+# ========================================
+# Docker 和容器相关
+# ========================================
+# Docker 临时文件
+.dockerignore.bak
+
+# Docker Compose 覆盖文件
+docker-compose.override.yml
+docker-compose.override.yaml
+
+# ========================================
+# Protocol Buffers 相关
+# ========================================
+# 临时 proto 文件
+*.proto.bak
+*.proto.tmp
+
+# Protobuf 编译缓存（如果有）
+.protoc-cache/
+
+# Swagger 生成的临时文件
+swagger-temp/
+api-docs-temp/
+
+# ========================================
+# 构建和部署
+# ========================================
+# 构建输出目录
+build/
+dist/
+out/
+
+# 打包文件
+*.tar.gz
+*.zip
+*.tgz
+
+# Kubernetes 部署文件（如果包含敏感信息）
+k8s-secrets.yaml
+secrets.yaml
+
+# ========================================
+# 临时和备份文件
+# ========================================
+# 通用临时文件
+*.tmp
+*.temp
+*.bak
+*.backup
+*.old
+
+# 数据库备份
+*.sql.bak
+*.db.bak
+
+# 证书和密钥文件
+*.pem
+*.key
+*.crt
+*.p12
+!*example*.pem
+!*example*.key
+
+# ========================================
+# 性能分析和调试
+# ========================================
+# pprof 输出
+cpu.prof
+mem.prof
+profile.prof
+
+# Delve 调试器
+debug
+__debug_bin
+
+# ========================================
+# 第三方工具
+# ========================================
+# Air 热重载工具
+.air.toml
+tmp/
+
+# golangci-lint 缓存
+.golangci-lint-cache/
+
+# Wire 生成的文件（如果使用依赖注入）
+wire_gen.go
+
+# ========================================
+# 项目特定的忽略
+# ========================================
+# 开发时的临时文件
+dev-temp/
+temp/
+
+# 本地测试数据
+test-data/
+sample-data/
+
+# 个人笔记和文档
+NOTES.md
+TODO.txt
+.personal/
+
+# 本地脚本
+local-*.sh
+dev-*.sh
