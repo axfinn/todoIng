@@ -13,8 +13,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/axfinn/todoIng/backend-go/internal/auth"
-	"github.com/axfinn/todoIng/backend-go/internal/email"
 	"github.com/axfinn/todoIng/backend-go/internal/captcha"
+	"github.com/axfinn/todoIng/backend-go/internal/email"
 	"github.com/axfinn/todoIng/backend-go/test/testutil"
 )
 
@@ -26,7 +26,7 @@ func TestRegister(t *testing.T) {
 	// 设置测试依赖
 	emailStore := email.NewStore(10*time.Minute, 3)
 	captchaStore := captcha.NewStore(5 * time.Minute)
-	
+
 	// 创建路由
 	r := mux.NewRouter()
 	setupAuthRoutes(r, testDB.DB, emailStore, captchaStore)
@@ -111,7 +111,7 @@ func TestRegister(t *testing.T) {
 			r.ServeHTTP(w, req)
 
 			if w.Code != tt.expectedStatus {
-				t.Errorf("Expected status %d, got %d. Response: %s", 
+				t.Errorf("Expected status %d, got %d. Response: %s",
 					tt.expectedStatus, w.Code, w.Body.String())
 			}
 
@@ -138,7 +138,7 @@ func TestLogin(t *testing.T) {
 
 	emailStore := email.NewStore(10*time.Minute, 3)
 	captchaStore := captcha.NewStore(5 * time.Minute)
-	
+
 	r := mux.NewRouter()
 	setupAuthRoutes(r, testDB.DB, emailStore, captchaStore)
 
@@ -199,7 +199,7 @@ func TestLogin(t *testing.T) {
 			r.ServeHTTP(w, req)
 
 			if w.Code != tt.expectedStatus {
-				t.Errorf("Expected status %d, got %d. Response: %s", 
+				t.Errorf("Expected status %d, got %d. Response: %s",
 					tt.expectedStatus, w.Code, w.Body.String())
 			}
 
@@ -230,7 +230,7 @@ func TestVerifyToken(t *testing.T) {
 
 	emailStore := email.NewStore(10*time.Minute, 3)
 	captchaStore := captcha.NewStore(5 * time.Minute)
-	
+
 	r := mux.NewRouter()
 	setupAuthRoutes(r, testDB.DB, emailStore, captchaStore)
 
@@ -267,7 +267,7 @@ func TestVerifyToken(t *testing.T) {
 			r.ServeHTTP(w, req)
 
 			if w.Code != tt.expectedStatus {
-				t.Errorf("Expected status %d, got %d. Response: %s", 
+				t.Errorf("Expected status %d, got %d. Response: %s",
 					tt.expectedStatus, w.Code, w.Body.String())
 			}
 		})
@@ -277,7 +277,7 @@ func TestVerifyToken(t *testing.T) {
 // setupAuthRoutes 设置认证路由用于测试
 func setupAuthRoutes(r *mux.Router, db *mongo.Database, emailStore *email.Store, captchaStore *captcha.Store) {
 	authRouter := r.PathPrefix("/auth").Subrouter()
-	
+
 	authRouter.HandleFunc("/register", RegisterHandler(db, emailStore, captchaStore)).Methods("POST")
 	authRouter.HandleFunc("/login", LoginHandler(db)).Methods("POST")
 	authRouter.HandleFunc("/verify", VerifyTokenHandler(db)).Methods("GET")

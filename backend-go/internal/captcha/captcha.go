@@ -15,7 +15,7 @@ type Item struct {
 }
 
 type Store struct {
-	m sync.Map // key -> Item
+	m   sync.Map // key -> Item
 	TTL time.Duration
 }
 
@@ -41,7 +41,7 @@ func randomID() string {
 }
 
 func init() {
-    mrand.Seed(time.Now().UnixNano())
+	mrand.Seed(time.Now().UnixNano())
 }
 
 func (s *Store) Generate(n int) (id, text string) {
@@ -53,10 +53,17 @@ func (s *Store) Generate(n int) (id, text string) {
 
 func (s *Store) Verify(id, value string) bool {
 	v, ok := s.m.Load(id)
-	if !ok { return false }
+	if !ok {
+		return false
+	}
 	item := v.(Item)
-	if time.Now().After(item.ExpiresAt) { s.m.Delete(id); return false }
-	if strings.ToUpper(value) != item.Text { return false }
+	if time.Now().After(item.ExpiresAt) {
+		s.m.Delete(id)
+		return false
+	}
+	if strings.ToUpper(value) != item.Text {
+		return false
+	}
 	s.m.Delete(id)
 	return true
 }
@@ -65,7 +72,9 @@ func (s *Store) Cleanup() {
 	now := time.Now()
 	s.m.Range(func(key, value any) bool {
 		item := value.(Item)
-		if now.After(item.ExpiresAt) { s.m.Delete(key) }
+		if now.After(item.ExpiresAt) {
+			s.m.Delete(key)
+		}
 		return true
 	})
 }

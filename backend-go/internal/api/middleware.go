@@ -20,10 +20,10 @@ func Logging(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 		ww := &responseWriter{ResponseWriter: w, status: 200}
-		
+
 		next.ServeHTTP(ww, r)
 		dur := time.Since(start)
-		
+
 		observability.CtxLog(r.Context(), "%s %s %d %s", r.Method, r.URL.Path, ww.status, dur)
 	})
 }
@@ -44,7 +44,7 @@ func Recover(next http.Handler) http.Handler {
 			if err := recover(); err != nil {
 				ctx := r.Context()
 				observability.CtxLog(ctx, "panic: %v", err)
-				
+
 				w.WriteHeader(http.StatusInternalServerError)
 				_ = json.NewEncoder(w).Encode(map[string]string{"error": "server error"})
 			}
@@ -56,11 +56,20 @@ func Recover(next http.Handler) http.Handler {
 func Auth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
-		if authHeader == "" { http.Error(w, "No token", http.StatusUnauthorized); return }
+		if authHeader == "" {
+			http.Error(w, "No token", http.StatusUnauthorized)
+			return
+		}
 		parts := strings.SplitN(authHeader, " ", 2)
-		if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" { http.Error(w, "Invalid auth header", http.StatusUnauthorized); return }
+		if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
+			http.Error(w, "Invalid auth header", http.StatusUnauthorized)
+			return
+		}
 		claims, err := auth.Parse(parts[1])
-		if err != nil { http.Error(w, "Token invalid", http.StatusUnauthorized); return }
+		if err != nil {
+			http.Error(w, "Token invalid", http.StatusUnauthorized)
+			return
+		}
 		ctx := context.WithValue(r.Context(), userKey, claims.UserID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
@@ -68,8 +77,12 @@ func Auth(next http.Handler) http.Handler {
 
 func GetUserID(r *http.Request) string {
 	v := r.Context().Value(userKey)
-	if v == nil { return "" }
-	if s, ok := v.(string); ok { return s }
+	if v == nil {
+		return ""
+	}
+	if s, ok := v.(string); ok {
+		return s
+	}
 	return ""
 }
 

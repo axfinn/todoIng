@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	pb "github.com/axfinn/todoIng/backend-go/pkg/api/v1"
 	"github.com/axfinn/todoIng/backend-go/internal/convert"
 	"github.com/axfinn/todoIng/backend-go/internal/models"
+	pb "github.com/axfinn/todoIng/backend-go/pkg/api/v1"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"google.golang.org/grpc/codes"
@@ -41,11 +41,11 @@ func (s *AuthService) Register(ctx context.Context, req *pb.RegisterRequest) (*p
 			{"username": req.Username},
 		},
 	}).Err()
-	
+
 	if err == nil {
 		return nil, status.Error(codes.AlreadyExists, "User already exists")
 	}
-	
+
 	if err != mongo.ErrNoDocuments {
 		return nil, status.Error(codes.Internal, fmt.Sprintf("Database error: %v", err))
 	}
@@ -69,7 +69,7 @@ func (s *AuthService) Register(ctx context.Context, req *pb.RegisterRequest) (*p
 
 	// 转换为 protobuf 响应
 	pbUser := convert.UserToProto(user)
-	
+
 	return &pb.RegisterResponse{
 		Response: &pb.Response{
 			Code:    201,
@@ -107,7 +107,7 @@ func (s *AuthService) Login(ctx context.Context, req *pb.LoginRequest) (*pb.Logi
 
 	// 转换为 protobuf 响应
 	pbUser := convert.UserToProto(&user)
-	
+
 	return &pb.LoginResponse{
 		Response: &pb.Response{
 			Code:    200,

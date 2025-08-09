@@ -16,8 +16,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 
-	pb "github.com/axfinn/todoIng/backend-go/pkg/api/v1"
 	"github.com/axfinn/todoIng/backend-go/internal/services"
+	pb "github.com/axfinn/todoIng/backend-go/pkg/api/v1"
 )
 
 // @title TodoIng gRPC API
@@ -42,7 +42,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	
+
 	if err = client.Ping(ctx, nil); err != nil {
 		log.Fatal(err)
 	}

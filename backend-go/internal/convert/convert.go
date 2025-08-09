@@ -1,11 +1,12 @@
 package convert
 
 import (
-	"time"
-	"google.golang.org/protobuf/types/known/timestamppb"
-	pb "github.com/axfinn/todoIng/backend-go/pkg/api/v1"
 	"github.com/axfinn/todoIng/backend-go/internal/models"
+	pb "github.com/axfinn/todoIng/backend-go/pkg/api/v1"
+	"google.golang.org/protobuf/types/known/timestamppb"
+	"time"
 )
+
 // 这样可以保持现有代码正常工作
 
 // UserToProto 将内部用户模型转换为 protobuf 模型
@@ -13,11 +14,11 @@ func UserToProto(user *models.User) *pb.User {
 	if user == nil {
 		return nil
 	}
-	
+
 	return &pb.User{
-		Id:       user.ID,
-		Username: user.Username,
-		Email:    user.Email,
+		Id:        user.ID,
+		Username:  user.Username,
+		Email:     user.Email,
 		CreatedAt: timestamppb.New(user.CreatedAt),
 		UpdatedAt: timestamppb.New(user.CreatedAt), // 使用 CreatedAt 因为模型中没有 UpdatedAt
 	}
@@ -28,16 +29,16 @@ func ProtoToUser(pbUser *pb.User) *models.User {
 	if pbUser == nil {
 		return nil
 	}
-	
+
 	user := &models.User{
 		Username: pbUser.Username,
 		Email:    pbUser.Email,
 	}
-	
+
 	if pbUser.CreatedAt != nil {
 		user.CreatedAt = pbUser.CreatedAt.AsTime()
 	}
-	
+
 	return user
 }
 
@@ -102,12 +103,12 @@ func TaskToProto(task *models.Task) *pb.Task {
 	if task == nil {
 		return nil
 	}
-	
+
 	var dueDate *timestamppb.Timestamp
 	if task.Deadline != nil && !task.Deadline.IsZero() {
 		dueDate = timestamppb.New(*task.Deadline)
 	}
-	
+
 	return &pb.Task{
 		Id:          task.ID,
 		Title:       task.Title,
@@ -126,14 +127,14 @@ func ProtoToTask(pbTask *pb.Task) *models.Task {
 	if pbTask == nil {
 		return nil
 	}
-	
+
 	task := &models.Task{
 		Title:       pbTask.Title,
 		Description: pbTask.Description,
 		Status:      ProtoToTaskStatus(pbTask.Status),
 		Priority:    ProtoToTaskPriority(pbTask.Priority),
 	}
-	
+
 	if pbTask.DueDate != nil {
 		deadline := pbTask.DueDate.AsTime()
 		task.Deadline = &deadline
@@ -144,7 +145,7 @@ func ProtoToTask(pbTask *pb.Task) *models.Task {
 	if pbTask.UpdatedAt != nil {
 		task.UpdatedAt = pbTask.UpdatedAt.AsTime()
 	}
-	
+
 	return task
 }
 
@@ -181,25 +182,25 @@ func ReportToProto(report *models.Report) *pb.Report {
 	if report == nil {
 		return nil
 	}
-	
+
 	// 注意：这里的 Tasks 字段在内部模型中是 []string，但 proto 中期望的是 []*pb.Task
 	// 实际使用时可能需要额外的查询来获取完整的任务信息
 	pbTasks := make([]*pb.Task, 0) // 暂时为空数组
-	
+
 	stats := &pb.ReportStats{
-		TotalTasks:       int32(report.Statistics.TotalTasks),
-		CompletedTasks:   int32(report.Statistics.CompletedTasks),
-		PendingTasks:     int32(report.Statistics.TotalTasks - report.Statistics.CompletedTasks - report.Statistics.InProgressTasks),
-		InProgressTasks:  int32(report.Statistics.InProgressTasks),
-		CompletionRate:   float64(report.Statistics.CompletionRate),
+		TotalTasks:      int32(report.Statistics.TotalTasks),
+		CompletedTasks:  int32(report.Statistics.CompletedTasks),
+		PendingTasks:    int32(report.Statistics.TotalTasks - report.Statistics.CompletedTasks - report.Statistics.InProgressTasks),
+		InProgressTasks: int32(report.Statistics.InProgressTasks),
+		CompletionRate:  float64(report.Statistics.CompletionRate),
 	}
-	
+
 	return &pb.Report{
 		Id:        report.ID,
 		Title:     report.Title,
 		Type:      ReportTypeToProto(report.Type),
 		StartDate: timestamppb.New(report.CreatedAt), // 使用 CreatedAt 作为开始时间
-		EndDate:   timestamppb.New(report.UpdatedAt),  // 使用 UpdatedAt 作为结束时间
+		EndDate:   timestamppb.New(report.UpdatedAt), // 使用 UpdatedAt 作为结束时间
 		UserId:    report.UserID,
 		CreatedAt: timestamppb.New(report.CreatedAt),
 		Tasks:     pbTasks,

@@ -21,8 +21,8 @@ type Code struct {
 }
 
 type Store struct {
-	m   sync.Map
-	TTL time.Duration
+	m           sync.Map
+	TTL         time.Duration
 	MaxAttempts int
 }
 
@@ -30,7 +30,7 @@ func NewStore(ttl time.Duration, maxAttempts int) *Store {
 	return &Store{TTL: ttl, MaxAttempts: maxAttempts}
 }
 
-func randomID() string { b:= make([]byte,16); rand.Read(b); return hex.EncodeToString(b) }
+func randomID() string { b := make([]byte, 16); rand.Read(b); return hex.EncodeToString(b) }
 
 func randomCode(n int) string {
 	b := make([]byte, n)
@@ -47,13 +47,25 @@ func (s *Store) Generate(email string, length int) (id, code string) {
 
 func (s *Store) Verify(id, email, input string) error {
 	v, ok := s.m.Load(id)
-	if !ok { return errors.New("invalid or expired code") }
+	if !ok {
+		return errors.New("invalid or expired code")
+	}
 	c := v.(*Code)
-	if time.Now().After(c.ExpiresAt) { s.m.Delete(id); return errors.New("code expired") }
-	if c.Email != email { return errors.New("email mismatch") }
-	if c.Attempts >= s.MaxAttempts { s.m.Delete(id); return errors.New("too many attempts") }
+	if time.Now().After(c.ExpiresAt) {
+		s.m.Delete(id)
+		return errors.New("code expired")
+	}
+	if c.Email != email {
+		return errors.New("email mismatch")
+	}
+	if c.Attempts >= s.MaxAttempts {
+		s.m.Delete(id)
+		return errors.New("too many attempts")
+	}
 	c.Attempts++
-	if strings.ToUpper(input) != c.Code { return errors.New("invalid code") }
+	if strings.ToUpper(input) != c.Code {
+		return errors.New("invalid code")
+	}
 	s.m.Delete(id)
 	return nil
 }
@@ -62,7 +74,9 @@ func (s *Store) Cleanup() {
 	now := time.Now()
 	s.m.Range(func(key, value any) bool {
 		c := value.(*Code)
-		if now.After(c.ExpiresAt) { s.m.Delete(key) }
+		if now.After(c.ExpiresAt) {
+			s.m.Delete(key)
+		}
 		return true
 	})
 }
@@ -72,13 +86,17 @@ func Send(to, code string) error {
 	user := os.Getenv("EMAIL_USER")
 	pass := os.Getenv("EMAIL_PASS")
 	port := os.Getenv("EMAIL_PORT")
-	if host=="" || user=="" || pass=="" { return fmt.Errorf("email config incomplete") }
+	if host == "" || user == "" || pass == "" {
+		return fmt.Errorf("email config incomplete")
+	}
 	p := 587
 	fmt.Sscanf(port, "%d", &p)
 	d := mail.NewDialer(host, p, user, pass)
 	m := mail.NewMessage()
 	from := os.Getenv("EMAIL_FROM")
-	if from=="" { from = user }
+	if from == "" {
+		from = user
+	}
 	m.SetHeader("From", from)
 	m.SetHeader("To", to)
 	m.SetHeader("Subject", "TodoIng 邮箱验证码")

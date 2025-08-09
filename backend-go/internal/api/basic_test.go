@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"testing"
 	"os"
+	"strings"
+	"testing"
 
 	"github.com/gorilla/mux"
 )
@@ -35,9 +36,9 @@ func TestHealthEndpoint(t *testing.T) {
 // 测试注册请求验证
 func TestRegisterValidation(t *testing.T) {
 	tests := []struct {
-		name           string
-		requestBody    map[string]interface{}
-		expectedValid  bool
+		name          string
+		requestBody   map[string]interface{}
+		expectedValid bool
 	}{
 		{
 			name: "有效注册请求",
@@ -89,8 +90,9 @@ func TestRegisterValidation(t *testing.T) {
 			}
 
 			// 验证请求字段
-			isValid := req.Username != "" && req.Email != "" && len(req.Password) >= 6
-			
+			isValidEmail := strings.Contains(req.Email, "@") && strings.Contains(req.Email, ".")
+			isValid := req.Username != "" && req.Email != "" && len(req.Password) >= 6 && isValidEmail
+
 			if isValid != tt.expectedValid {
 				t.Errorf("Expected validation result %v, got %v", tt.expectedValid, isValid)
 			}
@@ -101,9 +103,9 @@ func TestRegisterValidation(t *testing.T) {
 // 测试登录请求验证
 func TestLoginValidation(t *testing.T) {
 	tests := []struct {
-		name           string
-		requestBody    map[string]interface{}
-		expectedValid  bool
+		name          string
+		requestBody   map[string]interface{}
+		expectedValid bool
 	}{
 		{
 			name: "有效登录请求",
@@ -142,8 +144,8 @@ func TestLoginValidation(t *testing.T) {
 			}
 
 			// 验证请求字段
-			isValid := req.Email != ""
-			
+			isValid := req.Email != "" && req.Password != ""
+
 			if isValid != tt.expectedValid {
 				t.Errorf("Expected validation result %v, got %v", tt.expectedValid, isValid)
 			}
@@ -154,27 +156,27 @@ func TestLoginValidation(t *testing.T) {
 // 测试JSON响应助手函数
 func TestJSONHelper(t *testing.T) {
 	w := httptest.NewRecorder()
-	
+
 	testData := map[string]string{
 		"message": "test",
 		"status":  "success",
 	}
-	
+
 	JSON(w, http.StatusOK, testData)
-	
+
 	if w.Code != http.StatusOK {
 		t.Errorf("Expected status 200, got %d", w.Code)
 	}
-	
+
 	var response map[string]string
 	if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
 		t.Fatalf("Failed to unmarshal response: %v", err)
 	}
-	
+
 	if response["message"] != "test" {
 		t.Errorf("Expected message 'test', got '%s'", response["message"])
 	}
-	
+
 	if response["status"] != "success" {
 		t.Errorf("Expected status 'success', got '%s'", response["status"])
 	}
@@ -185,7 +187,7 @@ func TestEnvironmentVariables(t *testing.T) {
 	// 保存原始环境变量
 	originalRegistration := os.Getenv("DISABLE_REGISTRATION")
 	originalEmailVerification := os.Getenv("ENABLE_EMAIL_VERIFICATION")
-	
+
 	// 清理函数
 	defer func() {
 		if originalRegistration != "" {
@@ -199,13 +201,13 @@ func TestEnvironmentVariables(t *testing.T) {
 			os.Unsetenv("ENABLE_EMAIL_VERIFICATION")
 		}
 	}()
-	
+
 	// 测试注册禁用
 	os.Setenv("DISABLE_REGISTRATION", "true")
 	if os.Getenv("DISABLE_REGISTRATION") != "true" {
 		t.Error("Failed to set DISABLE_REGISTRATION environment variable")
 	}
-	
+
 	// 测试邮箱验证启用
 	os.Setenv("ENABLE_EMAIL_VERIFICATION", "true")
 	if os.Getenv("ENABLE_EMAIL_VERIFICATION") != "true" {

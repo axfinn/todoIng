@@ -24,7 +24,16 @@ func Generate(userID string, ttl time.Duration) (string, error) {
 func Parse(token string) (*Claims, error) {
 	claims := &Claims{}
 	_, err := jwt.ParseWithClaims(token, claims, func(t *jwt.Token) (interface{}, error) { return Secret(), nil })
-	if err != nil { return nil, err }
-	if claims.UserID == "" { return nil, errors.New("invalid token") }
+	if err != nil {
+		return nil, err
+	}
+	if claims.UserID == "" {
+		return nil, errors.New("invalid token")
+	}
 	return claims, nil
+}
+
+// GenerateJWT 兼容测试的函数名
+func GenerateJWT(userID string) (string, error) {
+	return Generate(userID, time.Hour)
 }

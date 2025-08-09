@@ -626,7 +626,7 @@ func main() {
 					"200": map[string]interface{}{
 						"description": "导出成功",
 						"schema": map[string]interface{}{
-							"type": "string",
+							"type":   "string",
 							"format": "binary",
 						},
 					},

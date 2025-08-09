@@ -3,16 +3,16 @@ package convert
 import (
 	"testing"
 	"time"
-	
-	pb "github.com/axfinn/todoIng/backend-go/pkg/api/v1"
+
 	"github.com/axfinn/todoIng/backend-go/internal/models"
+	pb "github.com/axfinn/todoIng/backend-go/pkg/api/v1"
 )
 
 func TestUserToProto(t *testing.T) {
 	// 测试数据
 	userID := "60d5ecb74eb3b8001f8b4567"
 	createdAt := time.Now()
-	
+
 	user := &models.User{
 		ID:        userID,
 		Username:  "testuser",

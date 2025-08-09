@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	pb "github.com/axfinn/todoIng/backend-go/pkg/api/v1"
 	"github.com/axfinn/todoIng/backend-go/internal/api"
+	pb "github.com/axfinn/todoIng/backend-go/pkg/api/v1"
 )
 
 // GrpcAuthHandler HTTP 到 gRPC 的认证处理器

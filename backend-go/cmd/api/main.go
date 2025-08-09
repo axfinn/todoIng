@@ -120,13 +120,13 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
+	"github.com/swaggo/http-swagger"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"github.com/swaggo/http-swagger"
 
 	"github.com/axfinn/todoIng/backend-go/internal/api"
-	"github.com/axfinn/todoIng/backend-go/internal/email"
 	"github.com/axfinn/todoIng/backend-go/internal/captcha"
+	"github.com/axfinn/todoIng/backend-go/internal/email"
 	"github.com/axfinn/todoIng/backend-go/internal/observability"
 	"go.mongodb.org/mongo-driver/bson"
 	"golang.org/x/crypto/bcrypt"
@@ -157,7 +157,11 @@ func main() {
 
 	// --- tracing init ---
 	shutdown, errTrace := observability.InitTracer(context.Background(), "todoing-api", os.Getenv("ENVIRONMENT"), "1.0")
-	if errTrace != nil { log.Printf("tracing init error: %v", errTrace) } else { defer func(){ _ = shutdown(context.Background()) }() }
+	if errTrace != nil {
+		log.Printf("tracing init error: %v", errTrace)
+	} else {
+		defer func() { _ = shutdown(context.Background()) }()
+	}
 
 	mongoURI := os.Getenv("MONGO_URI")
 	if mongoURI == "" {
@@ -165,7 +169,7 @@ func main() {
 		log.Fatal("MONGO_URI not set")
 	}
 	observability.LogInfo("Connecting to MongoDB at %s", mongoURI)
-	
+
 	var err error
 	clientOpts := options.Client().ApplyURI(mongoURI)
 	// 暂时移除 mongo tracing 监控
@@ -189,20 +193,20 @@ func main() {
 	// 暂时直接使用普通的 router，不使用 otelhttp
 	handler := r
 	observability.LogInfo("Router initialized")
-	
+
 	// Swagger 文档路由
 	r.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
-	
+
 	// 静态文件服务 - API 文档
 	docsHandler := http.StripPrefix("/docs/", http.FileServer(http.Dir("docs/")))
 	r.PathPrefix("/docs/").Handler(docsHandler)
-	
+
 	// 完整 API 文档路由
 	r.HandleFunc("/api-docs", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		http.ServeFile(w, r, "docs/api_complete.json")
 	}).Methods(http.MethodGet)
-	
+
 	r.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("ok"))
@@ -215,8 +219,10 @@ func main() {
 	observability.LogInfo("All API routes configured")
 
 	port := os.Getenv("PORT")
-	if port == "" { port = "5001" }
-	server := &http.Server{Addr: ":"+port, Handler: handler}
+	if port == "" {
+		port = "5001"
+	}
+	server := &http.Server{Addr: ":" + port, Handler: handler}
 	observability.LogInfo("HTTP server configured on port %s", port)
 
 	// create default user if not exists
@@ -226,20 +232,20 @@ func main() {
 		username := os.Getenv("DEFAULT_USERNAME")
 		password := os.Getenv("DEFAULT_PASSWORD")
 		emailAddr := os.Getenv("DEFAULT_EMAIL")
-		if username == "" || password == "" || emailAddr == "" { 
+		if username == "" || password == "" || emailAddr == "" {
 			observability.LogWarn("Default user environment variables not set, skipping default user creation")
-			return 
+			return
 		}
 		ctxDef, cancelDef := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancelDef()
 		usersCol := db.Collection("users")
-		err := usersCol.FindOne(ctxDef, bson.M{"$or": []bson.M{{"username": username},{"email": emailAddr}}}).Err()
+		err := usersCol.FindOne(ctxDef, bson.M{"$or": []bson.M{{"username": username}, {"email": emailAddr}}}).Err()
 		if err == mongo.ErrNoDocuments {
 			hash, _ := bcrypt.GenerateFromPassword([]byte(password), 10)
 			_, errIns := usersCol.InsertOne(ctxDef, bson.M{"username": username, "email": emailAddr, "password": string(hash), "createdAt": time.Now()})
-			if errIns != nil { 
+			if errIns != nil {
 				observability.LogError("Failed to create default user: %v", errIns)
-			} else { 
+			} else {
 				observability.LogInfo("Default user created successfully: %s (%s)", username, emailAddr)
 			}
 		} else if err == nil {
@@ -263,22 +269,22 @@ func main() {
 	observability.LogInfo("Server is ready and listening for requests")
 	<-quit
 	observability.LogInfo("Shutdown signal received, starting graceful shutdown...")
-	
+
 	ctxShut, cancelShut := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancelShut()
-	
-	if err := server.Shutdown(ctxShut); err != nil { 
+
+	if err := server.Shutdown(ctxShut); err != nil {
 		observability.LogError("Server shutdown error: %v", err)
 	} else {
 		observability.LogInfo("HTTP server shutdown successfully")
 	}
-	
-	if err := client.Disconnect(ctxShut); err != nil { 
+
+	if err := client.Disconnect(ctxShut); err != nil {
 		observability.LogError("MongoDB disconnect error: %v", err)
 	} else {
 		observability.LogInfo("MongoDB disconnected successfully")
 	}
-	
+
 	observability.LogInfo("Application shutdown complete")
 	fmt.Println("Server exiting")
 }
